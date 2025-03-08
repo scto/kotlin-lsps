@@ -1,5 +1,5 @@
-val analysisApiKotlinVersion = "2.1.20-dev-3305"
-val intellijVersion = "233.13135.128"
+val analysisApiKotlinVersion = "2.2.0-dev-745"
+val intellijVersion = "241.19416.19"
 
 plugins {
     kotlin("jvm") version "2.1.0"
@@ -22,12 +22,12 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-compiler:$analysisApiKotlinVersion")
     implementation("com.github.ben-manes.caffeine:caffeine:2.9.3")  // Needed by kotlin analysis api
     listOf(
-        "org.jetbrains.kotlin:high-level-api-fir-for-ide",
-        "org.jetbrains.kotlin:analysis-api-platform-interface-for-ide",
-        "org.jetbrains.kotlin:high-level-api-for-ide",
+        "org.jetbrains.kotlin:analysis-api-k2-for-ide",
+        "org.jetbrains.kotlin:analysis-api-for-ide",
         "org.jetbrains.kotlin:low-level-api-fir-for-ide",
+        "org.jetbrains.kotlin:analysis-api-platform-interface-for-ide",
         "org.jetbrains.kotlin:symbol-light-classes-for-ide",
-        "org.jetbrains.kotlin:high-level-api-impl-base-for-ide",
+        "org.jetbrains.kotlin:analysis-api-impl-base-for-ide",
         "org.jetbrains.kotlin:kotlin-compiler-common-for-ide",
         "org.jetbrains.kotlin:kotlin-compiler-fir-for-ide",
         "org.jetbrains.kotlin:kotlin-compiler-ir-for-ide",
