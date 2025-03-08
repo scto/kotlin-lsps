@@ -1,0 +1,2 @@
+- Implementar KotlinLSPProjectStructureProvider
+    - Implementar interfaces KaModule y KaNotUnderContentRootModule
