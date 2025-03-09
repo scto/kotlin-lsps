@@ -1,1 +1,1 @@
-- Ver error al ejecutar: tiene pinta de ser por el contentScope del mainModule 
+- KotlinPlatformSettings

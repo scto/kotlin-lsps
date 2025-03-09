@@ -95,6 +95,10 @@ fun registerFIRServices(project: MockProject, app: MockApplication) {
         app, "org.jetbrains.kotlin.analysis.api.permissions.KaAnalysisPermissionRegistry",
         "org.jetbrains.kotlin.analysis.api.impl.base.permissions.KaBaseAnalysisPermissionRegistry", pluginDescriptor
     )
+    registerFIRService(
+        project, "org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver",
+        "org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseJavaModuleResolver", pluginDescriptor
+    )
 }
 
 fun registerFIRService(componentManager: MockComponentManager, interfaceName: String, implClassName: String, pluginDescriptor: DefaultPluginDescriptor) {

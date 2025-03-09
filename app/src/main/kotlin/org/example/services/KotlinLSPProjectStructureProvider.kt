@@ -22,8 +22,11 @@ class KotlinLSPProjectStructureProvider: KotlinProjectStructureProviderBase() {
         var virtualFiles: List<VirtualFile>? = null
     }
 
+    @KaPlatformInterface
     private val mainModule = object : KaSourceModule {
         override val contentScope: GlobalSearchScope
+            get() = GlobalSearchScope.filesScope(KotlinLSPProjectStructureProvider.project!!, virtualFiles!!)
+        override val baseContentScope: GlobalSearchScope
             get() = GlobalSearchScope.filesScope(KotlinLSPProjectStructureProvider.project!!, virtualFiles!!)
         override val directDependsOnDependencies: List<KaModule>
             get() = emptyList()
@@ -51,6 +54,7 @@ class KotlinLSPProjectStructureProvider: KotlinProjectStructureProviderBase() {
         TODO("Not yet implemented")
     }
 
+    @OptIn(KaPlatformInterface::class)
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule {
         return mainModule
     }
