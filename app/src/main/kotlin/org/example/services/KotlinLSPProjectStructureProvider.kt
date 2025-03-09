@@ -2,6 +2,7 @@ package org.example.services
 
 import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -18,11 +19,12 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 class KotlinLSPProjectStructureProvider: KotlinProjectStructureProviderBase() {
     companion object {
         var project: MockProject? = null
+        var virtualFiles: List<VirtualFile>? = null
     }
 
     private val mainModule = object : KaSourceModule {
         override val contentScope: GlobalSearchScope
-            get() = GlobalSearchScope.allScope(KotlinLSPProjectStructureProvider.project!!)
+            get() = GlobalSearchScope.filesScope(KotlinLSPProjectStructureProvider.project!!, virtualFiles!!)
         override val directDependsOnDependencies: List<KaModule>
             get() = emptyList()
         override val directFriendDependencies: List<KaModule>
@@ -43,7 +45,6 @@ class KotlinLSPProjectStructureProvider: KotlinProjectStructureProviderBase() {
             get() = JvmPlatforms.defaultJvmPlatform
         override val transitiveDependsOnDependencies: List<KaModule>
             get() = emptyList()
-
     }
 
     override fun getImplementingModules(module: KaModule): List<KaModule> {

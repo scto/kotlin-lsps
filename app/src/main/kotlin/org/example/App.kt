@@ -1,16 +1,19 @@
 package org.example
 
+import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockApplication
 import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
 import org.example.services.KotlinLSPProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironmentMode
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreProjectEnvironment
@@ -19,6 +22,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
+@OptIn(KaExperimentalApi::class)
 fun main() {
     setupIdeaStandaloneExecution()
     val projectDisposable = Disposer.newDisposable("LSPAnalysisAPISession.project")
@@ -39,8 +43,14 @@ fun main() {
         registerService(KotlinLifetimeTokenFactory::class.java, KotlinReadActionConfinementLifetimeTokenFactory::class.java)
     }
 
+    CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, KaResolveExtensionProvider.EP_NAME, KaResolveExtensionProvider::class.java)
+
     val psiFactory = KtPsiFactory(project)
     val ktFile = psiFactory.createFile("fn main() { println(\"aaa\")}")
+    val virtualFile = ktFile.virtualFile
+
+    KotlinLSPProjectStructureProvider.project = project
+    KotlinLSPProjectStructureProvider.virtualFiles = listOf(virtualFile)
     
     analyze(ktFile) {
         val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
