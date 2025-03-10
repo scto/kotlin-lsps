@@ -6,10 +6,14 @@ import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
+import org.example.services.KotlinLSPDeclarationProviderFactory
+import org.example.services.KotlinLSPPlatformSettings
 import org.example.services.KotlinLSPProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
@@ -41,6 +45,8 @@ fun main() {
     project.apply {
         registerService(KotlinProjectStructureProvider::class.java, KotlinLSPProjectStructureProvider::class.java)
         registerService(KotlinLifetimeTokenFactory::class.java, KotlinReadActionConfinementLifetimeTokenFactory::class.java)
+        registerService(KotlinPlatformSettings::class.java, KotlinLSPPlatformSettings::class.java)
+        registerService(KotlinDeclarationProviderFactory::class.java, KotlinLSPDeclarationProviderFactory::class.java)
     }
 
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, KaResolveExtensionProvider.EP_NAME, KaResolveExtensionProvider::class.java)
@@ -89,6 +95,7 @@ fun registerFIRServices(project: MockProject, app: MockApplication) {
         "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionCache",
         pluginDescriptor
     )
+    registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents", pluginDescriptor)
 
     // analysis-api-impl-base.xml
     registerFIRService(
