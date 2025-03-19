@@ -6,14 +6,18 @@ import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderCliImpl
 import org.example.services.KotlinLSPDeclarationProviderFactory
 import org.example.services.KotlinLSPPlatformSettings
 import org.example.services.KotlinLSPProjectStructureProvider
+import org.example.services.LSPPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
@@ -42,11 +46,17 @@ fun main() {
 
     registerFIRServices(project, app)
 
+    app.apply {
+        // TODO Intellij uses VFSUtil propietary class
+        registerService(BuiltinsVirtualFileProvider::class.java, BuiltinsVirtualFileProviderCliImpl::class.java)
+    }
+
     project.apply {
         registerService(KotlinProjectStructureProvider::class.java, KotlinLSPProjectStructureProvider::class.java)
         registerService(KotlinLifetimeTokenFactory::class.java, KotlinReadActionConfinementLifetimeTokenFactory::class.java)
         registerService(KotlinPlatformSettings::class.java, KotlinLSPPlatformSettings::class.java)
         registerService(KotlinDeclarationProviderFactory::class.java, KotlinLSPDeclarationProviderFactory::class.java)
+        registerService(KotlinPackageProviderFactory::class.java, LSPPackageProviderFactory::class.java)
     }
 
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, KaResolveExtensionProvider.EP_NAME, KaResolveExtensionProvider::class.java)
@@ -106,6 +116,8 @@ fun registerFIRServices(project: MockProject, app: MockApplication) {
         project, "org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver",
         "org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseJavaModuleResolver", pluginDescriptor
     )
+    registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider",
+        "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseResolutionScopeProvider", pluginDescriptor)
 }
 
 fun registerFIRService(componentManager: MockComponentManager, interfaceName: String, implClassName: String, pluginDescriptor: DefaultPluginDescriptor) {
