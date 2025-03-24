@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironmentMode
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
@@ -29,6 +30,9 @@ import org.jetbrains.kotlin.cli.jvm.compiler.setupIdeaStandaloneExecution
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinSimpleGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
+import org.example.services.LSPAnnotationsResolverFactory
 
 @OptIn(KaExperimentalApi::class)
 fun main() {
@@ -57,6 +61,10 @@ fun main() {
         registerService(KotlinPlatformSettings::class.java, KotlinLSPPlatformSettings::class.java)
         registerService(KotlinDeclarationProviderFactory::class.java, KotlinLSPDeclarationProviderFactory::class.java)
         registerService(KotlinPackageProviderFactory::class.java, LSPPackageProviderFactory::class.java)
+        // TODO Implement something like intellij plugin
+        registerService(KotlinGlobalSearchScopeMerger::class.java, KotlinSimpleGlobalSearchScopeMerger::class.java)
+
+        registerService(KotlinAnnotationsResolverFactory::class.java, LSPAnnotationsResolverFactory::class.java)
     }
 
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, KaResolveExtensionProvider.EP_NAME, KaResolveExtensionProvider::class.java)
