@@ -110,6 +110,12 @@ fun registerFIRServices(project: MockProject, app: MockApplication) {
     )
 
     // LL FIR services, these come from low-level-api-fhir.xml
+    registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.LLStatisticsService", pluginDescriptor)
+    registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationTracker", pluginDescriptor)
+    registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService", pluginDescriptor)
+    registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationEventPublisher", pluginDescriptor)
+    registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.LLFirElementByPsiElementChooser", "org.jetbrains.kotlin.analysis.low.level.api.fir.services.LLRealFirElementByPsiElementChooser", pluginDescriptor)
     registerFIRServiceClass(
         project,
         "org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory",
