@@ -33,6 +33,9 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinSimpleGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.example.services.LSPAnnotationsResolverFactory
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionConfigurator
+import org.example.services.LSPAnalysisPermissionOptions
+import org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions
 
 @OptIn(KaExperimentalApi::class)
 fun main() {
@@ -53,6 +56,8 @@ fun main() {
     app.apply {
         // TODO Intellij uses VFSUtil propietary class
         registerService(BuiltinsVirtualFileProvider::class.java, BuiltinsVirtualFileProviderCliImpl::class.java)
+
+        registerService(KotlinAnalysisPermissionOptions::class.java, LSPAnalysisPermissionOptions::class.java)
     }
 
     project.apply {
@@ -68,6 +73,7 @@ fun main() {
     }
 
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, KaResolveExtensionProvider.EP_NAME, KaResolveExtensionProvider::class.java)
+    CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, "org.jetbrains.kotlin.llFirSessionConfigurator", LLFirSessionConfigurator::class.java)
 
     val psiFactory = KtPsiFactory(project)
     val ktFile = psiFactory.createFile("fn main() { println(\"aaa\")}")
@@ -114,6 +120,7 @@ fun registerFIRServices(project: MockProject, app: MockApplication) {
         pluginDescriptor
     )
     registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents", pluginDescriptor)
+    registerFIRService(app, "org.jetbrains.kotlin.analysis.api.platform.resolution.KaResolutionActivityTracker", "org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirResolutionActivityTracker", pluginDescriptor)
 
     // analysis-api-impl-base.xml
     registerFIRService(
@@ -126,6 +133,8 @@ fun registerFIRServices(project: MockProject, app: MockApplication) {
     )
     registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider",
         "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseResolutionScopeProvider", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.permissions.KaAnalysisPermissionChecker", "org.jetbrains.kotlin.analysis.api.impl.base.permissions.KaBaseAnalysisPermissionChecker", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.lifetime.KaLifetimeTracker", "org.jetbrains.kotlin.analysis.api.impl.base.lifetime.KaBaseLifetimeTracker", pluginDescriptor)
 }
 
 fun registerFIRService(componentManager: MockComponentManager, interfaceName: String, implClassName: String, pluginDescriptor: DefaultPluginDescriptor) {
