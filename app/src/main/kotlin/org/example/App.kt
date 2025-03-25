@@ -36,6 +36,7 @@ import org.example.services.LSPAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionConfigurator
 import org.example.services.LSPAnalysisPermissionOptions
 import org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions
+import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 
 @OptIn(KaExperimentalApi::class)
 fun main() {
@@ -74,6 +75,11 @@ fun main() {
 
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, KaResolveExtensionProvider.EP_NAME, KaResolveExtensionProvider::class.java)
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, "org.jetbrains.kotlin.llFirSessionConfigurator", LLFirSessionConfigurator::class.java)
+    CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, "com.intellij.java.elementFinder", JavaElementFinder::class.java) 
+
+    val pluginDescriptor = DefaultPluginDescriptor("analysis-api-lsp-base-loader-2")
+    val kcsrClass = loadClass(app, "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge", pluginDescriptor) 
+    CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinContentScopeRefiner", kcsrClass::class.java)
 
     val psiFactory = KtPsiFactory(project)
     val ktFile = psiFactory.createFile("fn main() { println(\"aaa\")}")
@@ -153,4 +159,8 @@ fun registerFIRService(componentManager: MockComponentManager, interfaceName: St
 fun registerFIRServiceClass(componentManager: MockComponentManager, implClassName: String, pluginDescriptor: DefaultPluginDescriptor) {
     val implClass = componentManager.loadClass<JvmType.Object>(implClassName, pluginDescriptor)
     componentManager.registerService(implClass)
+}
+
+fun loadClass(componentManager: MockComponentManager, className: String, pluginDescriptor: DefaultPluginDescriptor): Class<JvmType.Object> {
+    return componentManager.loadClass<JvmType.Object>(className, pluginDescriptor)
 }
