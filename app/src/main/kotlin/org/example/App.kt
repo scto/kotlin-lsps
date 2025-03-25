@@ -123,6 +123,13 @@ fun registerFIRServices(project: MockProject, app: MockApplication) {
     registerFIRService(app, "org.jetbrains.kotlin.analysis.api.platform.resolution.KaResolutionActivityTracker", "org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirResolutionActivityTracker", pluginDescriptor)
 
     // analysis-api-impl-base.xml
+    registerFIRServiceClass(app, "org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaContentScopeProvider", "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseContentScopeProvider", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.KotlinMessageBusProvider", "org.jetbrains.kotlin.analysis.api.platform.KotlinProjectMessageBusProvider", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider", "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseModuleProvider", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade", "org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseKotlinJavaPsiFacade", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory", "org.jetbrains.kotlin.analysis.api.impl.base.java.source.JavaElementSourceWithSmartPointerFactory", pluginDescriptor)
+    registerFIRService(project, "org.jetbrains.kotlin.psi.KotlinReferenceProvidersService", "org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService", pluginDescriptor)
     registerFIRService(
         app, "org.jetbrains.kotlin.analysis.api.permissions.KaAnalysisPermissionRegistry",
         "org.jetbrains.kotlin.analysis.api.impl.base.permissions.KaBaseAnalysisPermissionRegistry", pluginDescriptor
