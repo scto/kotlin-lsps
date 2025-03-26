@@ -45,6 +45,10 @@ import com.intellij.psi.search.ProjectScope
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.PsiManager
+import org.jetbrains.kotlin.psi.KtFile
 
 val latestLanguageVersionSettings: LanguageVersionSettings =
         LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
@@ -108,10 +112,9 @@ fun main() {
         perfManager = null, 
     )
 
-    // Create an example kotlin file in memory
-    val psiFactory = KtPsiFactory(project)
-    val ktFile = psiFactory.createFile("fn main() { println(\"aaa\")}")
-    val virtualFile = ktFile.virtualFile
+    // Load an example kotlin file from disk 
+    val virtualFile = VirtualFileManager.getInstance().findFileByUrl("file:///home/amg/Projects/kotlin-incremental-analysis/test-project/Main.kt")!!
+    val ktFile = PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile
 
     KotlinLSPProjectStructureProvider.project = project
     KotlinLSPProjectStructureProvider.virtualFiles = listOf(virtualFile)
@@ -127,6 +130,11 @@ fun main() {
 
     // Perform an in-memory modification
     // TODO
+    val psiDocMgr = PsiDocumentManager.getInstance(project)
+    val doc = psiDocMgr.getDocument(ktFile)!!
+    println(doc.text)
+    psiDocMgr.commitDocument(doc)
+    println(doc.text)
 
     // Get diagnostics again
     analyze(ktFile) {
