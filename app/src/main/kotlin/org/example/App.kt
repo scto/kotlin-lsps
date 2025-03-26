@@ -108,6 +108,7 @@ fun main() {
         perfManager = null, 
     )
 
+    // Create an example kotlin file in memory
     val psiFactory = KtPsiFactory(project)
     val ktFile = psiFactory.createFile("fn main() { println(\"aaa\")}")
     val virtualFile = ktFile.virtualFile
@@ -115,9 +116,22 @@ fun main() {
     KotlinLSPProjectStructureProvider.project = project
     KotlinLSPProjectStructureProvider.virtualFiles = listOf(virtualFile)
     
+    // Get diagnostics
     analyze(ktFile) {
         val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
         println("Diagnostics: ${diagnostics.size}")
+        diagnostics.forEach {
+            println("${it.severity}: ${it.defaultMessage} | range: ${it.textRanges}")
+        }
+    }
+
+    // Perform an in-memory modification
+    // TODO
+
+    // Get diagnostics again
+    analyze(ktFile) {
+        val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
+        println("Updated diagnostics: ${diagnostics.size}")
         diagnostics.forEach {
             println("${it.severity}: ${it.defaultMessage} | range: ${it.textRanges}")
         }
