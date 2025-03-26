@@ -49,9 +49,17 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.psi.KtFile
+import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
+import com.intellij.openapi.editor.Document
 
 val latestLanguageVersionSettings: LanguageVersionSettings =
         LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
+
+class WriteAccessGuard: DocumentWriteAccessGuard() {
+    override fun isWritable(p0: Document): Result {
+        return success()
+    }
+}
 
 @OptIn(KaExperimentalApi::class)
 fun main() {
@@ -91,6 +99,7 @@ fun main() {
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, KaResolveExtensionProvider.EP_NAME, KaResolveExtensionProvider::class.java)
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, "org.jetbrains.kotlin.llFirSessionConfigurator", LLFirSessionConfigurator::class.java)
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, "com.intellij.java.elementFinder", JavaElementFinder::class.java) 
+CoreApplicationEnvironment.registerExtensionPoint(app.extensionArea, DocumentWriteAccessGuard.EP_NAME, WriteAccessGuard::class.java)
 
     val pluginDescriptor = DefaultPluginDescriptor("analysis-api-lsp-base-loader-2")
     val kcsrClass = loadClass(app, "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge", pluginDescriptor) 
@@ -133,6 +142,7 @@ fun main() {
     val psiDocMgr = PsiDocumentManager.getInstance(project)
     val doc = psiDocMgr.getDocument(ktFile)!!
     println(doc.text)
+    doc.replaceString(0, 0, "fun a(){}")
     psiDocMgr.commitDocument(doc)
     println(doc.text)
 
