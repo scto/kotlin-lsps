@@ -51,6 +51,7 @@ import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.psi.KtFile
 import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.command.CommandProcessor
 
 val latestLanguageVersionSettings: LanguageVersionSettings =
         LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
@@ -139,12 +140,15 @@ CoreApplicationEnvironment.registerExtensionPoint(app.extensionArea, DocumentWri
 
     // Perform an in-memory modification
     // TODO
+    val cmd = app.getService(CommandProcessor::class.java)
     val psiDocMgr = PsiDocumentManager.getInstance(project)
     val doc = psiDocMgr.getDocument(ktFile)!!
     println(doc.text)
-    doc.replaceString(0, 0, "fun a(){}")
-    psiDocMgr.commitDocument(doc)
-    println(doc.text)
+    cmd.executeCommand(project, {
+        doc.replaceString(0, 0, "fun a(){}\n")
+        psiDocMgr.commitDocument(doc)
+        println(doc.text)
+    }, "sample", null)
 
     // Get diagnostics again
     analyze(ktFile) {
