@@ -37,6 +37,17 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionConf
 import org.example.services.LSPAnalysisPermissionOptions
 import org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
+import com.intellij.psi.impl.file.impl.JavaFileManager
+import org.jetbrains.kotlin.cli.jvm.compiler.*
+import org.jetbrains.kotlin.cli.jvm.index.SingleJavaFileRootsIndex
+import org.jetbrains.kotlin.config.*
+import com.intellij.psi.search.ProjectScope
+import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
+import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
+
+val latestLanguageVersionSettings: LanguageVersionSettings =
+        LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
 
 @OptIn(KaExperimentalApi::class)
 fun main() {
@@ -80,6 +91,22 @@ fun main() {
     val pluginDescriptor = DefaultPluginDescriptor("analysis-api-lsp-base-loader-2")
     val kcsrClass = loadClass(app, "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge", pluginDescriptor) 
     CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinContentScopeRefiner", kcsrClass::class.java)
+
+    val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
+
+    // TODO This setup comes from standalone platform
+    val packagePartsScope = ProjectScope.getLibrariesScope(project)
+    val libraryRoots = emptyList<JavaRoot>()
+    val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, packagePartsScope).apply {
+        addRoots(libraryRoots, MessageCollector.NONE)
+    }
+    javaFileManager.initialize(
+        index = JvmDependenciesIndexImpl(emptyList(), shouldOnlyFindFirstClass = false),
+        packagePartProviders = listOf(packagePartProvider),
+        singleJavaFileRootsIndex = SingleJavaFileRootsIndex(emptyList()),
+        usePsiClassFilesReading = true,
+        perfManager = null, 
+    )
 
     val psiFactory = KtPsiFactory(project)
     val ktFile = psiFactory.createFile("fn main() { println(\"aaa\")}")

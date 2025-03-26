@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.psi.*
 
 class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
     override val hasSpecificCallablePackageNamesComputation: Boolean
-        get() = TODO("Not yet implemented")
+        get() = false   // TODO 
     override val hasSpecificClassifierPackageNamesComputation: Boolean
-        get() = TODO("Not yet implemented")
+        get() = false   // TODO 
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
         TODO("Not yet implemented")
@@ -49,7 +49,7 @@ class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
     }
 
     override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
-        TODO("Not yet implemented")
+        return emptySet()   // TODO
     }
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> {
@@ -57,7 +57,7 @@ class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
     }
 
     override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> {
-        TODO("Not yet implemented")
+        return emptySet()   // TODO
     }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> {
