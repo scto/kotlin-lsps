@@ -45,7 +45,7 @@ class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
     }
 
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
     override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
