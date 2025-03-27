@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.psi.PsiElement
 
 val latestLanguageVersionSettings: LanguageVersionSettings =
         LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
@@ -143,11 +144,17 @@ CoreApplicationEnvironment.registerExtensionPoint(app.extensionArea, DocumentWri
     val cmd = app.getService(CommandProcessor::class.java)
     val psiDocMgr = PsiDocumentManager.getInstance(project)
     val doc = psiDocMgr.getDocument(ktFile)!!
+    printPsiTree(ktFile)
     println(doc.text)
     cmd.executeCommand(project, {
         doc.replaceString(0, 0, "fun a(){}\n")
         psiDocMgr.commitDocument(doc)
         println(doc.text)
+        try {
+            printPsiTree(ktFile)
+        } catch (e: Exception) {
+            println(e)
+        }
     }, "sample", null)
 
     // Get diagnostics again
@@ -232,4 +239,21 @@ fun registerFIRServiceClass(componentManager: MockComponentManager, implClassNam
 
 fun loadClass(componentManager: MockComponentManager, className: String, pluginDescriptor: DefaultPluginDescriptor): Class<JvmType.Object> {
     return componentManager.loadClass<JvmType.Object>(className, pluginDescriptor)
+}
+
+fun printPsiTree(ktFile: KtFile) {
+    val rootNode = ktFile.node.psi
+
+    printPsiNode(rootNode, 0)
+}
+
+fun printPsiNode(node: PsiElement, depth: Int) {
+    // Print the node with indentation based on its depth in the tree
+    val indent = "  ".repeat(depth)
+    println("$indent${node.javaClass.simpleName}: ${node.text}")
+
+    // Recursively print child nodes
+    for (child in node.children) {
+        printPsiNode(child, depth + 1)
+    }
 }
