@@ -75,135 +75,149 @@ class WriteAccessGuard: DocumentWriteAccessGuard() {
 
 @OptIn(KaExperimentalApi::class)
 fun main() {
-    setupIdeaStandaloneExecution()
-    val projectDisposable = Disposer.newDisposable("LSPAnalysisAPISession.project")
-    val compilerConfiguration = CompilerConfiguration()
-    val appEnvironment = KotlinCoreEnvironment.getOrCreateApplicationEnvironment(
-        projectDisposable,
-        compilerConfiguration,
-        KotlinCoreApplicationEnvironmentMode.Production
-    )
-    val coreEnvironment = KotlinCoreProjectEnvironment(projectDisposable, appEnvironment)
-    val project = coreEnvironment.project
-    val app = appEnvironment.application
+    lateinit var app: MockApplication
+    lateinit var project: MockProject
+    lateinit var ktFile: KtFile
 
-    registerFIRServices(project, app)
-
-    app.apply {
-        // TODO Intellij uses VFSUtil propietary class
-        registerService(BuiltinsVirtualFileProvider::class.java, BuiltinsVirtualFileProviderCliImpl::class.java)
-
-        registerService(KotlinAnalysisPermissionOptions::class.java, LSPAnalysisPermissionOptions::class.java)
-    }
-
-    project.apply {
-        registerService(KotlinProjectStructureProvider::class.java, KotlinLSPProjectStructureProvider::class.java)
-        registerService(
-            KotlinLifetimeTokenFactory::class.java,
-            KotlinReadActionConfinementLifetimeTokenFactory::class.java
+    val initialAnalysisTime = measureTimeMillis {
+        setupIdeaStandaloneExecution()
+        val projectDisposable = Disposer.newDisposable("LSPAnalysisAPISession.project")
+        val compilerConfiguration = CompilerConfiguration()
+        val appEnvironment = KotlinCoreEnvironment.getOrCreateApplicationEnvironment(
+            projectDisposable,
+            compilerConfiguration,
+            KotlinCoreApplicationEnvironmentMode.Production
         )
-        registerService(KotlinPlatformSettings::class.java, KotlinLSPPlatformSettings::class.java)
-        registerService(KotlinDeclarationProviderFactory::class.java, KotlinLSPDeclarationProviderFactory::class.java)
-        registerService(KotlinPackageProviderFactory::class.java, LSPPackageProviderFactory::class.java)
-        // TODO Implement something like intellij plugin
-        registerService(KotlinGlobalSearchScopeMerger::class.java, KotlinSimpleGlobalSearchScopeMerger::class.java)
+        val coreEnvironment = KotlinCoreProjectEnvironment(projectDisposable, appEnvironment)
+        project = coreEnvironment.project
+        app = appEnvironment.application
 
-        registerService(KotlinAnnotationsResolverFactory::class.java, LSPAnnotationsResolverFactory::class.java)
-        registerService(KotlinModuleDependentsProvider::class.java, LSPModuleDependentsProvider::class.java)
+        registerFIRServices(project, app)
+
+        app.apply {
+            // TODO Intellij uses VFSUtil propietary class
+            registerService(BuiltinsVirtualFileProvider::class.java, BuiltinsVirtualFileProviderCliImpl::class.java)
+
+            registerService(KotlinAnalysisPermissionOptions::class.java, LSPAnalysisPermissionOptions::class.java)
+        }
+
+        project.apply {
+            registerService(KotlinProjectStructureProvider::class.java, KotlinLSPProjectStructureProvider::class.java)
+            registerService(
+                KotlinLifetimeTokenFactory::class.java,
+                KotlinReadActionConfinementLifetimeTokenFactory::class.java
+            )
+            registerService(KotlinPlatformSettings::class.java, KotlinLSPPlatformSettings::class.java)
+            registerService(
+                KotlinDeclarationProviderFactory::class.java,
+                KotlinLSPDeclarationProviderFactory::class.java
+            )
+            registerService(KotlinPackageProviderFactory::class.java, LSPPackageProviderFactory::class.java)
+            // TODO Implement something like intellij plugin
+            registerService(KotlinGlobalSearchScopeMerger::class.java, KotlinSimpleGlobalSearchScopeMerger::class.java)
+
+            registerService(KotlinAnnotationsResolverFactory::class.java, LSPAnnotationsResolverFactory::class.java)
+            registerService(KotlinModuleDependentsProvider::class.java, LSPModuleDependentsProvider::class.java)
+        }
+
+        CoreApplicationEnvironment.registerExtensionPoint(
+            project.extensionArea,
+            KaResolveExtensionProvider.EP_NAME,
+            KaResolveExtensionProvider::class.java
+        )
+        CoreApplicationEnvironment.registerExtensionPoint(
+            project.extensionArea,
+            "org.jetbrains.kotlin.llFirSessionConfigurator",
+            LLFirSessionConfigurator::class.java
+        )
+        CoreApplicationEnvironment.registerExtensionPoint(
+            project.extensionArea,
+            "com.intellij.java.elementFinder",
+            JavaElementFinder::class.java
+        )
+        CoreApplicationEnvironment.registerExtensionPoint(
+            app.extensionArea,
+            DocumentWriteAccessGuard.EP_NAME,
+            WriteAccessGuard::class.java
+        )
+
+        val pluginDescriptor = DefaultPluginDescriptor("analysis-api-lsp-base-loader-2")
+        val kcsrClass = loadClass(
+            app,
+            "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge",
+            pluginDescriptor
+        )
+        CoreApplicationEnvironment.registerExtensionPoint(
+            project.extensionArea,
+            "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinContentScopeRefiner",
+            kcsrClass::class.java
+        )
+
+        val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
+
+        // TODO This setup comes from standalone platform
+        val packagePartsScope = ProjectScope.getLibrariesScope(project)
+        val libraryRoots = emptyList<JavaRoot>()
+        val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, packagePartsScope).apply {
+            addRoots(libraryRoots, MessageCollector.NONE)
+        }
+        javaFileManager.initialize(
+            index = JvmDependenciesIndexImpl(emptyList(), shouldOnlyFindFirstClass = false),
+            packagePartProviders = listOf(packagePartProvider),
+            singleJavaFileRootsIndex = SingleJavaFileRootsIndex(emptyList()),
+            usePsiClassFilesReading = true,
+            perfManager = null,
+        )
+
+        // Load an example kotlin file from disk
+        val virtualFile = VirtualFileManager.getInstance()
+            .findFileByUrl("file:///home/amg/Projects/kotlin-incremental-analysis/test-project/Main.kt")!!
+        ktFile = PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile
+
+        KotlinLSPProjectStructureProvider.project = project
+        KotlinLSPProjectStructureProvider.virtualFiles = listOf(virtualFile)
+
+        // Get diagnostics
+        analyze(ktFile) {
+            val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
+            println("-------------- ORIGINAL")
+            //printPsiTree(ktFile)
+            println("Diagnostics: ${diagnostics.size}")
+            diagnostics.forEach {
+                println("${it.severity}: ${it.defaultMessage} | range: ${it.textRanges}")
+            }
+        }
     }
+    println("Initial analysis time (ms): $initialAnalysisTime")
 
-    CoreApplicationEnvironment.registerExtensionPoint(
-        project.extensionArea,
-        KaResolveExtensionProvider.EP_NAME,
-        KaResolveExtensionProvider::class.java
-    )
-    CoreApplicationEnvironment.registerExtensionPoint(
-        project.extensionArea,
-        "org.jetbrains.kotlin.llFirSessionConfigurator",
-        LLFirSessionConfigurator::class.java
-    )
-    CoreApplicationEnvironment.registerExtensionPoint(
-        project.extensionArea,
-        "com.intellij.java.elementFinder",
-        JavaElementFinder::class.java
-    )
-    CoreApplicationEnvironment.registerExtensionPoint(
-        app.extensionArea,
-        DocumentWriteAccessGuard.EP_NAME,
-        WriteAccessGuard::class.java
-    )
+    val incrementalAnalysisTime = measureTimeMillis {
+        // Perform an in-memory modification
+        val cmd = app.getService(CommandProcessor::class.java)
+        val psiDocMgr = PsiDocumentManager.getInstance(project)
+        val doc = psiDocMgr.getDocument(ktFile)!!
+        cmd.executeCommand(project, {
+            doc.replaceString(40, 40, "println(\"aa\")\n")
+            psiDocMgr.commitDocument(doc)
+            ktFile.onContentReload()
+        }, "sample", null)
 
-    val pluginDescriptor = DefaultPluginDescriptor("analysis-api-lsp-base-loader-2")
-    val kcsrClass = loadClass(
-        app,
-        "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge",
-        pluginDescriptor
-    )
-    CoreApplicationEnvironment.registerExtensionPoint(
-        project.extensionArea,
-        "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinContentScopeRefiner",
-        kcsrClass::class.java
-    )
+        KaSourceModificationService.getInstance(project)
+            .handleElementModification(ktFile, KaElementModificationType.Unknown)
 
-    val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
-
-    // TODO This setup comes from standalone platform
-    val packagePartsScope = ProjectScope.getLibrariesScope(project)
-    val libraryRoots = emptyList<JavaRoot>()
-    val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, packagePartsScope).apply {
-        addRoots(libraryRoots, MessageCollector.NONE)
-    }
-    javaFileManager.initialize(
-        index = JvmDependenciesIndexImpl(emptyList(), shouldOnlyFindFirstClass = false),
-        packagePartProviders = listOf(packagePartProvider),
-        singleJavaFileRootsIndex = SingleJavaFileRootsIndex(emptyList()),
-        usePsiClassFilesReading = true,
-        perfManager = null,
-    )
-
-    // Load an example kotlin file from disk 
-    val virtualFile = VirtualFileManager.getInstance()
-        .findFileByUrl("file:///home/amg/Projects/kotlin-incremental-analysis/test-project/Main.kt")!!
-    val ktFile = PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile
-
-    KotlinLSPProjectStructureProvider.project = project
-    KotlinLSPProjectStructureProvider.virtualFiles = listOf(virtualFile)
-
-    // Get diagnostics
-    analyze(ktFile) {
-        val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
-        println("-------------- ORIGINAL")
+        println("-------------- MODIFIED")
         //printPsiTree(ktFile)
-        println("Diagnostics: ${diagnostics.size}")
-        diagnostics.forEach {
-            println("${it.severity}: ${it.defaultMessage} | range: ${it.textRanges}")
+
+        // Get diagnostics again
+        analyze(ktFile) {
+            val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
+            println("Updated diagnostics: ${diagnostics.size}")
+            diagnostics.forEach {
+                println("${it.severity}: ${it.defaultMessage} | range: ${it.textRanges}")
+            }
         }
     }
 
-    // Perform an in-memory modification
-    val cmd = app.getService(CommandProcessor::class.java)
-    val psiDocMgr = PsiDocumentManager.getInstance(project)
-    val doc = psiDocMgr.getDocument(ktFile)!!
-    cmd.executeCommand(project, {
-        doc.replaceString(40, 40, "println(\"aa\")\n")
-        psiDocMgr.commitDocument(doc)
-        ktFile.onContentReload()
-    }, "sample", null)
-
-    KaSourceModificationService.getInstance(project)
-        .handleElementModification(ktFile, KaElementModificationType.Unknown)
-
-    println("-------------- MODIFIED")
-    //printPsiTree(ktFile)
-
-    // Get diagnostics again
-    analyze(ktFile) {
-        val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
-        println("Updated diagnostics: ${diagnostics.size}")
-        diagnostics.forEach {
-            println("${it.severity}: ${it.defaultMessage} | range: ${it.textRanges}")
-        }
-    }
+    println("Incremental analysis time (ms): $incrementalAnalysisTime")
 }
 
 @OptIn(KaImplementationDetail::class)
