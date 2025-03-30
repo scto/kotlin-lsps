@@ -1,4 +1,4 @@
-package org.example
+package org.kotlinlsp
 
 import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockApplication
@@ -51,7 +51,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.Topic
-import org.example.services.*
+import org.kotlinlsp.services.*
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
@@ -171,7 +171,7 @@ fun main() {
 
         // Load an example kotlin file from disk
         val virtualFile = VirtualFileManager.getInstance()
-            .findFileByUrl("file:///home/amg/Projects/kotlin-incremental-analysis/test-project/Main.kt")!!
+            .findFileByUrl("file:///home/amg/Projects/kotlin-lsp/test-project/Main.kt")!!
         ktFile = PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile
 
         KotlinLSPProjectStructureProvider.project = project
@@ -181,7 +181,6 @@ fun main() {
         analyze(ktFile) {
             val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
             println("-------------- ORIGINAL")
-            //printPsiTree(ktFile)
             println("Diagnostics: ${diagnostics.size}")
             diagnostics.forEach {
                 println("${it.severity}: ${it.defaultMessage} | range: ${it.textRanges}")
@@ -205,7 +204,6 @@ fun main() {
             .handleElementModification(ktFile, KaElementModificationType.Unknown)
 
         println("-------------- MODIFIED")
-        //printPsiTree(ktFile)
 
         // Get diagnostics again
         analyze(ktFile) {
@@ -317,23 +315,6 @@ fun registerFIRServiceClass(componentManager: MockComponentManager, implClassNam
 
 fun loadClass(componentManager: MockComponentManager, className: String, pluginDescriptor: DefaultPluginDescriptor): Class<JvmType.Object> {
     return componentManager.loadClass(className, pluginDescriptor)
-}
-
-fun printPsiTree(ktFile: KtFile) {
-    val rootNode = ktFile.node.psi
-
-    printPsiNode(rootNode, 0)
-}
-
-fun printPsiNode(node: PsiElement, depth: Int) {
-    // Print the node with indentation based on its depth in the tree
-    val indent = "  ".repeat(depth)
-    println("$indent${node.javaClass.simpleName}: ${node.text}")
-
-    // Recursively print child nodes
-    for (child in node.children) {
-        printPsiNode(child, depth + 1)
-    }
 }
 
 fun <T: Any> registerProjectListener(project: MockProject, listenerClass: String, topic: Topic<T>, pluginDescriptor: DefaultPluginDescriptor) {

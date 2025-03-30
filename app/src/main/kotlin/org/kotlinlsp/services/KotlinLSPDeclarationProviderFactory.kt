@@ -1,4 +1,4 @@
-package org.example.services
+package org.kotlinlsp.services
 
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider

@@ -1,9 +1,9 @@
-package org.example.services
+package org.kotlinlsp.services
 
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderBase
-import org.example.services.KotlinLSPProjectStructureProvider
+import org.kotlinlsp.services.KotlinLSPProjectStructureProvider
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.name.FqName

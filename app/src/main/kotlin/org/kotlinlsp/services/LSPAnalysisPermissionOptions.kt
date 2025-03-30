@@ -1,4 +1,4 @@
-package org.example.services
+package org.kotlinlsp.services
 
 import org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions
 

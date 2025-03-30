@@ -1,4 +1,4 @@
-package org.example.services
+package org.kotlinlsp.services
 
 import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project

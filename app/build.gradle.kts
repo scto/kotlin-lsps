@@ -33,9 +33,6 @@ dependencies {
     ).forEach {
         implementation("$it:$analysisApiKotlinVersion") { isTransitive = false }
     }
-
-    testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -45,9 +42,20 @@ java {
 }
 
 application {
-    mainClass = "org.example.AppKt"
+    mainClass = "org.kotlinlsp.MainKt" 
 }
 
-tasks.named<Test>("test") {
-    useJUnitPlatform()
+tasks.jar {
+    manifest {
+        attributes["Main-Class"] = "org.kotlinlsp.MainKt" 
+    }
+
+    from(sourceSets.main.get().output)
+
+    val dependencies = configurations.runtimeClasspath.get().filter { it.exists() }
+    dependencies.forEach { file ->
+        from(if (file.isDirectory) file else zipTree(file))
+    }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
