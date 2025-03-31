@@ -44,7 +44,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.psi.KtFile
 import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.psi.PsiElement
@@ -63,18 +62,16 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInva
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationTopics
 import kotlin.reflect.full.primaryConstructor
 import kotlin.system.measureTimeMillis
-
-val latestLanguageVersionSettings: LanguageVersionSettings =
-        LanguageVersionSettingsImpl(LanguageVersion.LATEST_STABLE, ApiVersion.LATEST)
-
-class WriteAccessGuard: DocumentWriteAccessGuard() {
-    override fun isWritable(p0: Document): Result {
-        return success()
-    }
-}
+import org.eclipse.lsp4j.jsonrpc.Launcher
+import org.kotlinlsp.lsp.MyLanguageServer
 
 @OptIn(KaExperimentalApi::class)
 fun main() {
+    val server = MyLanguageServer()
+    val launcher = Launcher.createLauncher(server, LanguageClient::class.java, System.`in`, System.out)
+    server.connect(launcher.remoteProxy)
+    launcher.startListening()
+
     lateinit var app: MockApplication
     lateinit var project: MockProject
     lateinit var ktFile: KtFile
