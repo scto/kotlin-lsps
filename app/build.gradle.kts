@@ -46,18 +46,3 @@ java {
 application {
     mainClass = "org.kotlinlsp.MainKt" 
 }
-
-tasks.jar {
-    manifest {
-        attributes["Main-Class"] = "org.kotlinlsp.MainKt" 
-    }
-
-    from(sourceSets.main.get().output)
-
-    val dependencies = configurations.runtimeClasspath.get().filter { it.exists() }
-    dependencies.forEach { file ->
-        from(if (file.isDirectory) file else zipTree(file))
-    }
-
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
