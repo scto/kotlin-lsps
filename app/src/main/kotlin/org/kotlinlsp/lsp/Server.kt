@@ -60,5 +60,12 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
 
     override fun connect(p0: LanguageClient) {
         client = p0
+
+        client.logMessage(
+            MessageParams(
+                MessageType.Info,
+                "KLSP: started successfully!"
+            )
+        )
     }
 }
