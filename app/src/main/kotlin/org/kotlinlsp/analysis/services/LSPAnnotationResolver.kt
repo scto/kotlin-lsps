@@ -1,4 +1,4 @@
-package org.kotlinlsp.services
+package org.kotlinlsp.analysis.services
 
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolver
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory

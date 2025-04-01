@@ -1,4 +1,4 @@
-package org.kotlinlsp.services
+package org.kotlinlsp.analysis.services
 
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider
@@ -17,31 +17,31 @@ class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
         get() = false   // TODO 
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
     override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
     override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
     override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
-        TODO("Not yet implemented")
+        return null    // TODO
     }
 
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> {
@@ -53,7 +53,7 @@ class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
     }
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
     override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> {
@@ -61,7 +61,7 @@ class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
     }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> {
-        TODO("Not yet implemented")
+        return emptyList()  // TODO
     }
 
 }

@@ -1,4 +1,4 @@
-package org.kotlinlsp.services
+package org.kotlinlsp.analysis.services
 
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule

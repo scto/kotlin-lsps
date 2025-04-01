@@ -3,16 +3,19 @@ package org.kotlinlsp.lsp
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
+import org.kotlinlsp.analysis.AnalysisSession
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
 class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, LanguageClientAware {
     private lateinit var client: LanguageClient
+    private lateinit var analysisSession: AnalysisSession
 
     override fun initialize(params: InitializeParams?): CompletableFuture<InitializeResult> {
         val capabilities = ServerCapabilities().apply {
             textDocumentSync = Either.forLeft(TextDocumentSyncKind.Incremental)
         }
+
         return CompletableFuture.completedFuture(InitializeResult(capabilities))
     }
 
@@ -28,14 +31,8 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
     override fun getWorkspaceService(): WorkspaceService = this
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
-        val diagnostic = Diagnostic(
-            Range(Position(0, 0), Position(0, 5)),
-            "Example error: Incorrect syntax",
-            DiagnosticSeverity.Error,
-            "MyLSP"
-        )
-        val diagnostics = listOf(diagnostic)
-        client.publishDiagnostics(PublishDiagnosticsParams(params.textDocument.uri, diagnostics))
+        log("Opened file: ${params.textDocument.uri}")
+        analysisSession.onOpenFile(params.textDocument.uri)
     }
 
     override fun didChange(p0: DidChangeTextDocumentParams) {
@@ -61,10 +58,18 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
     override fun connect(p0: LanguageClient) {
         client = p0
 
+        analysisSession = AnalysisSession {
+            client.publishDiagnostics(it)
+        }
+
+        log("Started successfully!")
+    }
+
+    private fun log(message: String) {
         client.logMessage(
             MessageParams(
                 MessageType.Info,
-                "KLSP: started successfully!"
+                "KLSP: $message"
             )
         )
     }
