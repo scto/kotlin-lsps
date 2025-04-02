@@ -15,19 +15,27 @@ import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinLSPProjectStructureProvider: KotlinProjectStructureProviderBase() {
-    companion object {
-        var project: MockProject? = null
-        var virtualFiles: List<VirtualFile>? = null
+class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
+    private lateinit var mockProject: MockProject
+    private lateinit var ktFiles: List<KtFile>
+    private lateinit var virtualFiles: List<VirtualFile>
+
+    fun setup(project: MockProject, ktFiles: List<KtFile>) {
+        this.mockProject = project
+        this.ktFiles = ktFiles
+        this.virtualFiles = ktFiles.map { it.virtualFile }
     }
+
+    fun getKtFile(path: String): KtFile? = ktFiles.find { "file://${it.virtualFilePath}" == path }
 
     @KaPlatformInterface
     private val mainModule = object : KaSourceModule {
         override val contentScope: GlobalSearchScope
-            get() = GlobalSearchScope.filesScope(KotlinLSPProjectStructureProvider.project!!, virtualFiles!!)
+            get() = GlobalSearchScope.filesScope(mockProject, virtualFiles)
         override val baseContentScope: GlobalSearchScope
-            get() = GlobalSearchScope.filesScope(KotlinLSPProjectStructureProvider.project!!, virtualFiles!!)
+            get() = GlobalSearchScope.filesScope(mockProject, virtualFiles)
         override val directDependsOnDependencies: List<KaModule>
             get() = emptyList()
         override val directFriendDependencies: List<KaModule>
@@ -43,7 +51,7 @@ class KotlinLSPProjectStructureProvider: KotlinProjectStructureProviderBase() {
         override val name: String
             get() = "Main module name"
         override val project: Project
-            get() = KotlinLSPProjectStructureProvider.project!!
+            get() = mockProject
         override val targetPlatform: TargetPlatform
             get() = JvmPlatforms.defaultJvmPlatform
         override val transitiveDependsOnDependencies: List<KaModule>

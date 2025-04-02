@@ -56,11 +56,16 @@ import org.kotlinlsp.analysis.services.*
 import kotlin.reflect.full.primaryConstructor
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.util.PsiTreeUtil
+import java.io.File
+import java.io.FileWriter
 
 @OptIn(KaExperimentalApi::class)
 class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit) {
     private val app: MockApplication
     private val project: MockProject
+    private val projectStructureProvider: ProjectStructureProvider
+    private val commandProcessor: CommandProcessor
+    private val psiDocumentManager: PsiDocumentManager
 
     init {
         setupIdeaStandaloneExecution()
@@ -85,7 +90,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         }
 
         project.apply {
-            registerService(KotlinProjectStructureProvider::class.java, KotlinLSPProjectStructureProvider::class.java)
+            registerService(KotlinProjectStructureProvider::class.java, ProjectStructureProvider::class.java)
             registerService(
                 KotlinLifetimeTokenFactory::class.java,
                 KotlinReadActionConfinementLifetimeTokenFactory::class.java
@@ -95,7 +100,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
                 KotlinDeclarationProviderFactory::class.java,
                 KotlinLSPDeclarationProviderFactory::class.java
             )
-            registerService(KotlinPackageProviderFactory::class.java, LSPPackageProviderFactory::class.java)
+            registerService(KotlinPackageProviderFactory::class.java, PackageProviderFactory::class.java)
             // TODO Implement something like intellij plugin
             registerService(KotlinGlobalSearchScopeMerger::class.java, KotlinSimpleGlobalSearchScopeMerger::class.java)
 
@@ -152,7 +157,11 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             perfManager = null,
         )
 
-        KotlinLSPProjectStructureProvider.project = project
+        projectStructureProvider = project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider
+        (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
+
+        commandProcessor = app.getService(CommandProcessor::class.java)
+        psiDocumentManager = PsiDocumentManager.getInstance(project)
     }
 
     @OptIn(KaImplementationDetail::class)
@@ -210,9 +219,9 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         registerProjectListener(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService\$LLKotlinModificationEventListener", KotlinModificationEvent.TOPIC, pluginDescriptor)
         registerProjectListener(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService\$LLPsiModificationTrackerListener", PsiModificationTracker.TOPIC, pluginDescriptor)
         val theTopic = Topic(
-            /* listenerClass = */ LLFirInBlockModificationListener::class.java,
-            /* broadcastDirection = */ Topic.BroadcastDirection.TO_CHILDREN,
-            /* immediateDelivery = */ true,
+            LLFirInBlockModificationListener::class.java,
+            Topic.BroadcastDirection.TO_CHILDREN,
+            true,
         )
         registerProjectListener(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationListenerForCodeFragments", theTopic, pluginDescriptor)
         registerProjectListener(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationTracker\$Listener", theTopic, pluginDescriptor)
@@ -264,7 +273,10 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
     fun onOpenFile(path: String): List<PsiErrorElement> {
         val ktFile = loadKtFile(path)
-        KotlinLSPProjectStructureProvider.virtualFiles = listOf(ktFile.virtualFile)  // TODO Remove this
+
+        // TODO Change this to support multiple files
+        projectStructureProvider.setup(project, listOf(ktFile))
+
         updateDiagnostics(ktFile)
 
         return PsiTreeUtil.collectElementsOfType(ktFile, PsiErrorElement::class.java).toList()
@@ -302,18 +314,27 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         onDiagnostics(PublishDiagnosticsParams("file://${ktFile.virtualFilePath}", syntaxDiagnostics + analysisDiagnostics))
     }
 
-    fun modifyKtFile(ktFile: KtFile) {
-        val cmd = app.getService(CommandProcessor::class.java)
-        val psiDocMgr = PsiDocumentManager.getInstance(project)
-        val doc = psiDocMgr.getDocument(ktFile)!!
-        cmd.executeCommand(project, {
-            doc.replaceString(40, 40, "println(\"aa\")\n")
-            psiDocMgr.commitDocument(doc)
-            ktFile.onContentReload()
-        }, "sample", null)
+    // TODO Use version to avoid conflicts
+    fun onChangeFile(path: String, version: Int, changes: List<TextDocumentContentChangeEvent>) {
+        val ktFile = projectStructureProvider.getKtFile(path)!!
+        val doc = psiDocumentManager.getDocument(ktFile)!!
 
+        changes.forEach {
+            commandProcessor.executeCommand(project, {
+                val startOffset = it.range.start.toOffset(ktFile)
+                val endOffset = it.range.end.toOffset(ktFile)
+
+                doc.replaceString(startOffset, endOffset, it.text)
+                psiDocumentManager.commitDocument(doc)
+                ktFile.onContentReload()
+            }, "onChangeFile", null)
+        }
+
+        // TODO Optimize the KaElementModificationType
         KaSourceModificationService.getInstance(project)
             .handleElementModification(ktFile, KaElementModificationType.Unknown)
+
+        updateDiagnostics(ktFile)
     }
 }
 
@@ -323,6 +344,8 @@ private fun KaSeverity.toLspSeverity(): DiagnosticSeverity =
         KaSeverity.WARNING -> DiagnosticSeverity.Warning
         KaSeverity.INFO -> DiagnosticSeverity.Information
     }
+
+private fun Position.toOffset(ktFile: KtFile): Int = StringUtil.lineColToOffset(ktFile.text, line, character)
 
 private fun TextRange.toLspRange(ktFile: KtFile): Range {
     val text = ktFile.text

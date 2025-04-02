@@ -31,12 +31,11 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
     override fun getWorkspaceService(): WorkspaceService = this
 
     override fun didOpen(params: DidOpenTextDocumentParams) {
-        log("Opened file: ${params.textDocument.uri}")
         analysisSession.onOpenFile(params.textDocument.uri)
     }
 
-    override fun didChange(p0: DidChangeTextDocumentParams) {
-
+    override fun didChange(params: DidChangeTextDocumentParams) {
+        analysisSession.onChangeFile(params.textDocument.uri, params.textDocument.version, params.contentChanges)
     }
 
     override fun didClose(p0: DidCloseTextDocumentParams) {
