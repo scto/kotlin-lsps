@@ -54,6 +54,8 @@ import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.*
 import kotlin.reflect.full.primaryConstructor
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.util.PsiTreeUtil
 
 @OptIn(KaExperimentalApi::class)
 class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit) {
@@ -260,10 +262,12 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         )
     }
 
-    fun onOpenFile(path: String) {
+    fun onOpenFile(path: String): List<PsiErrorElement> {
         val ktFile = loadKtFile(path)
         KotlinLSPProjectStructureProvider.virtualFiles = listOf(ktFile.virtualFile)  // TODO Remove this
         updateDiagnostics(ktFile)
+
+        return PsiTreeUtil.collectElementsOfType(ktFile, PsiErrorElement::class.java).toList()
     }
 
     private fun loadKtFile(path: String): KtFile {
@@ -273,7 +277,15 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     }
 
     private fun updateDiagnostics(ktFile: KtFile) {
-        val params = analyze(ktFile) {
+        val syntaxDiagnostics = PsiTreeUtil.collectElementsOfType(ktFile, PsiErrorElement::class.java).map {
+            return@map Diagnostic(
+                it.textRange.toLspRange(ktFile),
+                it.errorDescription,
+                DiagnosticSeverity.Error,
+                "Kotlin LSP"
+            )
+        }
+        val analysisDiagnostics = analyze(ktFile) {
             val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
 
             val lspDiagnostics = diagnostics.map {
@@ -285,9 +297,9 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
                 )
             }
 
-            return@analyze PublishDiagnosticsParams("file://${ktFile.virtualFilePath}", lspDiagnostics)
+            return@analyze lspDiagnostics
         }
-        onDiagnostics(params)
+        onDiagnostics(PublishDiagnosticsParams("file://${ktFile.virtualFilePath}", syntaxDiagnostics + analysisDiagnostics))
     }
 
     fun modifyKtFile(ktFile: KtFile) {
