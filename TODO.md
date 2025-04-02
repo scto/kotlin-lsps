@@ -1,1 +1,1 @@
-- Implement didChange operation 
+- Integrate build system (gradle)
