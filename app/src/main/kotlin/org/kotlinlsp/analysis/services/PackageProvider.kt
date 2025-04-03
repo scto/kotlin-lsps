@@ -24,13 +24,13 @@ class PackageProviderFactory: KotlinPackageProviderFactory {
 
 private class PackageProvider(project: Project, searchScope: GlobalSearchScope): KotlinPackageProviderBase(project, searchScope) {
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
-        // TODO
+        // TODO Check in the index if this package name corresponds to a kotlin file
         log("doesKotlinOnlyPackageExist: $packageFqName")
         return true
     }
 
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> {
-        // TODO
+        // TODO Get subpackage names in the index
         log("getKotlinOnlySubpackageNames: $packageFqName")
         return emptySet()
     }
