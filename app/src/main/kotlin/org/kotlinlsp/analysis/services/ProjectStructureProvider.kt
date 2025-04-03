@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.KtFile
+import org.kotlinlsp.log
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     private lateinit var mockProject: MockProject
@@ -59,11 +60,13 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     }
 
     override fun getImplementingModules(module: KaModule): List<KaModule> {
-        TODO("Not yet implemented")
+        log("getImplementingModules: $module")
+        return emptyList()  // TODO
     }
 
     @OptIn(KaPlatformInterface::class)
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule {
+        log("getModule: $element")
         return mainModule
     }
 

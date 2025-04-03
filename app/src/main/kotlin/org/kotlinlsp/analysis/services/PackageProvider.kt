@@ -8,6 +8,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.kotlinlsp.log
 
 class PackageProviderFactory: KotlinPackageProviderFactory {
     private lateinit var project: MockProject
@@ -24,11 +25,13 @@ class PackageProviderFactory: KotlinPackageProviderFactory {
 private class PackageProvider(project: Project, searchScope: GlobalSearchScope): KotlinPackageProviderBase(project, searchScope) {
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
         // TODO
+        log("doesKotlinOnlyPackageExist: $packageFqName")
         return true
     }
 
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> {
         // TODO
+        log("getKotlinOnlySubpackageNames: $packageFqName")
         return emptySet()
     }
 }

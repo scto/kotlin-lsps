@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.kotlinlsp.log
 
 class DeclarationProvider: KotlinDeclarationProvider {
     override val hasSpecificCallablePackageNamesComputation: Boolean
@@ -17,53 +18,64 @@ class DeclarationProvider: KotlinDeclarationProvider {
         get() = false   // TODO 
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
+        log("findFilesForFacade: $facadeFqName")
         return emptyList()  // TODO
     }
 
     override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> {
+        log("findFilesForFacadeByPackage: $packageFqName")
         return emptyList()  // TODO
     }
 
     override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> {
+        log("findFilesForScript: $scriptFqName")
         return emptyList()  // TODO
     }
 
     override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
+        log("findInternalFilesForFacade: $facadeFqName")
         return emptyList()  // TODO
     }
 
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
+        log("getAllClassesByClassId: $classId")
         return emptyList()  // TODO
     }
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
+        log("getAllTypeAliasesByClassId: $classId")
         return emptyList()  // TODO
     }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? {
+        log("getClassLikeDeclarationByClassId: $classId")
         return null    // TODO
     }
 
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> {
+        log("getTopLevelCallableFiles: $callableId")
         return emptyList()  // TODO
     }
 
     override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
+        log("getTopLevelCallableNamesInPackage: $packageFqName")
         return emptySet()   // TODO
     }
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> {
+        log("getTopLevelFunctions: $callableId")
         return emptyList()  // TODO
     }
 
     override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> {
+        log("getTopLevelKotlinClassLikeDeclarationNamesInPackage: $packageFqName")
         return emptySet()   // TODO
     }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> {
+        log("getTopLevelProperties: $callableId")
         return emptyList()  // TODO
     }
-
 }
 
 class DeclarationProviderFactory: KotlinDeclarationProviderFactory {
