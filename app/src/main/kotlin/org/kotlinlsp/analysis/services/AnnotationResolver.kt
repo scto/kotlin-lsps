@@ -6,14 +6,14 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtAnnotated
 import com.intellij.psi.search.GlobalSearchScope
 
-class LSPAnnotationsResolverFactory : KotlinAnnotationsResolverFactory {
+class AnnotationsResolverFactory : KotlinAnnotationsResolverFactory {
     override fun createAnnotationResolver(searchScope: GlobalSearchScope): KotlinAnnotationsResolver {
-        return LSPAnnotationsResolver()
+        return AnnotationsResolver()
     }
 }
 
 // TODO Implement this
-class LSPAnnotationsResolver : KotlinAnnotationsResolver {
+class AnnotationsResolver : KotlinAnnotationsResolver {
     override fun declarationsByAnnotation(annotationClassId: ClassId): Set<KtAnnotated> {
         return emptySet()
     }

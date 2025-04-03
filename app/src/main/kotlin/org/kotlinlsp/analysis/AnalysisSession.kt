@@ -86,7 +86,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             // TODO Intellij uses VFSUtil propietary class
             registerService(BuiltinsVirtualFileProvider::class.java, BuiltinsVirtualFileProviderCliImpl::class.java)
 
-            registerService(KotlinAnalysisPermissionOptions::class.java, LSPAnalysisPermissionOptions::class.java)
+            registerService(KotlinAnalysisPermissionOptions::class.java, AnalysisPermissionOptions::class.java)
         }
 
         project.apply {
@@ -95,17 +95,17 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
                 KotlinLifetimeTokenFactory::class.java,
                 KotlinReadActionConfinementLifetimeTokenFactory::class.java
             )
-            registerService(KotlinPlatformSettings::class.java, KotlinLSPPlatformSettings::class.java)
+            registerService(KotlinPlatformSettings::class.java, PlatformSettings::class.java)
             registerService(
                 KotlinDeclarationProviderFactory::class.java,
-                KotlinLSPDeclarationProviderFactory::class.java
+                DeclarationProviderFactory::class.java
             )
             registerService(KotlinPackageProviderFactory::class.java, PackageProviderFactory::class.java)
             // TODO Implement something like intellij plugin
             registerService(KotlinGlobalSearchScopeMerger::class.java, KotlinSimpleGlobalSearchScopeMerger::class.java)
 
-            registerService(KotlinAnnotationsResolverFactory::class.java, LSPAnnotationsResolverFactory::class.java)
-            registerService(KotlinModuleDependentsProvider::class.java, LSPModuleDependentsProvider::class.java)
+            registerService(KotlinAnnotationsResolverFactory::class.java, AnnotationsResolverFactory::class.java)
+            registerService(KotlinModuleDependentsProvider::class.java, ModuleDependentsProvider::class.java)
         }
 
         CoreApplicationEnvironment.registerExtensionPoint(

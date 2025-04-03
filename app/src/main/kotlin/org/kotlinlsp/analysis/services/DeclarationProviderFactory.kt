@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
-class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
+class DeclarationProvider: KotlinDeclarationProvider {
     override val hasSpecificCallablePackageNamesComputation: Boolean
         get() = false   // TODO 
     override val hasSpecificClassifierPackageNamesComputation: Boolean
@@ -66,11 +66,11 @@ class KotlinLSPDeclarationProvider: KotlinDeclarationProvider {
 
 }
 
-class KotlinLSPDeclarationProviderFactory: KotlinDeclarationProviderFactory {
+class DeclarationProviderFactory: KotlinDeclarationProviderFactory {
     override fun createDeclarationProvider(
         scope: GlobalSearchScope,
         contextualModule: KaModule?
     ): KotlinDeclarationProvider {
-        return KotlinLSPDeclarationProvider()
+        return DeclarationProvider()
     }
 }
