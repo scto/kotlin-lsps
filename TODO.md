@@ -1,5 +1,0 @@
-- Integrate build system (gradle) -> Return BuildSystemInfo
-    - Build index with kotlin packages (as a tree to get subpackages easily)
-        - See sourceSets and get all package names
-        - Get package names from dependency JARs as well (only kotlin packages!!), see standalone and intellij for hints
-    - Implement PackageProvider 
