@@ -38,8 +38,8 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
         analysisSession.onChangeFile(params.textDocument.uri, params.textDocument.version, params.contentChanges)
     }
 
-    override fun didClose(p0: DidCloseTextDocumentParams) {
-
+    override fun didClose(params: DidCloseTextDocumentParams) {
+        analysisSession.onCloseFile(params.textDocument.uri)
     }
 
     override fun didSave(p0: DidSaveTextDocumentParams) {
@@ -57,19 +57,10 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
     override fun connect(p0: LanguageClient) {
         client = p0
 
-        analysisSession = AnalysisSession {
-            client.publishDiagnostics(it)
-        }
-
-        log("Started successfully!")
-    }
-
-    private fun log(message: String) {
-        client.logMessage(
-            MessageParams(
-                MessageType.Info,
-                "KLSP: $message"
-            )
+        analysisSession = AnalysisSession(
+            onDiagnostics = {
+                client.publishDiagnostics(it)
+            }
         )
     }
 }

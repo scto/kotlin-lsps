@@ -12,10 +12,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.messages.Topic
 import org.eclipse.lsp4j.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -54,18 +56,14 @@ import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.*
 import kotlin.reflect.full.primaryConstructor
-import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.util.PsiTreeUtil
-import java.io.File
-import java.io.FileWriter
 
 @OptIn(KaExperimentalApi::class)
 class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit) {
     private val app: MockApplication
     private val project: MockProject
-    private val projectStructureProvider: ProjectStructureProvider
     private val commandProcessor: CommandProcessor
     private val psiDocumentManager: PsiDocumentManager
+    private val openedFiles = mutableMapOf<String, KtFile>()
 
     init {
         setupIdeaStandaloneExecution()
@@ -157,7 +155,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             perfManager = null,
         )
 
-        projectStructureProvider = project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider
+        (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(project)
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
 
         commandProcessor = app.getService(CommandProcessor::class.java)
@@ -271,15 +269,15 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         )
     }
 
-    fun onOpenFile(path: String): List<PsiErrorElement> {
+    fun onOpenFile(path: String) {
         val ktFile = loadKtFile(path)
-
-        // TODO Change this to support multiple files
-        projectStructureProvider.setup(project, listOf(ktFile))
+        openedFiles[path] = ktFile
 
         updateDiagnostics(ktFile)
+    }
 
-        return PsiTreeUtil.collectElementsOfType(ktFile, PsiErrorElement::class.java).toList()
+    fun onCloseFile(path: String) {
+        openedFiles.remove(path)
     }
 
     private fun loadKtFile(path: String): KtFile {
@@ -316,7 +314,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
     // TODO Use version to avoid conflicts
     fun onChangeFile(path: String, version: Int, changes: List<TextDocumentContentChangeEvent>) {
-        val ktFile = projectStructureProvider.getKtFile(path)!!
+        val ktFile = openedFiles[path]!!
         val doc = psiDocumentManager.getDocument(ktFile)!!
 
         changes.forEach {
