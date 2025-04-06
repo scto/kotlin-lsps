@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.log
+import org.kotlinlsp.trace
 import org.kotlinlsp.warn
 
 class PackageProviderFactory: KotlinPackageProviderFactory {
@@ -28,6 +29,7 @@ class PackageProviderFactory: KotlinPackageProviderFactory {
 private class PackageProvider(project: Project, searchScope: GlobalSearchScope): KotlinPackageProviderBase(project, searchScope) {
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
         // TODO Cache this
+        trace("doesKotlinOnlyPackageExist: $packageFqName")
         val files = VirtualFileEnumeration.extract(searchScope)?.filesIfCollection
         if(files == null) {
             warn("doesKotlinOnlyPackageExist: not a VirtualFileEnumeration!")
@@ -45,7 +47,7 @@ private class PackageProvider(project: Project, searchScope: GlobalSearchScope):
 
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> {
         // TODO Get subpackage names
-        log("getKotlinOnlySubpackageNames: $packageFqName")
+        trace("getKotlinOnlySubpackageNames: $packageFqName")
         return emptySet()
     }
 }

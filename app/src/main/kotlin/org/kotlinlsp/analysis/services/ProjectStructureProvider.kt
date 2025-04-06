@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.kotlinlsp.buildsystem.getModuleList
 import org.kotlinlsp.log
+import org.kotlinlsp.trace
 import java.io.File
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
@@ -31,12 +32,12 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     }
 
     override fun getImplementingModules(module: KaModule): List<KaModule> {
-        log("getImplementingModules: $module")
+        trace("getImplementingModules: $module")
         return emptyList()  // TODO
     }
 
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule {
-        log("[DONE] getModule: $element, useSiteModule: $useSiteModule")
+        trace("getModule: $element, useSiteModule: $useSiteModule")
         val virtualFile = element.containingFile.virtualFile
         return searchVirtualFileInModule(virtualFile, useSiteModule ?: rootModule)!!
     }
@@ -53,6 +54,7 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
 
     @OptIn(KaPlatformInterface::class)
     override fun getNotUnderContentRootModule(project: Project): KaNotUnderContentRootModule {
+        trace("getNotUnderContentRootModule")
         throw Exception("unsupported")
     }
 }
