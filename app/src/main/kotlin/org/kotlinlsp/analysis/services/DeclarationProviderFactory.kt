@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.kotlinlsp.log
 
-class DeclarationProvider: KotlinDeclarationProvider {
+class DeclarationProvider(private val scope: GlobalSearchScope): KotlinDeclarationProvider {
     override val hasSpecificCallablePackageNamesComputation: Boolean
         get() = false   // TODO 
     override val hasSpecificClassifierPackageNamesComputation: Boolean
@@ -57,11 +57,6 @@ class DeclarationProvider: KotlinDeclarationProvider {
         return emptyList()  // TODO
     }
 
-    override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
-        log("getTopLevelCallableNamesInPackage: $packageFqName")
-        return emptySet()   // TODO
-    }
-
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> {
         log("getTopLevelFunctions: $callableId")
         return emptyList()  // TODO
@@ -69,6 +64,11 @@ class DeclarationProvider: KotlinDeclarationProvider {
 
     override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> {
         log("getTopLevelKotlinClassLikeDeclarationNamesInPackage: $packageFqName")
+        return emptySet()   // TODO
+    }
+
+    override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> {
+        log("getTopLevelCallableNamesInPackage: $packageFqName")
         return emptySet()   // TODO
     }
 
@@ -83,6 +83,6 @@ class DeclarationProviderFactory: KotlinDeclarationProviderFactory {
         scope: GlobalSearchScope,
         contextualModule: KaModule?
     ): KotlinDeclarationProvider {
-        return DeclarationProvider()
+        return DeclarationProvider(scope)
     }
 }

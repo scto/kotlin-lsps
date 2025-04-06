@@ -1,0 +1,2 @@
+- Implement getTopLevelKotlinClassLikeDeclarationNamesInPackage and getTopLevelCallableNamesInPackage in DeclarationProvider
+- Add LibraryModules to the gradle resolver
