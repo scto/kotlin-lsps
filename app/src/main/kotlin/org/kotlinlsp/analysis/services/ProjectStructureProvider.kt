@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.kotlinlsp.buildsystem.getModuleList
-import org.kotlinlsp.log
 import org.kotlinlsp.trace
 import java.io.File
 

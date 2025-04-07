@@ -5,10 +5,12 @@ import java.io.FileWriter
 
 private enum class LogLevel(level: Int) {
     Trace(0),
-    Warning(1),
-    Off(2)
+    Debug(1),
+    Warning(2),
+    Error(3),
+    Off(4)
 }
-private val logLevel = LogLevel.Trace
+private val logLevel = LogLevel.Error
 
 fun removeLogFile() {
     val logFile = File("/home/amg/Projects/kotlin-lsp/log.txt")
@@ -17,9 +19,19 @@ fun removeLogFile() {
     }
 }
 
-fun log(message: String) {
+private fun log(message: String) {
     if(logLevel >= LogLevel.Off) return
     FileWriter(File("/home/amg/Projects/kotlin-lsp/log.txt"), true).use { it.appendLine(message) }
+}
+
+fun debug(message: String) {
+    if(logLevel > LogLevel.Debug) return
+    log("[DEBUG]: $message")
+}
+
+fun error(message: String) {
+    if(logLevel > LogLevel.Error) return
+    log("[ERROR]: $message")
 }
 
 fun trace(message: String) {

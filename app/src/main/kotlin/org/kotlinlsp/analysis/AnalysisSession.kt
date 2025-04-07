@@ -157,6 +157,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(project)
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
+        (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project)
 
         commandProcessor = app.getService(CommandProcessor::class.java)
         psiDocumentManager = PsiDocumentManager.getInstance(project)
