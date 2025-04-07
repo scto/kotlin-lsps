@@ -4,7 +4,7 @@ import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.kotlinlsp.analysis.services.SourceModule
+import org.kotlinlsp.analysis.services.modules.SourceModule
 
 fun getModuleList(project: MockProject): KaModule {
     // TODO Integrate with gradle, for now return a mock corresponding to the LSP project
