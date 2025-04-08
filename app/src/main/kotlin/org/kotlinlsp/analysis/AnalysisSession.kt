@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfi
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
@@ -53,6 +54,7 @@ import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
 import org.jetbrains.kotlin.cli.jvm.index.SingleJavaFileRootsIndex
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.load.kotlin.JvmType
+import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.*
 import kotlin.reflect.full.primaryConstructor
@@ -104,6 +106,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
             registerService(KotlinAnnotationsResolverFactory::class.java, AnnotationsResolverFactory::class.java)
             registerService(KotlinModuleDependentsProvider::class.java, ModuleDependentsProvider::class.java)
+            registerService(KotlinPackagePartProviderFactory::class.java, PackagePartProviderFactory::class.java)
         }
 
         CoreApplicationEnvironment.registerExtensionPoint(
@@ -147,13 +150,16 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, packagePartsScope).apply {
             addRoots(libraryRoots, MessageCollector.NONE)
         }
+        val rootsIndex = JvmDependenciesIndexImpl(emptyList(), shouldOnlyFindFirstClass = false)
         javaFileManager.initialize(
-            index = JvmDependenciesIndexImpl(emptyList(), shouldOnlyFindFirstClass = false),
+            index = rootsIndex,
             packagePartProviders = listOf(packagePartProvider),
             singleJavaFileRootsIndex = SingleJavaFileRootsIndex(emptyList()),
             usePsiClassFilesReading = true,
             perfManager = null,
         )
+        val fileFinderFactory = CliVirtualFileFinderFactory(rootsIndex, false, perfManager = null)
+        project.registerService(VirtualFileFinderFactory::class.java, fileFinderFactory)
 
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(project)
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)

@@ -46,3 +46,11 @@ java {
 application {
     mainClass = "org.kotlinlsp.MainKt" 
 }
+
+tasks.register("printMainClasspathJars") {
+    doLast {
+        configurations.compileClasspath.get().forEach {
+            println(it.absolutePath)
+        }
+    }
+}

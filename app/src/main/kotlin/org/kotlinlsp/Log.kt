@@ -10,7 +10,7 @@ private enum class LogLevel(level: Int) {
     Error(3),
     Off(4)
 }
-private val logLevel = LogLevel.Error
+private val logLevel = LogLevel.Trace
 
 fun removeLogFile() {
     val logFile = File("/home/amg/Projects/kotlin-lsp/log.txt")
