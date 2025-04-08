@@ -1,1 +1,2 @@
-- Add LibraryModules to the gradle resolver
+- Add JDK dependency
+- Resolve import from dependencies in Main.kt
