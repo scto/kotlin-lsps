@@ -25,14 +25,14 @@ class LibraryModule(
     private val isJdk: Boolean = false,
     private val name: String
 ): KaLibraryModule, KaModuleBase() {
-    private val scope = GlobalSearchScope.filesScope(
-        mockProject,
-        roots.map { VirtualFileManager.getInstance().findFileByNioPath(it) }
-    )
-
     @KaPlatformInterface
-    override val baseContentScope: GlobalSearchScope
-        get() = scope
+    override val baseContentScope: GlobalSearchScope by lazy {
+        // TODO Fix this, not working for JDK dependency
+        GlobalSearchScope.filesScope(
+            mockProject,
+            roots.map { VirtualFileManager.getInstance().findFileByNioPath(it) }
+        )
+    }
     override val binaryRoots: Collection<Path>
         get() = roots
 
