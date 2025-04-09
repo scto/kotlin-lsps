@@ -5,6 +5,7 @@ import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import java.io.File
 import java.io.FileWriter
+import kotlin.io.path.absolutePathString
 
 private enum class LogLevel(level: Int) {
     Trace(0),
@@ -64,7 +65,7 @@ fun printModule(rootModule: KaModule, level: Int = 0) {
 
         is LibraryModule -> {
             info("$indent- ${rootModule.libraryName}")
-            info("$indent* ${rootModule.jarPath.substringAfterLast("/")}")
+            info("$indent* ${rootModule.binaryRoots.first().absolutePathString().substringAfterLast("/")}")
         }
 
         else -> {

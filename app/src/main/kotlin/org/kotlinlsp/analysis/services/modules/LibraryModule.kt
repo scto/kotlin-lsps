@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -14,30 +15,30 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import java.nio.file.Path
-import kotlin.io.path.Path
 
 class LibraryModule(
     private val mockProject: MockProject,
-    val jarPath: String,
+    private val roots: List<Path> = emptyList(),
     private val javaVersion: JvmTarget,
     private val sourceModule: KaLibrarySourceModule? = null,
     private val dependencies: List<KaModule> = emptyList(),
     private val isJdk: Boolean = false,
     private val name: String
-): KaLibraryModule {
-    private val scope = GlobalSearchScope.fileScope(mockProject, VirtualFileManager.getInstance().findFileByUrl("file://${jarPath}"))
+): KaLibraryModule, KaModuleBase() {
+    private val scope = GlobalSearchScope.filesScope(
+        mockProject,
+        roots.map { VirtualFileManager.getInstance().findFileByNioPath(it) }
+    )
 
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope
         get() = scope
     override val binaryRoots: Collection<Path>
-        get() = listOf(Path(jarPath))
+        get() = roots
 
     @KaExperimentalApi
     override val binaryVirtualFiles: Collection<VirtualFile>
         get() = emptyList() // Not supporting in-memory libraries
-    override val contentScope: GlobalSearchScope
-        get() = scope
     override val directDependsOnDependencies: List<KaModule>
         get() = emptyList() // Not supporting KMP right now
     override val directFriendDependencies: List<KaModule>
@@ -56,6 +57,4 @@ class LibraryModule(
         get() = mockProject
     override val targetPlatform: TargetPlatform
         get() = JvmPlatforms.jvmPlatformByTargetVersion(javaVersion)
-    override val transitiveDependsOnDependencies: List<KaModule>
-        get() = emptyList() // Not supporting KMP right now
 }

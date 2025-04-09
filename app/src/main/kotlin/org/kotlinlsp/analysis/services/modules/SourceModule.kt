@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaModuleBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.config.*
@@ -20,7 +21,7 @@ class SourceModule(
     private val javaVersion: JvmTarget,
     private val kotlinVersion: LanguageVersion,
     private val moduleName: String
-) : KaSourceModule {
+) : KaSourceModule, KaModuleBase() {
     private val scope: GlobalSearchScope by lazy {
         val files = File(folderPath)
             .walk()
@@ -30,9 +31,6 @@ class SourceModule(
 
         return@lazy GlobalSearchScope.filesScope(mockProject, files)
     }
-
-    override val contentScope: GlobalSearchScope
-        get() = scope
 
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope
@@ -55,6 +53,4 @@ class SourceModule(
         get() = mockProject
     override val targetPlatform: TargetPlatform
         get() = JvmPlatforms.jvmPlatformByTargetVersion(javaVersion)
-    override val transitiveDependsOnDependencies: List<KaModule>
-        get() = emptyList() // Not supporting KMP right now
 }

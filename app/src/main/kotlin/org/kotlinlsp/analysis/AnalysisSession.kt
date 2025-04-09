@@ -138,7 +138,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         )
         CoreApplicationEnvironment.registerExtensionPoint(
             project.extensionArea,
-            "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinContentScopeRefiner",
+            "org.jetbrains.kotlin.kotlinContentScopeRefiner",
             kcsrClass::class.java
         )
 
