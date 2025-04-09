@@ -4,6 +4,9 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.kotlinlsp.analysis.AnalysisSession
+import org.kotlinlsp.info
+import org.kotlinlsp.setupLogger
+import org.kotlinlsp.trace
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
@@ -11,10 +14,14 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
     private lateinit var client: LanguageClient
     private lateinit var analysisSession: AnalysisSession
 
-    override fun initialize(params: InitializeParams?): CompletableFuture<InitializeResult> {
+    override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
         val capabilities = ServerCapabilities().apply {
             textDocumentSync = Either.forLeft(TextDocumentSyncKind.Incremental)
         }
+
+        val rootPath = params.workspaceFolders.first().uri.removePrefix("file://")
+        setupLogger(rootPath)
+        info(rootPath)
 
         return CompletableFuture.completedFuture(InitializeResult(capabilities))
     }

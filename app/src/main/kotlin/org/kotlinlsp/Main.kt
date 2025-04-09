@@ -5,7 +5,6 @@ import org.kotlinlsp.lsp.MyLanguageServer
 import java.util.concurrent.Executors
 
 fun main() {
-    removeLogFile()
     val server = MyLanguageServer()
     val threads = Executors.newSingleThreadExecutor {
         Thread(it, "client")

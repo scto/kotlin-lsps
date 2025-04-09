@@ -18,7 +18,7 @@ import kotlin.io.path.Path
 
 class LibraryModule(
     private val mockProject: MockProject,
-    private val jarPath: String,
+    val jarPath: String,
     private val javaVersion: JvmTarget,
     private val sourceModule: KaLibrarySourceModule? = null,
     private val dependencies: List<KaModule> = emptyList(),
