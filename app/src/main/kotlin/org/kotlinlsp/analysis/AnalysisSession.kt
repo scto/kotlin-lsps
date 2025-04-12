@@ -265,21 +265,23 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     }
 
     @OptIn(KaPlatformInterface::class)
-    private fun fetchLibraryRoots(module: KaModule, roots: MutableList<JavaRoot>) {
+    private fun fetchLibraryRoots(module: KaModule, roots: MutableList<JavaRoot>, cache: MutableMap<String, Boolean> = mutableMapOf()) {
         when(module) {
             is SourceModule -> {
                 module.directRegularDependencies.forEach {
-                    fetchLibraryRoots(it, roots)
+                    fetchLibraryRoots(it, roots, cache)
                 }
             }
             is LibraryModule -> {
-                // TODO Add a way to deduplicate, a transitive dependency might be added multiple times!
-                VirtualFileEnumeration.extract(module.baseContentScope)?.filesIfCollection?.forEach {
-                    val root = JavaRoot(it, JavaRoot.RootType.BINARY)
-                    roots.add(root)
-                }
-                module.directRegularDependencies.forEach {
-                    fetchLibraryRoots(it, roots)
+                if(cache.get(module.libraryName) == null) {
+                    VirtualFileEnumeration.extract(module.baseContentScope)?.filesIfCollection?.forEach {
+                        val root = JavaRoot(it, JavaRoot.RootType.BINARY)
+                        roots.add(root)
+                    }
+                    module.directRegularDependencies.forEach {
+                        fetchLibraryRoots(it, roots, cache)
+                    }
+                    cache.set(module.libraryName, true)
                 }
             }
             else -> throw Exception("Unsupported KaModule! $module")
