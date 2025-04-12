@@ -7,27 +7,40 @@ import org.kotlinlsp.analysis.AnalysisSession
 import org.kotlinlsp.info
 import org.kotlinlsp.setupLogger
 import org.kotlinlsp.trace
+import java.io.File
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletableFuture.completedFuture
 import kotlin.system.exitProcess
 
 class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, LanguageClientAware {
     private lateinit var client: LanguageClient
     private lateinit var analysisSession: AnalysisSession
+    private lateinit var rootPath: String
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
         val capabilities = ServerCapabilities().apply {
             textDocumentSync = Either.forLeft(TextDocumentSyncKind.Incremental)
         }
 
-        val rootPath = params.workspaceFolders.first().uri.removePrefix("file://")
+        rootPath = params.workspaceFolders.first().uri.removePrefix("file://")
+
+        return completedFuture(InitializeResult(capabilities))
+    }
+
+    override fun initialized(params: InitializedParams) {
         setupLogger(rootPath)
         info(rootPath)
 
-        return CompletableFuture.completedFuture(InitializeResult(capabilities))
+        analysisSession = AnalysisSession(
+            onDiagnostics = {
+                client.publishDiagnostics(it)
+            }
+        )
     }
 
     override fun shutdown(): CompletableFuture<Any> {
-        return CompletableFuture.completedFuture(Unit)
+        exit()  // TODO Nvim does not call exit so the server is kept alive and reparented to the init process (?)
+        return completedFuture(null)
     }
 
     override fun exit() {
@@ -63,11 +76,5 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
 
     override fun connect(p0: LanguageClient) {
         client = p0
-
-        analysisSession = AnalysisSession(
-            onDiagnostics = {
-                client.publishDiagnostics(it)
-            }
-        )
     }
 }
