@@ -8,18 +8,21 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.kotlinlsp.buildsystem.getModuleList
 import org.kotlinlsp.trace
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     private lateinit var mockProject: MockProject
+    private lateinit var appEnvironment: KotlinCoreApplicationEnvironment
 
-    fun setup(project: MockProject) {
+    fun setup(project: MockProject, applicationEnvironment: KotlinCoreApplicationEnvironment) {
         this.mockProject = project
+        this.appEnvironment = applicationEnvironment
     }
 
     private val rootModule: KaModule by lazy {
-        getModuleList(mockProject)
+        getModuleList(mockProject, appEnvironment)
     }
 
     override fun getImplementingModules(module: KaModule): List<KaModule> {
