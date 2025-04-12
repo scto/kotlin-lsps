@@ -273,6 +273,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
                 }
             }
             is LibraryModule -> {
+                // TODO Add a way to deduplicate, a transitive dependency might be added multiple times!
                 VirtualFileEnumeration.extract(module.baseContentScope)?.filesIfCollection?.forEach {
                     val root = JavaRoot(it, JavaRoot.RootType.BINARY)
                     roots.add(root)
