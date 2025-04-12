@@ -25,7 +25,7 @@ private class PackageProvider(project: Project, searchScope: GlobalSearchScope):
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
         trace("doesKotlinOnlyPackageExist: $packageFqName")
 
-        return virtualFilesForPackage(project, searchScope, packageFqName).iterator().hasNext()
+        return packageFqName.isRoot || virtualFilesForPackage(project, searchScope, packageFqName).iterator().hasNext()
     }
 
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> {

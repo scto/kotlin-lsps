@@ -101,7 +101,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
                 DeclarationProviderFactory::class.java
             )
             registerService(KotlinPackageProviderFactory::class.java, PackageProviderFactory::class.java)
-            // TODO Implement something like intellij plugin
+            // TODO We can optimize this by providing our own, as IJ kotlin plugin does
             registerService(KotlinGlobalSearchScopeMerger::class.java, KotlinSimpleGlobalSearchScopeMerger::class.java)
 
             registerService(KotlinAnnotationsResolverFactory::class.java, AnnotationsResolverFactory::class.java)

@@ -5,5 +5,5 @@ import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings
 
 class PlatformSettings : KotlinPlatformSettings {
     override val deserializedDeclarationsOrigin: KotlinDeserializedDeclarationsOrigin
-        get() = KotlinDeserializedDeclarationsOrigin.BINARIES   // Change to stubs
+        get() = KotlinDeserializedDeclarationsOrigin.BINARIES
 }
