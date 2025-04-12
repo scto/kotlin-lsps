@@ -14,7 +14,6 @@ import org.kotlinlsp.trace
 import kotlin.io.path.Path
 import java.io.File
 
-@OptIn(KaImplementationDetail::class)
 fun getModuleList(project: MockProject): KaModule {
     // TODO Integrate with gradle, for now return a mock corresponding to the LSP project
     // To get dependency tree, use ./gradlew :app:dependencies --configuration compileClasspath

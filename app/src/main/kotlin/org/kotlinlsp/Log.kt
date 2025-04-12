@@ -5,6 +5,12 @@ import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import java.io.File
 import java.io.FileWriter
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.util.logging.Handler
+import java.util.logging.Level
+import java.util.logging.LogRecord
+import java.util.logging.Logger
 import kotlin.io.path.absolutePathString
 
 private enum class LogLevel(level: Int) {
@@ -24,6 +30,9 @@ fun setupLogger(path: String) {
     if (logFile.exists()) {
         logFile.delete()
     }
+
+    // This is to log the exceptions to log.txt file (JUL = java.util.log)
+    Logger.getLogger("").addHandler(JULRedirector())
 }
 
 private fun log(message: String) {
@@ -75,4 +84,23 @@ fun printModule(rootModule: KaModule, level: Int = 0) {
     rootModule.directRegularDependencies.forEach {
         printModule(it, level + 1)
     }
+}
+
+private class JULRedirector: Handler() {
+    override fun publish(record: LogRecord) {
+        when (record.level) {
+            Level.SEVERE -> error(record.message)
+            Level.WARNING -> warn(record.message)
+            Level.INFO -> info(record.message)
+            Level.CONFIG -> debug(record.message)
+            Level.FINE -> trace(record.message)
+            else -> trace(record.message)
+        }
+
+        val stackTrace = StringWriter().also { PrintWriter(it).use { pw -> record.thrown.printStackTrace(pw) } }.toString()
+        error(stackTrace)
+    }
+
+    override fun flush() {}
+    override fun close() {}
 }
