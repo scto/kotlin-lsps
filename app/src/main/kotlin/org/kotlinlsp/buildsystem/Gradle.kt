@@ -12,13 +12,16 @@ import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.printModule
 import org.kotlinlsp.trace
 import kotlin.io.path.Path
+import java.io.File
 
 @OptIn(KaImplementationDetail::class)
 fun getModuleList(project: MockProject): KaModule {
     // TODO Integrate with gradle, for now return a mock corresponding to the LSP project
     // To get dependency tree, use ./gradlew :app:dependencies --configuration compileClasspath
     // To get jar locations, use ./gradlew printMainClasspathJars
-    val gradleFolder = "/home/amg/.gradle"  // Replace with your environment
+
+    val homeFolder = System.getenv("HOME")
+    val gradleFolder = "$homeFolder/.gradle"
     val javaVersion = JvmTarget.JVM_21
     val kotlinVersion = LanguageVersion.KOTLIN_2_1
 
@@ -247,6 +250,7 @@ fun getModuleList(project: MockProject): KaModule {
             roots = listOf(Path("$gradleFolder/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-fir-for-ide/2.2.0-dev-7826/4daec39a1f78c27c5a402d41a7e233c2041805b9/kotlin-compiler-fir-for-ide-2.2.0-dev-7826.jar"))
         ),
         lsp4j,
+        // TODO We need to test adding the JDK dependency to resolve java.* imports
         /*LibraryModule(
             mockProject = project,
             javaVersion = javaVersion,
@@ -256,7 +260,8 @@ fun getModuleList(project: MockProject): KaModule {
         )*/
     )
 
-    val rootPath = "/home/amg/Projects/kotlin-lsp"
+    // Get path where this program is running
+    val rootPath = File("").absolutePath 
     val rootModule = SourceModule(
         moduleName = "main",
         mockProject = project,
