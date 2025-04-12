@@ -15,8 +15,13 @@ import org.kotlinlsp.trace
 import kotlin.io.path.Path
 import java.io.File
 
+private var cachedModule: KaModule? = null
+
 @OptIn(KaImplementationDetail::class)
 fun getModuleList(project: MockProject, appEnvironment: KotlinCoreApplicationEnvironment): KaModule {
+    val constantCachedModule = cachedModule
+    if(constantCachedModule != null) return constantCachedModule
+
     // TODO Integrate with gradle, for now return a mock corresponding to the LSP project
     // To get dependency tree, use ./gradlew :app:dependencies --configuration compileClasspath
     // To get jar locations, use ./gradlew printMainClasspathJars
@@ -301,5 +306,6 @@ fun getModuleList(project: MockProject, appEnvironment: KotlinCoreApplicationEnv
         dependencies = dependencies
     )
     printModule(rootModule)
+    cachedModule = rootModule
     return rootModule
 }

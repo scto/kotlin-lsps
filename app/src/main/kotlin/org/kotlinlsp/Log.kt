@@ -3,10 +3,7 @@ package org.kotlinlsp
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
-import java.io.File
-import java.io.FileWriter
-import java.io.PrintWriter
-import java.io.StringWriter
+import java.io.*
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
@@ -22,22 +19,28 @@ private enum class LogLevel(level: Int) {
     Off(5)
 }
 private val logLevel = LogLevel.Trace
-private lateinit var loggerPath: String
+private lateinit var logFile: File
 
 fun setupLogger(path: String) {
-    loggerPath = "$path/log.txt"
-    val logFile = File(loggerPath)
+    val loggerPath = "$path/log.txt"
+    logFile = File(loggerPath)
     if (logFile.exists()) {
         logFile.delete()
     }
 
     // This is to log the exceptions to log.txt file (JUL = java.util.log)
     Logger.getLogger("").addHandler(JULRedirector())
+
+    // Also redirect stderr there (for analysis api logs)
+    System.setErr(PrintStream(FileOutputStream(logFile)))
 }
 
 private fun log(message: String) {
     if(logLevel >= LogLevel.Off) return
-    FileWriter(File(loggerPath), true).use { it.appendLine(message) }
+    FileWriter(logFile, true).use {
+        it.appendLine(message)
+        it.flush()
+    }
 }
 
 fun debug(message: String) {

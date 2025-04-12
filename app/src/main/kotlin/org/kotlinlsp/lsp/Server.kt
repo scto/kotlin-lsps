@@ -62,19 +62,19 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
         analysisSession.onCloseFile(params.textDocument.uri)
     }
 
-    override fun didSave(p0: DidSaveTextDocumentParams) {
+    override fun didSave(params: DidSaveTextDocumentParams) {
 
     }
 
-    override fun didChangeConfiguration(p0: DidChangeConfigurationParams) {
+    override fun didChangeConfiguration(params: DidChangeConfigurationParams) {
 
     }
 
-    override fun didChangeWatchedFiles(p0: DidChangeWatchedFilesParams) {
+    override fun didChangeWatchedFiles(params: DidChangeWatchedFilesParams) {
 
     }
 
-    override fun connect(p0: LanguageClient) {
-        client = p0
+    override fun connect(params: LanguageClient) {
+        client = params
     }
 }

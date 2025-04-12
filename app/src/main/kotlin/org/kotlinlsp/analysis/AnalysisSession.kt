@@ -16,18 +16,21 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.search.ProjectScope
+import com.intellij.psi.search.impl.VirtualFileEnumeration
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.messages.Topic
 import org.eclipse.lsp4j.*
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
@@ -40,6 +43,7 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalS
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinSimpleGlobalSearchScopeMerger
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderCliImpl
@@ -57,6 +61,10 @@ import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.*
+import org.kotlinlsp.analysis.services.modules.LibraryModule
+import org.kotlinlsp.analysis.services.modules.SourceModule
+import org.kotlinlsp.buildsystem.getModuleList
+import org.kotlinlsp.trace
 import kotlin.reflect.full.primaryConstructor
 
 @OptIn(KaExperimentalApi::class)
@@ -107,6 +115,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             registerService(KotlinAnnotationsResolverFactory::class.java, AnnotationsResolverFactory::class.java)
             registerService(KotlinModuleDependentsProvider::class.java, ModuleDependentsProvider::class.java)
             registerService(KotlinPackagePartProviderFactory::class.java, PackagePartProviderFactory::class.java)
+            registerService(KotlinJavaModuleAccessibilityChecker::class.java, JavaModuleAccessibilityChecker::class.java)
         }
 
         CoreApplicationEnvironment.registerExtensionPoint(
@@ -142,15 +151,17 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             kcsrClass::class.java
         )
 
+        // This setup comes from standalone platform
         val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
-
-        // TODO This setup comes from standalone platform
         val packagePartsScope = ProjectScope.getLibrariesScope(project)
-        val libraryRoots = emptyList<JavaRoot>()
+        val libraryRoots = mutableListOf<JavaRoot>()
+        val rootModule = getModuleList(project, appEnvironment)
+        fetchLibraryRoots(rootModule, libraryRoots)
+
         val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, packagePartsScope).apply {
             addRoots(libraryRoots, MessageCollector.NONE)
         }
-        val rootsIndex = JvmDependenciesIndexImpl(emptyList(), shouldOnlyFindFirstClass = false)
+        val rootsIndex = JvmDependenciesIndexImpl(libraryRoots, shouldOnlyFindFirstClass = false)   // TODO Should receive all (sources + libraries + jdk)
         javaFileManager.initialize(
             index = rootsIndex,
             packagePartProviders = listOf(packagePartProvider),
@@ -251,6 +262,27 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseResolutionScopeProvider", pluginDescriptor)
         registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.permissions.KaAnalysisPermissionChecker", "org.jetbrains.kotlin.analysis.api.impl.base.permissions.KaBaseAnalysisPermissionChecker", pluginDescriptor)
         registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.lifetime.KaLifetimeTracker", "org.jetbrains.kotlin.analysis.api.impl.base.lifetime.KaBaseLifetimeTracker", pluginDescriptor)
+    }
+
+    @OptIn(KaPlatformInterface::class)
+    private fun fetchLibraryRoots(module: KaModule, roots: MutableList<JavaRoot>) {
+        when(module) {
+            is SourceModule -> {
+                module.directRegularDependencies.forEach {
+                    fetchLibraryRoots(it, roots)
+                }
+            }
+            is LibraryModule -> {
+                VirtualFileEnumeration.extract(module.baseContentScope)?.filesIfCollection?.forEach {
+                    val root = JavaRoot(it, JavaRoot.RootType.BINARY)
+                    roots.add(root)
+                }
+                module.directRegularDependencies.forEach {
+                    fetchLibraryRoots(it, roots)
+                }
+            }
+            else -> throw Exception("Unsupported KaModule! $module")
+        }
     }
 
     private fun registerFIRService(componentManager: MockComponentManager, interfaceName: String, implClassName: String, pluginDescriptor: DefaultPluginDescriptor) {
