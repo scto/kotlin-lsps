@@ -3,6 +3,7 @@ package org.kotlinlsp.analysis
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.core.CoreApplicationEnvironment
+import com.intellij.lang.jvm.facade.JvmElementProvider
 import com.intellij.mock.MockApplication
 import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
@@ -142,6 +143,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             ClassTypePointerFactory.EP_NAME,
             ClassTypePointerFactory::class.java
         )
+        CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, JvmElementProvider.EP_NAME, JvmElementProvider::class.java)
         CoreApplicationEnvironment.registerExtensionPoint(
             project.extensionArea,
             KaResolveExtensionProvider.EP_NAME,
