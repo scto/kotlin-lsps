@@ -292,7 +292,7 @@ fun getModuleList(project: MockProject, appEnvironment: KotlinCoreApplicationEnv
             javaVersion = javaVersion,
             name = "JDK 21",
             isJdk = true,
-            roots = LibraryUtils.findClassesFromJdkHome(Path("/usr/lib/jvm/java-21-openjdk"), isJre = false)
+            roots = listOf(Path("/usr/lib/jvm/java-21-openjdk")),
         )
     )
 

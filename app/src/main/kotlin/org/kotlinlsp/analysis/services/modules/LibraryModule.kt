@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.StandardFileSystems.JAR_PROTOCOL
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.search.impl.VirtualFileEnumeration
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
@@ -26,9 +27,9 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import java.nio.file.Path
 
 class LibraryModule(
-    private val appEnvironment: KotlinCoreApplicationEnvironment,
+    val appEnvironment: KotlinCoreApplicationEnvironment,
     private val mockProject: MockProject,
-    private val roots: List<Path> = emptyList(),
+    private val roots: List<Path>,
     private val javaVersion: JvmTarget,
     private val sourceModule: KaLibrarySourceModule? = null,
     private val dependencies: List<KaModule> = emptyList(),
@@ -38,6 +39,10 @@ class LibraryModule(
     @OptIn(KaImplementationDetail::class)
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope by lazy {
+        if(isJdk) {
+            return@lazy ProjectScope.getLibrariesScope(mockProject)
+        }
+
         val virtualFileUrls = buildSet {
             for (root in getVirtualFilesForLibraryRoots(binaryRoots, appEnvironment)) {
                 LibraryUtils.getAllVirtualFilesFromRoot(root, includeRoot = true)
@@ -45,29 +50,14 @@ class LibraryModule(
             }
         }
 
-        return@lazy object : GlobalSearchScope(project), VirtualFileEnumeration {
+        return@lazy object : GlobalSearchScope(project) {
             override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
 
             override fun isSearchInModuleContent(p0: com.intellij.openapi.module.Module): Boolean = false
 
             override fun isSearchInLibraries(): Boolean = true
 
-            override fun toString(): String {
-                if(virtualFileUrls.isEmpty()) return "(empty)"
-                return "${virtualFileUrls.first()} ${if(virtualFileUrls.size > 1) "(and more)" else ""}"
-            }
-
-            override fun contains(p0: Int): Boolean {
-                TODO("Not yet implemented")
-            }
-
-            override fun asArray(): IntArray {
-                TODO("Not yet implemented")
-            }
-
-            override fun getFilesIfCollection(): MutableCollection<VirtualFile> {
-                return virtualFileUrls.mapNotNull { VirtualFileManager.getInstance().findFileByUrl(it) }.toMutableList()
-            }
+            override fun toString(): String = virtualFileUrls.first().toString()
         }
     }
 

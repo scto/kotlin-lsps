@@ -1,5 +1,7 @@
 package org.kotlinlsp.analysis
 
+import com.intellij.codeInsight.ExternalAnnotationsManager
+import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockApplication
 import com.intellij.mock.MockComponentManager
@@ -9,12 +11,14 @@ import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.StandardFileSystems.JAR_PROTOCOL
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiManager
+import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
+import com.intellij.psi.*
 import com.intellij.psi.impl.file.impl.JavaFileManager
+import com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.search.impl.VirtualFileEnumeration
 import com.intellij.psi.util.PsiModificationTracker
@@ -27,10 +31,12 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
 import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker
+import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
@@ -54,9 +60,12 @@ import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
+import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesDynamicCompoundIndex
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
 import org.jetbrains.kotlin.cli.jvm.index.SingleJavaFileRootsIndex
+import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.psi.KtFile
@@ -65,6 +74,8 @@ import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.getModuleList
 import org.kotlinlsp.trace
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 import kotlin.reflect.full.primaryConstructor
 
 @OptIn(KaExperimentalApi::class)
@@ -116,8 +127,21 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             registerService(KotlinModuleDependentsProvider::class.java, ModuleDependentsProvider::class.java)
             registerService(KotlinPackagePartProviderFactory::class.java, PackagePartProviderFactory::class.java)
             registerService(KotlinJavaModuleAccessibilityChecker::class.java, JavaModuleAccessibilityChecker::class.java)
+
+            registerService(ExternalAnnotationsManager::class.java, MockExternalAnnotationsManager())
+            registerService(InferredAnnotationsManager::class.java, MockInferredAnnotationsManager())
+
+            registerService(
+                KotlinJavaModuleAnnotationsProvider::class.java,
+                JavaModuleAnnotationsProvider(),
+            )
+            registerService(SmartTypePointerManager::class.java, SmartTypePointerManagerImpl::class.java)
         }
 
+        CoreApplicationEnvironment.registerApplicationExtensionPoint(
+            ClassTypePointerFactory.EP_NAME,
+            ClassTypePointerFactory::class.java
+        )
         CoreApplicationEnvironment.registerExtensionPoint(
             project.extensionArea,
             KaResolveExtensionProvider.EP_NAME,
@@ -153,15 +177,27 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
         // This setup comes from standalone platform
         val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
-        val packagePartsScope = ProjectScope.getLibrariesScope(project)
+        val librariesScope = ProjectScope.getLibrariesScope(project)
         val libraryRoots = mutableListOf<JavaRoot>()
         val rootModule = getModuleList(project, appEnvironment)
         fetchLibraryRoots(rootModule, libraryRoots)
 
-        val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, packagePartsScope).apply {
+        val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, librariesScope).apply {
             addRoots(libraryRoots, MessageCollector.NONE)
         }
-        val rootsIndex = JvmDependenciesIndexImpl(libraryRoots, shouldOnlyFindFirstClass = false)   // TODO Should receive all (sources + libraries + jdk)
+        val rootsIndex = JvmDependenciesDynamicCompoundIndex(shouldOnlyFindFirstClass = false).apply {
+            addIndex(JvmDependenciesIndexImpl(libraryRoots, shouldOnlyFindFirstClass = false))  // TODO Should receive all (sources + libraries + jdk)
+            indexedRoots.forEach { javaRoot ->
+                if (javaRoot.file.isDirectory) {
+                    if (javaRoot.type == JavaRoot.RootType.SOURCE) {
+                        // TODO
+                    } else {
+                        coreEnvironment.addSourcesToClasspath(javaRoot.file)
+                    }
+                }
+            }
+        }
+
         javaFileManager.initialize(
             index = rootsIndex,
             packagePartProviders = listOf(packagePartProvider),
@@ -175,6 +211,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(project, appEnvironment)
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
         (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project)
+        (project.getService(KotlinPackagePartProviderFactory::class.java) as PackagePartProviderFactory).setup(libraryRoots)
 
         commandProcessor = app.getService(CommandProcessor::class.java)
         psiDocumentManager = PsiDocumentManager.getInstance(project)
@@ -264,7 +301,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.lifetime.KaLifetimeTracker", "org.jetbrains.kotlin.analysis.api.impl.base.lifetime.KaBaseLifetimeTracker", pluginDescriptor)
     }
 
-    @OptIn(KaPlatformInterface::class)
+    @OptIn(KaPlatformInterface::class, KaImplementationDetail::class)
     private fun fetchLibraryRoots(module: KaModule, roots: MutableList<JavaRoot>, cache: MutableMap<String, Boolean> = mutableMapOf()) {
         when(module) {
             is SourceModule -> {
@@ -274,18 +311,44 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             }
             is LibraryModule -> {
                 if(cache.get(module.libraryName) == null) {
-                    VirtualFileEnumeration.extract(module.baseContentScope)?.filesIfCollection?.forEach {
-                        val root = JavaRoot(it, JavaRoot.RootType.BINARY)
-                        roots.add(root)
-                    }
-                    module.directRegularDependencies.forEach {
-                        fetchLibraryRoots(it, roots, cache)
+                    if(module.isSdk) {
+                        val jdkRoots = LibraryUtils.findClassesFromJdkHome(module.binaryRoots.first(), isJre = false).map {
+                            val adjustedPath = adjustModulePath(it.absolutePathString())
+                            val virtualFile = CoreJrtFileSystem().findFileByPath(adjustedPath)!!
+                            return@map JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
+                        }
+                        roots.addAll(jdkRoots)
+                    } else {
+                        module.binaryRoots.forEach {
+                            val virtualFile = CoreJarFileSystem().findFileByPath("${it.absolutePathString()}!/")!!
+                            val root = JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
+                            roots.add(root)
+                        }
+                        module.directRegularDependencies.forEach {
+                            fetchLibraryRoots(it, roots, cache)
+                        }
                     }
                     cache.set(module.libraryName, true)
                 }
             }
             else -> throw Exception("Unsupported KaModule! $module")
         }
+    }
+
+    private fun adjustModulePath(pathString: String): String {
+        return if (pathString.contains("!/")) {
+            // URLs loaded from JDK point to module names in a JRT protocol format,
+            // e.g., "jrt:///path/to/jdk/home!/java.base" (JRT protocol prefix + JDK home path + JAR separator + module name)
+            // After protocol erasure, we will see "/path/to/jdk/home!/java.base" as a binary root.
+            // CoreJrtFileSystem.CoreJrtHandler#findFile, which uses Path#resolve, finds a virtual file path to the file itself,
+            // e.g., "/path/to/jdk/home!/modules/java.base". (JDK home path + JAR separator + actual file path)
+            // To work with that JRT handler, a hacky workaround here is to add "modules" before the module name so that it can
+            // find the actual file path.
+            // See [LLFirJavaFacadeForBinaries#getBinaryPath] and [StandaloneProjectFactory#getBinaryPath] for a similar hack.
+            val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
+            libHomePath + "!/" + "modules/$pathInImage"
+        } else
+            pathString
     }
 
     private fun registerFIRService(componentManager: MockComponentManager, interfaceName: String, implClassName: String, pluginDescriptor: DefaultPluginDescriptor) {

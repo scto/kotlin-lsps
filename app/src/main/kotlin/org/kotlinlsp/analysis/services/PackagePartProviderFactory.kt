@@ -10,14 +10,17 @@ import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.kotlinlsp.trace
 
 class PackagePartProviderFactory: KotlinPackagePartProviderFactory {
+    private lateinit var allLibraryRoots: List<JavaRoot>
+
+    fun setup(allLibraryRoots: List<JavaRoot>) {
+        this.allLibraryRoots = allLibraryRoots
+    }
+
     override fun createPackagePartProvider(scope: GlobalSearchScope): PackagePartProvider {
         trace("createPackagePartProvider $scope")
-        val files = VirtualFileEnumeration.extract(scope)?.filesIfCollection
-            ?: throw Exception("Scope is not a VirtualFileEnumeration!")
 
-        val roots = files.map { JavaRoot(it, JavaRoot.RootType.BINARY) }
         return JvmPackagePartProvider(latestLanguageVersionSettings, scope).apply {
-            addRoots(roots, MessageCollector.NONE)
+            addRoots(allLibraryRoots, MessageCollector.NONE)
         }
     }
 }
