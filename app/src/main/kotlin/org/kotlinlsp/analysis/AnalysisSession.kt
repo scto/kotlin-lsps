@@ -64,7 +64,10 @@ import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesDynamicCompoundIndex
 import org.jetbrains.kotlin.cli.jvm.index.JvmDependenciesIndexImpl
 import org.jetbrains.kotlin.cli.jvm.index.SingleJavaFileRootsIndex
+import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleFinder
+import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
 import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
+import org.jetbrains.kotlin.cli.jvm.modules.JavaModuleGraph
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.load.kotlin.JvmType
@@ -75,6 +78,7 @@ import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.getModuleList
 import org.kotlinlsp.trace
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.reflect.full.primaryConstructor
@@ -127,15 +131,8 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             registerService(KotlinAnnotationsResolverFactory::class.java, AnnotationsResolverFactory::class.java)
             registerService(KotlinModuleDependentsProvider::class.java, ModuleDependentsProvider::class.java)
             registerService(KotlinPackagePartProviderFactory::class.java, PackagePartProviderFactory::class.java)
-            registerService(KotlinJavaModuleAccessibilityChecker::class.java, JavaModuleAccessibilityChecker::class.java)
-
             registerService(ExternalAnnotationsManager::class.java, MockExternalAnnotationsManager())
             registerService(InferredAnnotationsManager::class.java, MockInferredAnnotationsManager())
-
-            registerService(
-                KotlinJavaModuleAnnotationsProvider::class.java,
-                JavaModuleAnnotationsProvider(),
-            )
             registerService(SmartTypePointerManager::class.java, SmartTypePointerManagerImpl::class.java)
         }
 
@@ -183,6 +180,24 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         val libraryRoots = mutableListOf<JavaRoot>()
         val rootModule = getModuleList(project, appEnvironment)
         fetchLibraryRoots(rootModule, libraryRoots)
+
+        val jdkHome = getJdkHome(rootModule)
+        val javaModuleFinder = CliJavaModuleFinder(jdkHome, null, javaFileManager, project, null)
+        val javaModuleGraph = JavaModuleGraph(javaModuleFinder)
+        val delegateJavaModuleResolver = CliJavaModuleResolver(
+            javaModuleGraph,
+            emptyList(),
+            javaModuleFinder.systemModules.toList(),
+            project,
+        )
+
+        project.apply {
+            registerService(KotlinJavaModuleAccessibilityChecker::class.java, JavaModuleAccessibilityChecker(delegateJavaModuleResolver))
+            registerService(
+                KotlinJavaModuleAnnotationsProvider::class.java,
+                JavaModuleAnnotationsProvider(delegateJavaModuleResolver),
+            )
+        }
 
         val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, librariesScope).apply {
             addRoots(libraryRoots, MessageCollector.NONE)
@@ -335,6 +350,29 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             }
             else -> throw Exception("Unsupported KaModule! $module")
         }
+    }
+
+    @OptIn(KaPlatformInterface::class)
+    private fun getJdkHome(module: KaModule): File? {
+        when (module) {
+            is SourceModule -> {
+                module.directRegularDependencies.forEach {
+                    val home = getJdkHome(it)
+                    if(home != null) return home
+                }
+            }
+
+            is LibraryModule -> {
+                if (module.isSdk) return File(module.binaryRoots.first().absolutePathString())
+                module.directRegularDependencies.forEach {
+                    val home = getJdkHome(it)
+                    if(home != null) return home
+                }
+            }
+
+            else -> throw Exception("Unsupported KaModule! $module")
+        }
+        return null
     }
 
     private fun adjustModulePath(pathString: String): String {
