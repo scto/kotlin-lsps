@@ -43,3 +43,8 @@ Feel free to create issues and submit pull requests, I'll answer them as soon as
 To help in the development of this project, these resources are extremely valuable:
 - [Kotlin Analysis API](https://github.com/JetBrains/kotlin/tree/master/analysis): especially the standalone platform, which is a static read only platform implementation we can use as a baseline
 - [IntelliJ IDEA Kotlin plugin](https://github.com/JetBrains/intellij-community/tree/master/plugins/kotlin): the kotlin plugin implements the Analysis API as well implementing the platform interface, so we have it as a base
+
+## Sponsor this project
+
+If you want to economically support this project, I accept donations via Buy Me A Coffee 
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/amgdev9)
