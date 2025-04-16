@@ -46,5 +46,5 @@ To help in the development of this project, these resources are extremely valuab
 
 ## Sponsor this project
 
-If you want to economically support this project, I accept donations via Buy Me A Coffee 
+If you want to economically support this project, I accept donations via 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/amgdev9)
