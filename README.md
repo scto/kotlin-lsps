@@ -12,6 +12,12 @@ Right now, this language server is at its infancy and thus not ready to use for 
 
 - Indexing solution: to provide features like autocomplete, go to definition and search references, we need to create an index where we store all the references used in the project. This feature has not been started yet, the idea is to use something like a sqlite database and perform a background indexing of the whole project, and incrementally update it as the user modifies the source files. One of the goals of this LS is to provide a fast startup time, so diagnostics are reported as quick as possible.
 
+### Implemented features
+- 🚧 Real time diagnostics: mostly working, need to finish configuring the Analysis API to solve the remaining diagnostics false errors
+- 🚧 Go to definition: working, would be nice to use a decompiler like Fernflower to show .class files contents
+- 🚧 Hover: only implemented for function calls, need to implement for the rest of use cases
+- 🚧 Build system integration: there is initial basic support at this [PR](https://github.com/amgdev9/kotlin-lsp/pull/1), but needs work to be usable
+
 ## Building and running
 
 To build the language server, just run the `./build.sh` script at the root directory, which compiles the project using gradle, packs it as a distribution zip and decompresses it in the `./lsp-dist` folder. Once built, you need to integrate it in a code editor to test its functionality. For example, in neovim the following config can be used:

@@ -2,6 +2,7 @@ package org.kotlinlsp.utils
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.jetbrains.kotlin.psi.KtElement
@@ -9,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 fun Position.toOffset(ktFile: KtFile): Int = StringUtil.lineColToOffset(ktFile.text, line, character)
 
-fun TextRange.toLspRange(ktFile: KtFile): Range {
+fun TextRange.toLspRange(ktFile: PsiFile): Range {
     val text = ktFile.text
     val lineColumnStart = StringUtil.offsetToLineColumn(text, startOffset)
     val lineColumnEnd = StringUtil.offsetToLineColumn(text, endOffset)

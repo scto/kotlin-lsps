@@ -18,7 +18,8 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
         val capabilities = ServerCapabilities().apply {
             textDocumentSync = Either.forLeft(TextDocumentSyncKind.Incremental)
-            hoverProvider = Either.forLeft(true) 
+            hoverProvider = Either.forLeft(true)
+            definitionProvider = Either.forLeft(true)
         }
 
         rootPath = params.workspaceFolders.first().uri.removePrefix("file://")
@@ -91,5 +92,10 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
         }
 
         return completedFuture(hover)
+    }
+
+    override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>?> {
+        val location = analysisSession.goToDefinition(params.textDocument.uri, params.position) ?: return completedFuture(null)
+        return completedFuture(Either.forLeft(mutableListOf(location)))
     }
 }

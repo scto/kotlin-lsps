@@ -67,11 +67,13 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.psi.KtFile
+import org.kotlinlsp.actions.goToDefinitionAction
 import org.kotlinlsp.actions.hoverAction
 import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.getModuleList
+import org.kotlinlsp.utils.debug
 import org.kotlinlsp.utils.toLspRange
 import org.kotlinlsp.utils.toOffset
 import java.io.File
@@ -479,6 +481,11 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     fun hover(path: String, position: Position): Pair<String, Range>? {
         val ktFile = openedFiles[path]!!
         return hoverAction(ktFile, position)
+    }
+
+    fun goToDefinition(path: String, position: Position): Location? {
+        val ktFile = openedFiles[path]!!
+        return goToDefinitionAction(ktFile, position)
     }
 }
 
