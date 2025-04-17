@@ -20,6 +20,7 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
         val capabilities = ServerCapabilities().apply {
             textDocumentSync = Either.forLeft(TextDocumentSyncKind.Incremental)
+            hoverProvider = Either.forLeft(true) 
         }
 
         rootPath = params.workspaceFolders.first().uri.removePrefix("file://")
@@ -76,5 +77,21 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
 
     override fun connect(params: LanguageClient) {
         client = params
+    }
+
+    override fun hover(params: HoverParams): CompletableFuture<Hover?> {
+        // TODO Add javadoc
+        val hoverResult = analysisSession.hover(params.textDocument.uri, params.position) ?: return completedFuture(null)
+        val content = MarkupContent().apply {
+            kind = "markdown"
+            value = "```kotlin\n${hoverResult!!.first}\n"
+        }
+
+        val hover = Hover().apply {
+            contents = Either.forRight(content)
+            range = hoverResult.second
+        }
+
+        return completedFuture(hover)
     }
 }
