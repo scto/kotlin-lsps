@@ -4,10 +4,8 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.kotlinlsp.analysis.AnalysisSession
-import org.kotlinlsp.info
-import org.kotlinlsp.setupLogger
-import org.kotlinlsp.trace
-import java.io.File
+import org.kotlinlsp.utils.info
+import org.kotlinlsp.utils.setupLogger
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 import kotlin.system.exitProcess

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.kotlinlsp.buildsystem.getModuleList
-import org.kotlinlsp.trace
+import org.kotlinlsp.utils.trace
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     private lateinit var mockProject: MockProject

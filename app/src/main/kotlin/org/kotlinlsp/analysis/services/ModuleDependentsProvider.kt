@@ -2,7 +2,7 @@ package org.kotlinlsp.analysis.services
 
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.kotlinlsp.trace
+import org.kotlinlsp.utils.trace
 
 class ModuleDependentsProvider: KotlinModuleDependentsProvider {
     override fun getDirectDependents(module: KaModule): Set<KaModule> {

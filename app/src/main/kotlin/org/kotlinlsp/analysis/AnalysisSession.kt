@@ -11,8 +11,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.*
@@ -48,15 +46,12 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleD
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinSimpleGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderCliImpl
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationListener
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionConfigurator
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationTopics
-import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.*
@@ -71,14 +66,14 @@ import org.jetbrains.kotlin.cli.jvm.modules.JavaModuleGraph
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.kotlinlsp.actions.hoverAction
 import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.getModuleList
-import org.kotlinlsp.debug
+import org.kotlinlsp.utils.toLspRange
+import org.kotlinlsp.utils.toOffset
 import java.io.File
 import kotlin.io.path.absolutePathString
 import kotlin.reflect.full.primaryConstructor
@@ -483,20 +478,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
     fun hover(path: String, position: Position): Pair<String, Range>? {
         val ktFile = openedFiles[path]!!
-        val offset = position.toOffset(ktFile)
-        val psi = ktFile.findElementAt(offset)?: return null
-        val element = PsiTreeUtil.getParentOfType(psi, KtDeclaration::class.java, false) ?: return null
-        val range = getElementRange(ktFile, element)
-
-        // TODO This uses the KtDeclaration which is too wide, use the narrowest element so hover is precise
-        val text = analyze(element) {
-            val symbol = element.symbol
-            val printer = PrettyPrinter()
-            KaDeclarationRendererForSource.WITH_SHORT_NAMES.renderDeclaration(useSiteSession, symbol, printer)
-            return@analyze printer.toString()
-        }
-
-        return Pair(text, range)
+        return hoverAction(ktFile, position)
     }
 }
 
@@ -506,30 +488,3 @@ private fun KaSeverity.toLspSeverity(): DiagnosticSeverity =
         KaSeverity.WARNING -> DiagnosticSeverity.Warning
         KaSeverity.INFO -> DiagnosticSeverity.Information
     }
-
-private fun Position.toOffset(ktFile: KtFile): Int = StringUtil.lineColToOffset(ktFile.text, line, character)
-
-private fun TextRange.toLspRange(ktFile: KtFile): Range {
-    val text = ktFile.text
-    val lineColumnStart = StringUtil.offsetToLineColumn(text, startOffset)
-    val lineColumnEnd = StringUtil.offsetToLineColumn(text, endOffset)
-
-    return Range(
-        Position(lineColumnStart.line, lineColumnStart.column),
-        Position(lineColumnEnd.line, lineColumnEnd.column)
-    )
-}
-
-private fun getElementRange(ktFile: KtFile, element: KtElement): Range {
-    val document = ktFile.viewProvider.document
-    val textRange = element.textRange
-    val startOffset = textRange.startOffset
-    val endOffset = textRange.endOffset
-    val start = document.getLineNumber(startOffset).let { line ->
-        Position(line, startOffset - document.getLineStartOffset(line))
-    }
-    val end = document.getLineNumber(endOffset).let { line ->
-        Position(line, endOffset - document.getLineStartOffset(line))
-    }
-    return Range(start, end)
-}

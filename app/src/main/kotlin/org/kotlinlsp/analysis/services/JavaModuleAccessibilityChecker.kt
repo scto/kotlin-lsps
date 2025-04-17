@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibi
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver
-import org.kotlinlsp.trace
+import org.kotlinlsp.utils.trace
 
 class JavaModuleAccessibilityChecker(
     private val javaModuleResolver: CliJavaModuleResolver,

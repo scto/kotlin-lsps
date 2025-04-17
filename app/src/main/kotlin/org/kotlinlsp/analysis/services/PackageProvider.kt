@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProvider
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.kotlinlsp.analysis.services.utils.virtualFilesForPackage
-import org.kotlinlsp.trace
+import org.kotlinlsp.utils.trace
 
 class PackageProviderFactory: KotlinPackageProviderFactory {
     private lateinit var project: MockProject

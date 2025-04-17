@@ -2,16 +2,13 @@ package org.kotlinlsp.buildsystem
 
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
-import org.kotlinlsp.printModule
-import org.kotlinlsp.trace
+import org.kotlinlsp.utils.printModule
 import kotlin.io.path.Path
 import java.io.File
 

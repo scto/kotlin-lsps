@@ -1,6 +1,8 @@
-package org.kotlinlsp
+package org.kotlinlsp.utils
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import java.io.*
@@ -106,4 +108,19 @@ private class JULRedirector: Handler() {
 
     override fun flush() {}
     override fun close() {}
+}
+
+fun printPsiTree(ktFile: KtFile) {
+    val rootNode = ktFile.node.psi
+
+    printPsiNode(rootNode, 0)
+}
+
+fun printPsiNode(node: PsiElement, depth: Int = 0) {
+    val indent = "  ".repeat(depth)
+    debug("$indent${node.javaClass.simpleName}: ${node.text}")
+
+    for (child in node.children) {
+        printPsiNode(child, depth + 1)
+    }
 }

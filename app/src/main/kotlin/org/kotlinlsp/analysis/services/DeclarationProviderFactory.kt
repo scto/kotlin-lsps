@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.kotlinlsp.analysis.services.utils.virtualFilesForPackage
-import org.kotlinlsp.debug
-import org.kotlinlsp.trace
+import org.kotlinlsp.utils.trace
 
 class DeclarationProvider(private val scope: GlobalSearchScope, private val project: Project): KotlinDeclarationProvider {
     override val hasSpecificCallablePackageNamesComputation: Boolean
