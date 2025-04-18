@@ -3,8 +3,8 @@ package org.kotlinlsp.analysis.services
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.declarations.*
+import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.*
 import org.kotlinlsp.analysis.services.utils.virtualFilesForPackage
 import org.kotlinlsp.utils.trace
 
-class DeclarationProvider(private val scope: GlobalSearchScope, private val project: Project): KotlinDeclarationProvider {
+class DeclarationProvider(val scope: GlobalSearchScope, private val project: Project): KotlinDeclarationProvider {
     override val hasSpecificCallablePackageNamesComputation: Boolean
         get() = false   // TODO 
     override val hasSpecificClassifierPackageNamesComputation: Boolean
@@ -130,4 +130,16 @@ class DeclarationProviderFactory: KotlinDeclarationProviderFactory {
     ): KotlinDeclarationProvider {
         return DeclarationProvider(scope, project)
     }
+}
+
+class DeclarationProviderMerger(private val project: Project) : KotlinDeclarationProviderMerger {
+    override fun merge(providers: List<KotlinDeclarationProvider>): KotlinDeclarationProvider =
+        providers.mergeSpecificProviders<_, DeclarationProvider>(KotlinCompositeDeclarationProvider.factory) { targetProviders ->
+            val combinedScope = GlobalSearchScope.union(targetProviders.map { it.scope })
+            project.createDeclarationProvider(combinedScope, contextualModule = null).apply {
+                check(this is DeclarationProvider) {
+                    "`DeclarationProvider` can only be merged into a combined declaration provider of the same type."
+                }
+            }
+        }
 }

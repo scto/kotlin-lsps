@@ -20,7 +20,7 @@ private enum class LogLevel(level: Int) {
     Error(4),
     Off(5)
 }
-private val logLevel = LogLevel.Debug
+private val logLevel = LogLevel.Trace
 private lateinit var logFile: File
 
 fun setupLogger(path: String) {

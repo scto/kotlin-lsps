@@ -3,6 +3,8 @@ package org.kotlinlsp.analysis
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.core.CoreApplicationEnvironment
+import com.intellij.core.CoreJavaFileManager
+import com.intellij.core.CorePackageIndex
 import com.intellij.lang.jvm.facade.JvmElementProvider
 import com.intellij.mock.MockApplication
 import com.intellij.mock.MockComponentManager
@@ -10,11 +12,13 @@ import com.intellij.mock.MockProject
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
+import com.intellij.openapi.roots.PackageIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.*
 import com.intellij.psi.impl.file.impl.JavaFileManager
+import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl
 import com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiModificationTracker
@@ -31,6 +35,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
 import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderMerger
 import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker
 import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory
@@ -38,8 +43,10 @@ import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfi
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
+import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger
 import org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
@@ -65,6 +72,7 @@ import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.cli.jvm.modules.JavaModuleGraph
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.load.kotlin.JvmType
+import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.actions.goToDefinitionAction
@@ -89,7 +97,9 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     private val openedFiles = mutableMapOf<String, KtFile>()
 
     init {
+        System.setProperty("java.awt.headless", "true")
         setupIdeaStandaloneExecution()
+
         val projectDisposable = Disposer.newDisposable("LSPAnalysisAPISession.project")
         val compilerConfiguration = CompilerConfiguration()
         val appEnvironment = KotlinCoreEnvironment.getOrCreateApplicationEnvironment(
@@ -104,7 +114,6 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         registerFIRServices(project, app)
 
         app.apply {
-            // TODO Intellij uses VFSUtil propietary class
             registerService(BuiltinsVirtualFileProvider::class.java, BuiltinsVirtualFileProviderCliImpl::class.java)
 
             registerService(KotlinAnalysisPermissionOptions::class.java, AnalysisPermissionOptions::class.java)
@@ -128,9 +137,18 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             registerService(KotlinAnnotationsResolverFactory::class.java, AnnotationsResolverFactory::class.java)
             registerService(KotlinModuleDependentsProvider::class.java, ModuleDependentsProvider::class.java)
             registerService(KotlinPackagePartProviderFactory::class.java, PackagePartProviderFactory::class.java)
+            registerService(
+                CoreJavaFileManager::class.java,
+                this.getService(JavaFileManager::class.java) as CoreJavaFileManager
+            )
             registerService(ExternalAnnotationsManager::class.java, MockExternalAnnotationsManager())
             registerService(InferredAnnotationsManager::class.java, MockInferredAnnotationsManager())
             registerService(SmartTypePointerManager::class.java, SmartTypePointerManagerImpl::class.java)
+            registerService(SmartPointerManager::class.java, SmartPointerManagerImpl::class.java)
+            registerService(KotlinModificationTrackerFactory::class.java, ModificationTrackerFactory::class.java)
+            registerService(KotlinDeclarationProviderMerger::class.java, DeclarationProviderMerger::class.java)
+            registerService(KotlinPackageProviderMerger::class.java, PackageProviderMerger::class.java)
+            setupHighestLanguageLevel()
         }
 
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
@@ -196,6 +214,8 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             )
         }
 
+        val corePackageIndex = project.getService(PackageIndex::class.java) as CorePackageIndex
+
         val packagePartProvider = JvmPackagePartProvider(latestLanguageVersionSettings, librariesScope).apply {
             addRoots(libraryRoots, MessageCollector.NONE)
         }
@@ -204,7 +224,8 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             indexedRoots.forEach { javaRoot ->
                 if (javaRoot.file.isDirectory) {
                     if (javaRoot.type == JavaRoot.RootType.SOURCE) {
-                        // TODO
+                        javaFileManager.addToClasspath(javaRoot.file)
+                        corePackageIndex.addToClasspath(javaRoot.file)
                     } else {
                         coreEnvironment.addSourcesToClasspath(javaRoot.file)
                     }
@@ -221,6 +242,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         )
         val fileFinderFactory = CliVirtualFileFinderFactory(rootsIndex, false, perfManager = null)
         project.registerService(VirtualFileFinderFactory::class.java, fileFinderFactory)
+        project.registerService(MetadataFinderFactory::class.java, CliMetadataFinderFactory(fileFinderFactory))
 
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(project, appEnvironment)
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
