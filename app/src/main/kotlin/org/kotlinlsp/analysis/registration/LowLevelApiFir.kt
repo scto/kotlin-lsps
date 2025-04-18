@@ -6,9 +6,14 @@ import com.intellij.util.messages.Topic
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEvent
 import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationListener
+import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionConfigurator
 
 @OptIn(KaImplementationDetail::class)
 fun Registrar.lowLevelApiFir() {
+    projectExtensionPoint(
+        "org.jetbrains.kotlin.llFirSessionConfigurator",
+        LLFirSessionConfigurator::class.java
+    )
     Registry.get(
         "kotlin.parallel.resolve.under.global.lock"
     ).setValue(false)

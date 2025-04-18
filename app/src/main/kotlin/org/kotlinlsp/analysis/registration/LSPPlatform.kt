@@ -5,8 +5,10 @@ import com.intellij.codeInsight.InferredAnnotationsManager
 import com.intellij.core.CoreJavaFileManager
 import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
 import com.intellij.psi.ClassTypePointerFactory
+import com.intellij.psi.PsiElementFinder
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartTypePointerManager
+import com.intellij.psi.impl.PsiElementFinderImpl
 import com.intellij.psi.impl.file.impl.JavaFileManager
 import com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl
@@ -17,6 +19,8 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotations
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderMerger
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDirectInheritorsProvider
+import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker
+import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
@@ -34,8 +38,11 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderCliImpl
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.DummyFileAttributeService
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService
-import org.jetbrains.kotlin.cli.jvm.compiler.MockExternalAnnotationsManager
-import org.jetbrains.kotlin.cli.jvm.compiler.MockInferredAnnotationsManager
+import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
+import org.jetbrains.kotlin.cli.jvm.compiler.*
+import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
+import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
+import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.kotlinlsp.analysis.services.*
 
 @OptIn(KaExperimentalApi::class)
@@ -53,6 +60,7 @@ fun Registrar.lspPlatform() {
     )
 
     // These are our platform services
+    KotlinCoreEnvironment.registerProjectExtensionPoints(project.extensionArea)
     appExtensionPoint(
         AdditionalKDocResolutionProvider.EP_NAME.toString(),
         AdditionalKDocResolutionProvider::class.java
@@ -101,7 +109,29 @@ fun Registrar.lspPlatform() {
         registerService(KotlinPackageProviderMerger::class.java, PackageProviderMerger::class.java)
         registerService(KotlinPackagePartProviderFactory::class.java, PackagePartProviderFactory::class.java)
     }
+    with(PsiElementFinder.EP.getPoint(project)) {
+        registerExtension(JavaElementFinder(project), disposable)
+        registerExtension(PsiElementFinderImpl(project), disposable)
+    }
     with(app) {
         registerService(KotlinAnalysisPermissionOptions::class.java, AnalysisPermissionOptions::class.java)
+    }
+}
+
+fun Registrar.lspPlatformPostInit(
+    cliJavaModuleResolver: CliJavaModuleResolver,
+    cliVirtualFileFinderFactory: CliVirtualFileFinderFactory
+) {
+    with(project) {
+        registerService(
+            KotlinJavaModuleAccessibilityChecker::class.java,
+            JavaModuleAccessibilityChecker(cliJavaModuleResolver)
+        )
+        registerService(
+            KotlinJavaModuleAnnotationsProvider::class.java,
+            JavaModuleAnnotationsProvider(cliJavaModuleResolver),
+        )
+        registerService(VirtualFileFinderFactory::class.java, cliVirtualFileFinderFactory)
+        registerService(MetadataFinderFactory::class.java, CliMetadataFinderFactory(cliVirtualFileFinderFactory))
     }
 }

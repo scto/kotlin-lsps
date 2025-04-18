@@ -4,12 +4,13 @@ import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockApplication
 import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.util.messages.Topic
 import org.jetbrains.kotlin.load.kotlin.JvmType
 import kotlin.reflect.full.primaryConstructor
 
-class Registrar(val project: MockProject, val app: MockApplication) {
+class Registrar(val project: MockProject, val app: MockApplication, val disposable: Disposable) {
     private val pluginDescriptor = DefaultPluginDescriptor("analysis-api-plugin-descriptor")
 
     fun <T: Any> projectListener(className: String, topic: Topic<T>) {

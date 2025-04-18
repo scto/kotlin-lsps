@@ -1,11 +1,9 @@
 package org.kotlinlsp.analysis
 
 import com.intellij.core.CorePackageIndex
-import com.intellij.lang.jvm.facade.JvmElementProvider
 import com.intellij.mock.MockApplication
 import com.intellij.mock.MockProject
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
 import com.intellij.openapi.roots.PackageIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -23,23 +21,13 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderMerger
-import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAccessibilityChecker
-import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleAnnotationsProvider
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
-import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinSimpleGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionConfigurator
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
@@ -51,13 +39,12 @@ import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
 import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.cli.jvm.modules.JavaModuleGraph
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
-import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.actions.goToDefinitionAction
 import org.kotlinlsp.actions.hoverAction
 import org.kotlinlsp.analysis.registration.Registrar
 import org.kotlinlsp.analysis.registration.lspPlatform
+import org.kotlinlsp.analysis.registration.lspPlatformPostInit
 import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
@@ -89,42 +76,24 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         project = coreEnvironment.project
         app = appEnvironment.application
 
-        val registrar = Registrar(project, app)
+        val registrar = Registrar(project, app, projectDisposable)
         registrar.lspPlatform()
 
         project.setupHighestLanguageLevel()
-        KotlinCoreEnvironment.registerProjectExtensionPoints(project.extensionArea)
-
-        registrar.projectExtensionPoint(JvmElementProvider.EP_NAME.toString(), JvmElementProvider::class.java)
-        registrar.projectExtensionPoint(
-            "org.jetbrains.kotlin.llFirSessionConfigurator",
-            LLFirSessionConfigurator::class.java
-        )
-
-        // This setup comes from standalone platform
-        val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
         val librariesScope = ProjectScope.getLibrariesScope(project)
-        val libraryRoots = mutableListOf<JavaRoot>()
         val rootModule = getModuleList(project, appEnvironment)
+        val libraryRoots = mutableListOf<JavaRoot>()
         fetchLibraryRoots(rootModule, libraryRoots)
 
-        val jdkHome = getJdkHome(rootModule)
-        val javaModuleFinder = CliJavaModuleFinder(jdkHome, null, javaFileManager, project, null)
+        val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
+        val javaModuleFinder = CliJavaModuleFinder(null, null, javaFileManager, project, null)
         val javaModuleGraph = JavaModuleGraph(javaModuleFinder)
         val delegateJavaModuleResolver = CliJavaModuleResolver(
             javaModuleGraph,
             emptyList(),
-            javaModuleFinder.systemModules.toList(),
+            emptyList(),    // This is always empty in standalone platform
             project,
         )
-
-        project.apply {
-            registerService(KotlinJavaModuleAccessibilityChecker::class.java, JavaModuleAccessibilityChecker(delegateJavaModuleResolver))
-            registerService(
-                KotlinJavaModuleAnnotationsProvider::class.java,
-                JavaModuleAnnotationsProvider(delegateJavaModuleResolver),
-            )
-        }
 
         val corePackageIndex = project.getService(PackageIndex::class.java) as CorePackageIndex
 
@@ -132,7 +101,12 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             addRoots(libraryRoots, MessageCollector.NONE)
         }
         val rootsIndex = JvmDependenciesDynamicCompoundIndex(shouldOnlyFindFirstClass = false).apply {
-            addIndex(JvmDependenciesIndexImpl(libraryRoots, shouldOnlyFindFirstClass = false))  // TODO Should receive all (sources + libraries + jdk)
+            addIndex(
+                JvmDependenciesIndexImpl(
+                    libraryRoots,
+                    shouldOnlyFindFirstClass = false
+                )
+            )  // TODO Should receive all (sources + libraries)
             indexedRoots.forEach { javaRoot ->
                 if (javaRoot.file.isDirectory) {
                     if (javaRoot.type == JavaRoot.RootType.SOURCE) {
@@ -153,14 +127,23 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             perfManager = null,
         )
         val fileFinderFactory = CliVirtualFileFinderFactory(rootsIndex, false, perfManager = null)
-        project.registerService(VirtualFileFinderFactory::class.java, fileFinderFactory)
-        project.registerService(MetadataFinderFactory::class.java, CliMetadataFinderFactory(fileFinderFactory))
 
-        (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(project, appEnvironment)
+        registrar.lspPlatformPostInit(
+            cliJavaModuleResolver = delegateJavaModuleResolver,
+            cliVirtualFileFinderFactory = fileFinderFactory
+        )
+
+        // Setup platform services
+        (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(
+            project,
+            appEnvironment
+        )
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
         (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project)
         // Here libraryRoots should have .class files, not .jar files
-        (project.getService(KotlinPackagePartProviderFactory::class.java) as PackagePartProviderFactory).setup(libraryRoots)
+        (project.getService(KotlinPackagePartProviderFactory::class.java) as PackagePartProviderFactory).setup(
+            libraryRoots
+        )
 
         commandProcessor = app.getService(CommandProcessor::class.java)
         psiDocumentManager = PsiDocumentManager.getInstance(project)

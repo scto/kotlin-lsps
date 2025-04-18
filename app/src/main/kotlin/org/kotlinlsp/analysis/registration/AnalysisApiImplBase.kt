@@ -51,10 +51,8 @@ fun Registrar.analysisApiImplBase() {
     appServiceClass(
         "org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
     )
-    projectExtensionPoint(
-        "com.intellij.java.elementFinder",
-        JavaElementFinder::class.java
-    )
+    // Here we don't register java.elementFinder as it will conflict
+    // with our platform
     Registry.get(
         "kotlin.decompiled.light.classes.check.inconsistency"
     ).setValue(false)
