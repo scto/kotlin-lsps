@@ -39,26 +39,13 @@ class LibraryModule(
     @OptIn(KaImplementationDetail::class)
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope by lazy {
-        if(isJdk) {
-            return@lazy ProjectScope.getLibrariesScope(mockProject)
+        val roots = if(isJdk) {
+            LibraryUtils.findClassesFromJdkHome(binaryRoots.first(), isJre = false)
+        } else {
+            binaryRoots
         }
 
-        val virtualFileUrls = buildSet {
-            for (root in getVirtualFilesForLibraryRoots(binaryRoots, appEnvironment)) {
-                LibraryUtils.getAllVirtualFilesFromRoot(root, includeRoot = true)
-                    .mapTo(this) { it.url }
-            }
-        }
-
-        return@lazy object : GlobalSearchScope(project) {
-            override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
-
-            override fun isSearchInModuleContent(p0: com.intellij.openapi.module.Module): Boolean = false
-
-            override fun isSearchInLibraries(): Boolean = true
-
-            override fun toString(): String = virtualFileUrls.first().toString()
-        }
+        return@lazy buildLibrarySearchScope(mockProject, roots, appEnvironment)
     }
 
     override val binaryRoots: Collection<Path>
@@ -88,6 +75,28 @@ class LibraryModule(
 }
 
 private const val JAR_SEPARATOR = "!/"
+
+@OptIn(KaImplementationDetail::class)
+private fun buildLibrarySearchScope(project: MockProject, binaryRoots: Collection<Path>, appEnvironment: CoreApplicationEnvironment): GlobalSearchScope {
+    val virtualFileUrls = buildSet {
+        for (root in getVirtualFilesForLibraryRoots(binaryRoots, appEnvironment)) {
+            LibraryUtils.getAllVirtualFilesFromRoot(root, includeRoot = true)
+                .mapTo(this) { it.url }
+        }
+    }
+
+    return object : GlobalSearchScope(project) {
+        override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
+
+        override fun isSearchInModuleContent(p0: com.intellij.openapi.module.Module): Boolean = false
+
+        override fun isSearchInLibraries(): Boolean = true
+
+        override fun toString(): String = virtualFileUrls.joinToString("\n") {
+            it
+        }
+    }
+}
 
 private fun getVirtualFilesForLibraryRoots(
     roots: Collection<Path>,

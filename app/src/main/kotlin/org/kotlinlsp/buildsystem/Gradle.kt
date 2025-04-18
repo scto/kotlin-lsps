@@ -2,19 +2,21 @@ package org.kotlinlsp.buildsystem
 
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
+import org.kotlinlsp.utils.debug
 import org.kotlinlsp.utils.printModule
 import kotlin.io.path.Path
 import java.io.File
 
 private var cachedModule: KaModule? = null
 
-@OptIn(KaImplementationDetail::class)
+@OptIn(KaImplementationDetail::class, KaPlatformInterface::class)
 fun getModuleList(project: MockProject, appEnvironment: KotlinCoreApplicationEnvironment): KaModule {
     val constantCachedModule = cachedModule
     if(constantCachedModule != null) return constantCachedModule
@@ -28,6 +30,14 @@ fun getModuleList(project: MockProject, appEnvironment: KotlinCoreApplicationEnv
     val javaVersion = JvmTarget.JVM_21
     val kotlinVersion = LanguageVersion.KOTLIN_2_1
 
+    val jdk = LibraryModule(
+        appEnvironment = appEnvironment,
+        mockProject = project,
+        javaVersion = javaVersion,
+        name = "JDK 21",
+        isJdk = true,
+        roots = listOf(Path("/usr/lib/jvm/java-21-openjdk")),
+    )
     val jetbrainsAnnotations = LibraryModule(
         appEnvironment = appEnvironment,
         mockProject = project,
@@ -283,14 +293,7 @@ fun getModuleList(project: MockProject, appEnvironment: KotlinCoreApplicationEnv
             roots = listOf(Path("$gradleFolder/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-fir-for-ide/2.2.0-dev-7826/4daec39a1f78c27c5a402d41a7e233c2041805b9/kotlin-compiler-fir-for-ide-2.2.0-dev-7826.jar"))
         ),
         lsp4j,
-        LibraryModule(
-            appEnvironment = appEnvironment,
-            mockProject = project,
-            javaVersion = javaVersion,
-            name = "JDK 21",
-            isJdk = true,
-            roots = listOf(Path("/usr/lib/jvm/java-21-openjdk")),
-        )
+        jdk
     )
 
     val rootPath = File("").absolutePath 
