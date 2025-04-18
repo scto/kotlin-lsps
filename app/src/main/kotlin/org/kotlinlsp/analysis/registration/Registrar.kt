@@ -9,7 +9,7 @@ import com.intellij.util.messages.Topic
 import org.jetbrains.kotlin.load.kotlin.JvmType
 import kotlin.reflect.full.primaryConstructor
 
-class Registrar(private val project: MockProject, private val app: MockApplication) {
+class Registrar(val project: MockProject, val app: MockApplication) {
     private val pluginDescriptor = DefaultPluginDescriptor("analysis-api-plugin-descriptor")
 
     fun <T: Any> projectListener(className: String, topic: Topic<T>) {
