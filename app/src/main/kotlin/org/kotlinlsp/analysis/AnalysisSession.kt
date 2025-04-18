@@ -2,16 +2,13 @@ package org.kotlinlsp.analysis
 
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
-import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.core.CoreJavaFileManager
 import com.intellij.core.CorePackageIndex
 import com.intellij.lang.jvm.facade.JvmElementProvider
 import com.intellij.mock.MockApplication
-import com.intellij.mock.MockComponentManager
 import com.intellij.mock.MockProject
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
-import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.roots.PackageIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -71,22 +68,20 @@ import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
 import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.cli.jvm.modules.JavaModuleGraph
 import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.load.kotlin.JvmType
 import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.actions.goToDefinitionAction
 import org.kotlinlsp.actions.hoverAction
+import org.kotlinlsp.analysis.registration.Registrar
 import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.getModuleList
-import org.kotlinlsp.utils.debug
 import org.kotlinlsp.utils.toLspRange
 import org.kotlinlsp.utils.toOffset
 import java.io.File
 import kotlin.io.path.absolutePathString
-import kotlin.reflect.full.primaryConstructor
 
 @OptIn(KaExperimentalApi::class)
 class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit) {
@@ -111,7 +106,9 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         project = coreEnvironment.project
         app = appEnvironment.application
 
-        registerFIRServices(project, app)
+        val registrar = Registrar(project, app)
+
+        registerFIRServices(registrar)
 
         app.apply {
             registerService(BuiltinsVirtualFileProvider::class.java, BuiltinsVirtualFileProviderCliImpl::class.java)
@@ -151,43 +148,27 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             setupHighestLanguageLevel()
         }
 
-        CoreApplicationEnvironment.registerApplicationExtensionPoint(
-            ClassTypePointerFactory.EP_NAME,
+        registrar.appExtensionPoint(
+            ClassTypePointerFactory.EP_NAME.toString(),
             ClassTypePointerFactory::class.java
         )
-        CoreApplicationEnvironment.registerExtensionPoint(project.extensionArea, JvmElementProvider.EP_NAME, JvmElementProvider::class.java)
-        CoreApplicationEnvironment.registerExtensionPoint(
-            project.extensionArea,
-            KaResolveExtensionProvider.EP_NAME,
+        registrar.projectExtensionPoint(JvmElementProvider.EP_NAME.toString(), JvmElementProvider::class.java)
+        registrar.projectExtensionPoint(
+            KaResolveExtensionProvider.EP_NAME.toString(),
             KaResolveExtensionProvider::class.java
         )
-        CoreApplicationEnvironment.registerExtensionPoint(
-            project.extensionArea,
+        registrar.projectExtensionPoint(
             "org.jetbrains.kotlin.llFirSessionConfigurator",
             LLFirSessionConfigurator::class.java
         )
-        CoreApplicationEnvironment.registerExtensionPoint(
-            project.extensionArea,
+        registrar.projectExtensionPoint(
             "com.intellij.java.elementFinder",
             JavaElementFinder::class.java
         )
-        CoreApplicationEnvironment.registerExtensionPoint(
-            app.extensionArea,
-            DocumentWriteAccessGuard.EP_NAME,
-            WriteAccessGuard::class.java
-        )
+        registrar.appExtensionPoint(DocumentWriteAccessGuard.EP_NAME.toString(),
+            WriteAccessGuard::class.java)
 
-        val pluginDescriptor = DefaultPluginDescriptor("analysis-api-lsp-base-loader-2")
-        val kcsrClass = loadClass(
-            app,
-            "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge",
-            pluginDescriptor
-        )
-        CoreApplicationEnvironment.registerExtensionPoint(
-            project.extensionArea,
-            "org.jetbrains.kotlin.kotlinContentScopeRefiner",
-            kcsrClass::class.java
-        )
+        registrar.projectExtensionPoint("org.jetbrains.kotlin.kotlinContentScopeRefiner", "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge")
 
         // This setup comes from standalone platform
         val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
@@ -254,87 +235,75 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     }
 
     @OptIn(KaImplementationDetail::class)
-    private fun registerFIRServices(project: MockProject, app: MockApplication) {
-        val pluginDescriptor = DefaultPluginDescriptor("analysis-api-lsp-base-loader")
-
+    private fun registerFIRServices(registrar: Registrar) {
         // These services come from analysis-api-fhir.xml, so we need to keep synced with this file in case of analysis API libraries updates
-        registerFIRService(
-            project,
+        registrar.projectService(
             "org.jetbrains.kotlin.analysis.api.session.KaSessionProvider",
             "org.jetbrains.kotlin.analysis.api.fir.KaFirSessionProvider",
-            pluginDescriptor
         )
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService",
-            "org.jetbrains.kotlin.analysis.api.fir.modification.KaFirSourceModificationService", pluginDescriptor
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService",
+            "org.jetbrains.kotlin.analysis.api.fir.modification.KaFirSourceModificationService"
         )
-        registerFIRService(project, "org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor",
-            "org.jetbrains.kotlin.analysis.api.fir.references.KotlinFirReferenceContributor", pluginDescriptor
+        registrar.projectService("org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor",
+            "org.jetbrains.kotlin.analysis.api.fir.references.KotlinFirReferenceContributor"
         )
-        registerFIRService(project, "org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker",
-            "org.jetbrains.kotlin.analysis.api.fir.references.ReadWriteAccessCheckerFirImpl", pluginDescriptor
+        registrar.projectService("org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker",
+            "org.jetbrains.kotlin.analysis.api.fir.references.ReadWriteAccessCheckerFirImpl"
         )
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.imports.KaDefaultImportsProvider"
-            ,"org.jetbrains.kotlin.analysis.api.fir.KaFirDefaultImportsProvider", pluginDescriptor
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.imports.KaDefaultImportsProvider"
+            ,"org.jetbrains.kotlin.analysis.api.fir.KaFirDefaultImportsProvider"
         )
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.statistics.KaStatisticsService"
-            ,"org.jetbrains.kotlin.analysis.api.fir.statistics.KaFirStatisticsService", pluginDescriptor
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.platform.statistics.KaStatisticsService"
+            ,"org.jetbrains.kotlin.analysis.api.fir.statistics.KaFirStatisticsService"
         )
-        registerProjectListener(project, "org.jetbrains.kotlin.analysis.api.fir.KaFirSessionProvider\$SessionInvalidationListener", LLFirSessionInvalidationTopics.SESSION_INVALIDATION, pluginDescriptor)
+        registrar.projectListener("org.jetbrains.kotlin.analysis.api.fir.KaFirSessionProvider\$SessionInvalidationListener", LLFirSessionInvalidationTopics.SESSION_INVALIDATION)
 
         // LL FIR services, these come from low-level-api-fhir.xml
-        registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.LLStatisticsService", pluginDescriptor)
-        registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationTracker", pluginDescriptor)
-        registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService", pluginDescriptor)
-        registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationEventPublisher", pluginDescriptor)
-        registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.LLFirElementByPsiElementChooser", "org.jetbrains.kotlin.analysis.low.level.api.fir.services.LLRealFirElementByPsiElementChooser", pluginDescriptor)
-        registerFIRServiceClass(
-            project,
+        registrar.projectServiceClass("org.jetbrains.kotlin.analysis.low.level.api.fir.statistics.LLStatisticsService")
+        registrar.projectServiceClass("org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationTracker")
+        registrar.projectServiceClass("org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService")
+        registrar.projectServiceClass("org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationEventPublisher")
+        registrar.projectServiceClass("org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService")
+        registrar.projectService("org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.LLFirElementByPsiElementChooser", "org.jetbrains.kotlin.analysis.low.level.api.fir.services.LLRealFirElementByPsiElementChooser")
+        registrar.projectServiceClass(
             "org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory",
-            pluginDescriptor
         )
-        registerFIRServiceClass(
-            project,
+        registrar.projectServiceClass(
             "org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService",
-            pluginDescriptor
         )
-        registerFIRServiceClass(
-            project,
+        registrar.projectServiceClass(
             "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionCache",
-            pluginDescriptor
         )
-        registerFIRServiceClass(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents", pluginDescriptor)
-        registerFIRService(app, "org.jetbrains.kotlin.analysis.api.platform.resolution.KaResolutionActivityTracker", "org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirResolutionActivityTracker", pluginDescriptor)
-        registerProjectListener(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService\$LLKotlinModificationEventListener", KotlinModificationEvent.TOPIC, pluginDescriptor)
-        registerProjectListener(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService\$LLPsiModificationTrackerListener", PsiModificationTracker.TOPIC, pluginDescriptor)
-        val theTopic = Topic(
+        registrar.projectServiceClass("org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents")
+        registrar.appService("org.jetbrains.kotlin.analysis.api.platform.resolution.KaResolutionActivityTracker", "org.jetbrains.kotlin.analysis.low.level.api.fir.lazy.resolve.LLFirResolutionActivityTracker")
+        registrar.projectListener("org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService\$LLKotlinModificationEventListener", KotlinModificationEvent.TOPIC)
+        registrar.projectListener("org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationService\$LLPsiModificationTrackerListener", PsiModificationTracker.TOPIC)
+        val LLFirInBlockModificationListenerTopic = Topic(
             LLFirInBlockModificationListener::class.java,
             Topic.BroadcastDirection.TO_CHILDREN,
             true,
         )
-        registerProjectListener(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationListenerForCodeFragments", theTopic, pluginDescriptor)
-        registerProjectListener(project, "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationTracker\$Listener", theTopic, pluginDescriptor)
+        registrar.projectListener("org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationListenerForCodeFragments", LLFirInBlockModificationListenerTopic)
+        registrar.projectListener("org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirInBlockModificationTracker\$Listener", LLFirInBlockModificationListenerTopic)
 
         // analysis-api-impl-base.xml
-        registerFIRServiceClass(app, "org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaContentScopeProvider", "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseContentScopeProvider", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.KotlinMessageBusProvider", "org.jetbrains.kotlin.analysis.api.platform.KotlinProjectMessageBusProvider", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider", "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseModuleProvider", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade", "org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseKotlinJavaPsiFacade", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory", "org.jetbrains.kotlin.analysis.api.impl.base.java.source.JavaElementSourceWithSmartPointerFactory", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.psi.KotlinReferenceProvidersService", "org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService", pluginDescriptor)
-        registerFIRService(
-            app, "org.jetbrains.kotlin.analysis.api.permissions.KaAnalysisPermissionRegistry",
-            "org.jetbrains.kotlin.analysis.api.impl.base.permissions.KaBaseAnalysisPermissionRegistry", pluginDescriptor
+        registrar.appServiceClass("org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher")
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaContentScopeProvider", "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseContentScopeProvider")
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.platform.KotlinMessageBusProvider", "org.jetbrains.kotlin.analysis.api.platform.KotlinProjectMessageBusProvider")
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider", "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseModuleProvider")
+        registrar.projectService("org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade", "org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseKotlinJavaPsiFacade")
+        registrar.projectService("org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory", "org.jetbrains.kotlin.analysis.api.impl.base.java.source.JavaElementSourceWithSmartPointerFactory")
+        registrar.projectService("org.jetbrains.kotlin.psi.KotlinReferenceProvidersService", "org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService")
+        registrar.appService("org.jetbrains.kotlin.analysis.api.permissions.KaAnalysisPermissionRegistry",
+            "org.jetbrains.kotlin.analysis.api.impl.base.permissions.KaBaseAnalysisPermissionRegistry"
         )
-        registerFIRService(
-            project, "org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver",
-            "org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseJavaModuleResolver", pluginDescriptor
+        registrar.projectService("org.jetbrains.kotlin.resolve.jvm.modules.JavaModuleResolver",
+            "org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseJavaModuleResolver"
         )
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider",
-            "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseResolutionScopeProvider", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.permissions.KaAnalysisPermissionChecker", "org.jetbrains.kotlin.analysis.api.impl.base.permissions.KaBaseAnalysisPermissionChecker", pluginDescriptor)
-        registerFIRService(project, "org.jetbrains.kotlin.analysis.api.platform.lifetime.KaLifetimeTracker", "org.jetbrains.kotlin.analysis.api.impl.base.lifetime.KaBaseLifetimeTracker", pluginDescriptor)
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider",
+            "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseResolutionScopeProvider")
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.platform.permissions.KaAnalysisPermissionChecker", "org.jetbrains.kotlin.analysis.api.impl.base.permissions.KaBaseAnalysisPermissionChecker")
+        registrar.projectService("org.jetbrains.kotlin.analysis.api.platform.lifetime.KaLifetimeTracker", "org.jetbrains.kotlin.analysis.api.impl.base.lifetime.KaBaseLifetimeTracker")
     }
 
     @OptIn(KaPlatformInterface::class, KaImplementationDetail::class)
@@ -405,32 +374,9 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             // find the actual file path.
             // See [LLFirJavaFacadeForBinaries#getBinaryPath] and [StandaloneProjectFactory#getBinaryPath] for a similar hack.
             val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
-            libHomePath + "!/" + "modules/$pathInImage"
+            "$libHomePath!/modules/$pathInImage"
         } else
             pathString
-    }
-
-    private fun registerFIRService(componentManager: MockComponentManager, interfaceName: String, implClassName: String, pluginDescriptor: DefaultPluginDescriptor) {
-        val iface = componentManager.loadClass<JvmType.Object>(interfaceName, pluginDescriptor)
-        val implClass = componentManager.loadClass<JvmType.Object>(implClassName, pluginDescriptor)
-        componentManager.registerService(iface, implClass)
-    }
-
-    private fun registerFIRServiceClass(componentManager: MockComponentManager, implClassName: String, pluginDescriptor: DefaultPluginDescriptor) {
-        val implClass = componentManager.loadClass<JvmType.Object>(implClassName, pluginDescriptor)
-        componentManager.registerService(implClass)
-    }
-
-    private fun loadClass(componentManager: MockComponentManager, className: String, pluginDescriptor: DefaultPluginDescriptor): Class<JvmType.Object> {
-        return componentManager.loadClass(className, pluginDescriptor)
-    }
-
-    private fun <T: Any> registerProjectListener(project: MockProject, listenerClass: String, topic: Topic<T>, pluginDescriptor: DefaultPluginDescriptor) {
-        val sessionInvalidationListener = loadClass(project, listenerClass, pluginDescriptor) as Class<T>
-        project.messageBus.connect().subscribe<T>(
-            topic,
-            sessionInvalidationListener.kotlin.primaryConstructor!!.call(project)
-        )
     }
 
     fun onOpenFile(path: String) {
