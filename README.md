@@ -46,6 +46,10 @@ sed -i "s|<your-home-folder>|$HOME|g" .kotlinlsp-modules.json
 
 After that, run the code editor in a kotlin file from this project and you should see diagnostics being reported. Also a `./log.txt` file will be created logging the calls to the services in the platform interface, to help troubleshoot bugs and track missing functionality. In the `Log.kt` file you can configure the verbosity of the logs.
 
+## Running tests
+
+To run the tests, just run the `./gradlew test` command. The tests are made around the LSP interface so we test against real user interactions, providing a good safety net in case of refactoring or updating dependencies.
+
 ## Contributions
 
 Contributions are welcome! I try to improve this language server in my spare time but progress will be slow if I do it all by myself, so the more contributors this project has, the faster the development will be. Feel free to contact me if you want to contribute, have any doubts about how to start or if you need some more context about the Analysis API (which I'm not an expert, but I can provide my own research to help the development of the project).

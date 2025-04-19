@@ -35,6 +35,10 @@ dependencies {
     }
 
     implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0")
+
+    testImplementation(platform("org.junit:junit-bom:5.12.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -52,5 +56,12 @@ tasks.register("printMainClasspathJars") {
         configurations.compileClasspath.get().forEach {
             println(it.absolutePath)
         }
+    }
+}
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
     }
 }
