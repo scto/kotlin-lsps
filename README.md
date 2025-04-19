@@ -22,7 +22,7 @@ Right now, this language server is at its infancy and thus not ready to use for 
 
 To build the language server, just run the `./build.sh` script at the root directory, which compiles the project using gradle, packs it as a distribution zip and decompresses it in the `./lsp-dist` folder. Once built, you need to integrate it in a code editor to test its functionality. For example, in neovim the following config can be used:
 
-```
+```lua
 local root_dir = vim.fs.root(0, {"settings.gradle.kts", "settings.gradle"})
 if not root_dir then
     root_dir = vim.fs.root(0, {"build.gradle.kts", "build.gradle"})
@@ -38,7 +38,7 @@ vim.lsp.enable('kotlinlsp')
 
 We need to do an extra step to configure the modules which will be used by the LSP. As of today the language server does not have integrations with build systems like gradle, so for the time being the modules used are read from a `.kotlinlsp-modules.json` file. To set it up, run these commands:
 
-```
+```bash
 cp .kotlinlsp-modules.template.json .kotlinlsp-modules.json
 # Changes the template with your home folder so jar dependencies are picked up correctly
 sed -i "s|<your-home-folder>|$HOME|g" .kotlinlsp-modules.json
