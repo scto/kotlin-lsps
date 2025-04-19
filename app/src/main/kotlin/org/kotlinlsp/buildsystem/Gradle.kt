@@ -303,9 +303,24 @@ fun getModuleList(project: MockProject, appEnvironment: KotlinCoreApplicationEnv
         kotlinVersion = kotlinVersion,
         javaVersion = javaVersion,
         folderPath = "$rootPath/app/src/main",
-        dependencies = dependencies
+        // Allow transitive dependencies to be visible to the source module
+        dependencies = collectTransitiveDependencies(dependencies)
     )
     printModule(rootModule)
     cachedModule = rootModule
     return rootModule
+}
+
+private fun collectTransitiveDependencies(modules: List<KaModule>): List<KaModule> {
+    val visited = mutableSetOf<KaModule>()
+    val toVisit = ArrayDeque(modules)
+
+    while (toVisit.isNotEmpty()) {
+        val current = toVisit.removeFirst()
+        if (current in visited) continue
+        visited += current
+        toVisit += current.directRegularDependencies
+    }
+
+    return visited.toList()
 }
