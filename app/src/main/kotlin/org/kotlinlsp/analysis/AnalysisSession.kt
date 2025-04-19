@@ -48,10 +48,9 @@ import org.kotlinlsp.analysis.registration.lspPlatformPostInit
 import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
-import org.kotlinlsp.buildsystem.getModuleList
+import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.utils.toLspRange
 import org.kotlinlsp.utils.toOffset
-import java.io.File
 import kotlin.io.path.absolutePathString
 
 class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit) {
@@ -59,6 +58,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     private val project: MockProject
     private val commandProcessor: CommandProcessor
     private val psiDocumentManager: PsiDocumentManager
+    private val buildSystemResolver: BuildSystemResolver
     private val openedFiles = mutableMapOf<String, KtFile>()
 
     init {
@@ -79,9 +79,12 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         val registrar = Registrar(project, app, projectDisposable)
         registrar.lspPlatform()
 
+        // Call the appropriate build system to get the modules to analyze
+        buildSystemResolver = BuildSystemResolver(project, appEnvironment)
+        val rootModule = buildSystemResolver.resolveModuleDAG()
+
         project.setupHighestLanguageLevel()
         val librariesScope = ProjectScope.getLibrariesScope(project)
-        val rootModule = getModuleList(project, appEnvironment)
         val libraryRoots = mutableListOf<JavaRoot>()
         fetchLibraryRoots(rootModule, libraryRoots)
 
@@ -135,8 +138,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
         // Setup platform services
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(
-            project,
-            appEnvironment
+            rootModule
         )
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
         (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project)

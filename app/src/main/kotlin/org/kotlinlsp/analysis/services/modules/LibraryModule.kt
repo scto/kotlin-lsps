@@ -28,13 +28,13 @@ import java.nio.file.Path
 
 class LibraryModule(
     val appEnvironment: KotlinCoreApplicationEnvironment,
+    val roots: List<Path>,
+    val javaVersion: JvmTarget,
+    val dependencies: MutableList<KaModule> = mutableListOf(),
+    val isJdk: Boolean = false,
+    val name: String,
     private val mockProject: MockProject,
-    private val roots: List<Path>,
-    private val javaVersion: JvmTarget,
     private val sourceModule: KaLibrarySourceModule? = null,
-    private val dependencies: List<KaModule> = emptyList(),
-    private val isJdk: Boolean = false,
-    private val name: String
 ): KaLibraryModule, KaModuleBase() {
     @OptIn(KaImplementationDetail::class)
     @KaPlatformInterface

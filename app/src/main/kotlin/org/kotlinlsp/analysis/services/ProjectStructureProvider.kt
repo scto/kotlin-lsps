@@ -1,6 +1,5 @@
 package org.kotlinlsp.analysis.services
 
-import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -8,21 +7,13 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
-import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
-import org.kotlinlsp.buildsystem.getModuleList
 import org.kotlinlsp.utils.trace
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
-    private lateinit var mockProject: MockProject
-    private lateinit var appEnvironment: KotlinCoreApplicationEnvironment
+    private lateinit var rootModule: KaModule
 
-    fun setup(project: MockProject, applicationEnvironment: KotlinCoreApplicationEnvironment) {
-        this.mockProject = project
-        this.appEnvironment = applicationEnvironment
-    }
-
-    private val rootModule: KaModule by lazy {
-        getModuleList(mockProject, appEnvironment)
+    fun setup(rootModule: KaModule) {
+        this.rootModule = rootModule
     }
 
     override fun getImplementingModules(module: KaModule): List<KaModule> {

@@ -15,12 +15,12 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import java.io.File
 
 class SourceModule(
+    val folderPath: String,
+    val dependencies: MutableList<KaModule>,
+    val javaVersion: JvmTarget,
+    val kotlinVersion: LanguageVersion,
+    val moduleName: String,
     private val mockProject: MockProject,
-    private val folderPath: String,
-    private val dependencies: List<KaModule>,
-    private val javaVersion: JvmTarget,
-    private val kotlinVersion: LanguageVersion,
-    private val moduleName: String
 ) : KaSourceModule, KaModuleBase() {
     private val scope: GlobalSearchScope by lazy {
         val files = File(folderPath)
