@@ -80,7 +80,6 @@ fun Registrar.lspPlatform() {
         WriteAccessGuard::class.java
     )
     with(project) {
-        registerService(FileAttributeService::class.java, DummyFileAttributeService::class.java)
         registerService(
             CoreJavaFileManager::class.java,
             project.getService(JavaFileManager::class.java) as CoreJavaFileManager
@@ -114,6 +113,7 @@ fun Registrar.lspPlatform() {
         registerExtension(PsiElementFinderImpl(project), disposable)
     }
     with(app) {
+        registerService(FileAttributeService::class.java, DummyFileAttributeService::class.java)
         registerService(KotlinAnalysisPermissionOptions::class.java, AnalysisPermissionOptions::class.java)
     }
 }
