@@ -8,13 +8,13 @@ Right now, this language server is at its infancy and thus not ready to use for 
 
 - Integration with build systems: as of now, this language server does not integrate with any build system. For testing and development purposes, a Gradle implementation can be found in `buildsystem/Gradle.kt`, which just defines explicitly the dependencies this codebase uses (that's the reason why this LS can only analyse this codebase). In the near future integration with existing build systems (gradle, maven...) will be added so this LS will be usable for other projects
 
-- Implement stubbed Analysis API services: To use the analysis API, we need to provide implementations for the services needed to define the so called [Platform Interface](https://github.com/JetBrains/kotlin/blob/master/analysis/analysis-api-platform-interface/README.md). Right now, only a subset of the platform interface is implemented (without caching mechanisms, just a quick implementation to have it working for now). The rest of the services are stubbed and need development. Because some services are not yet implemented, imports from external dependencies are not resolved correctly right now.
+- Implement stubbed Analysis API services: To use the analysis API, we need to provide implementations for the services needed to define the so called [Platform Interface](https://github.com/JetBrains/kotlin/blob/master/analysis/analysis-api-platform-interface/README.md). Right now, only a subset of the platform interface is implemented (without caching mechanisms, just a quick implementation to have it working for now, so slowness is expected in this phase of the project). The rest of the services are stubbed and need development.
 
 - Indexing solution: to provide features like autocomplete and search references, we need to create an index where we store all the references used in the project. This feature has not been started yet, the idea is to use something like a sqlite database and perform a background indexing of the whole project, and incrementally update it as the user modifies the source files. One of the goals of this LS is to provide a fast startup time, so diagnostics are reported as quick as possible.
 
 ### Implemented features
-- 🚧 Real time diagnostics: mostly working, need to finish configuring the Analysis API to solve the remaining diagnostics false errors
-- 🚧 Go to definition: working, would be nice to use a decompiler like Fernflower to show .class files contents
+- 🚧 Real time diagnostics: mostly working for this codebase, need to finish implement the Analysis API platform to solve the remaining diagnostics false errors
+- 🚧 Go to definition: working except for kotlin binary dependencies, it would also be nice to use a decompiler to jump into .class files (the analysis api provides `KotlinClassFileDecompiler` for kotlin .class files, fernflower may be used for java .class files)
 - 🚧 Hover: only implemented for function calls, need to implement for the rest of use cases
 - 🚧 Build system integration: there is initial basic support for gradle at this [PR](https://github.com/amgdev9/kotlin-lsp/pull/1), but needs work to be usable
 
