@@ -36,6 +36,14 @@ vim.lsp.config['kotlinlsp'] = {
 vim.lsp.enable('kotlinlsp')
 ```
 
+We need to do an extra step to configure the modules which will be used by the LSP. As of today the language server does not have integrations with build systems like gradle, so for the time being the modules used are read from a `.kotlinlsp-modules.json` file. To set it up, run these commands:
+
+```
+cp .kotlinlsp-modules.template.json .kotlinlsp-modules.json
+# Changes the template with your home folder so jar dependencies are picked up correctly
+sed -i "s|<your-home-folder>|$HOME|g" .kotlinlsp-modules.json
+```
+
 After that, run the code editor in a kotlin file from this project and you should see diagnostics being reported. Also a `./log.txt` file will be created logging the calls to the services in the platform interface, to help troubleshoot bugs and track missing functionality. In the `Log.kt` file you can configure the verbosity of the logs.
 
 ## Contributions
