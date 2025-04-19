@@ -183,29 +183,6 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         }
     }
 
-    @OptIn(KaPlatformInterface::class)
-    private fun getJdkHome(module: KaModule): File? {
-        when (module) {
-            is SourceModule -> {
-                module.directRegularDependencies.forEach {
-                    val home = getJdkHome(it)
-                    if(home != null) return home
-                }
-            }
-
-            is LibraryModule -> {
-                if (module.isSdk) return File(module.binaryRoots.first().absolutePathString())
-                module.directRegularDependencies.forEach {
-                    val home = getJdkHome(it)
-                    if(home != null) return home
-                }
-            }
-
-            else -> throw Exception("Unsupported KaModule! $module")
-        }
-        return null
-    }
-
     private fun adjustModulePath(pathString: String): String {
         return if (pathString.contains("!/")) {
             // URLs loaded from JDK point to module names in a JRT protocol format,
