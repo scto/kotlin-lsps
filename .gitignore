@@ -1,6 +1,10 @@
+# Build artifacts
 .gradle
 .idea
 .kotlin
 build
+
+# LSP
 lsp-dist
+.kotlinlsp-modules.json
 log.txt
