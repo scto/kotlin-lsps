@@ -1,5 +1,7 @@
 # Kotlin Language Server
 
+[![Status](https://github.com/amgdev9/kotlin-lsp/actions/workflows/push.yml/badge.svg)](https://github.com/amgdev9/kotlin-lsp/actions/workflows/push.yml)
+
 This is an implementation of the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/specification) for the [Kotlin](https://kotlinlang.org) programming language, leveraging the Kotlin [Analysis API](https://github.com/JetBrains/kotlin/blob/master/docs/analysis/analysis-api/analysis-api.md) to provide real time diagnostics, syntax and semantic analysis of Kotlin source files and libraries.
 
 ## Current status
