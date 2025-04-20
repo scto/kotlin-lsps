@@ -53,7 +53,7 @@ import org.kotlinlsp.utils.toLspRange
 import org.kotlinlsp.utils.toOffset
 import kotlin.io.path.absolutePathString
 
-class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit) {
+class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit, private val rootPath: String) {
     private val app: MockApplication
     private val project: MockProject
     private val commandProcessor: CommandProcessor
@@ -80,7 +80,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         registrar.lspPlatform()
 
         // Call the appropriate build system to get the modules to analyze
-        buildSystemResolver = BuildSystemResolver(project, appEnvironment)
+        buildSystemResolver = BuildSystemResolver(project, appEnvironment, rootPath)
         val rootModule = buildSystemResolver.resolveModuleDAG()
 
         project.setupHighestLanguageLevel()

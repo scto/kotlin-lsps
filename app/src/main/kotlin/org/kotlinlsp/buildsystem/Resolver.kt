@@ -7,10 +7,11 @@ import java.io.File
 
 class BuildSystemResolver(
     project: MockProject,
-    appEnvironment: KotlinCoreApplicationEnvironment
+    appEnvironment: KotlinCoreApplicationEnvironment,
+    rootFolder: String
 ) {
     private val BUILD_SYSTEMS: List<BuildSystem> = listOf(
-        FileBasedBuildSystem(project, appEnvironment),
+        FileBasedBuildSystem(project, appEnvironment, rootFolder),
         GradleBuildSystem()
     )
 

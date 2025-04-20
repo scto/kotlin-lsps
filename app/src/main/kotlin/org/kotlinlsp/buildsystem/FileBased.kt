@@ -10,13 +10,14 @@ import java.io.File
 // Also used for testing purposes
 class FileBasedBuildSystem(
     private val project: MockProject,
-    private val appEnvironment: KotlinCoreApplicationEnvironment
+    private val appEnvironment: KotlinCoreApplicationEnvironment,
+    private val rootFolder: String
 ): BuildSystem {
     override val markerFiles: List<String>
-        get() = listOf(".kotlinlsp-modules.json")
+        get() = listOf("$rootFolder/.kotlinlsp-modules.json")
 
     override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String> {
-        val contents = File(".kotlinlsp-modules.json").readText()
+        val contents = File("$rootFolder/.kotlinlsp-modules.json").readText()
         val rootModule = deserializeRootModule(
             contents,
             mockProject = project,
