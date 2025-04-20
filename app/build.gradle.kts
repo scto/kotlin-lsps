@@ -1,3 +1,4 @@
+val lspVersion = "0.1"
 val analysisApiKotlinVersion = "2.2.0-dev-7826" // 3-March-2025
 val intellijVersion = "241.19416.19"    // Same as KSP uses, upgrading to latest gives runtime errors (incompatible with Analysis API for now)
 
@@ -5,6 +6,8 @@ plugins {
     kotlin("jvm") version "2.1.0"
     application
 }
+
+version = lspVersion
 
 repositories {
     mavenCentral()
@@ -57,6 +60,14 @@ tasks.register("printMainClasspathJars") {
         configurations.compileClasspath.get().forEach {
             println(it.absolutePath)
         }
+    }
+}
+
+tasks.jar {
+    manifest {
+        attributes(
+            "Implementation-Version" to project.version
+        )
     }
 }
 

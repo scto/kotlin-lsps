@@ -4,6 +4,7 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.kotlinlsp.analysis.AnalysisSession
+import org.kotlinlsp.utils.getLspVersion
 import org.kotlinlsp.utils.info
 import org.kotlinlsp.utils.setupLogger
 import java.util.concurrent.CompletableFuture
@@ -21,10 +22,13 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
             hoverProvider = Either.forLeft(true)
             definitionProvider = Either.forLeft(true)
         }
+        val serverInfo = ServerInfo().apply {
+            version = getLspVersion()
+        }
 
         rootPath = params.workspaceFolders.first().uri.removePrefix("file://")
 
-        return completedFuture(InitializeResult(capabilities))
+        return completedFuture(InitializeResult(capabilities, serverInfo))
     }
 
     override fun initialized(params: InitializedParams) {

@@ -29,7 +29,7 @@ if not root_dir then
 end
 local lsp_folder = "... path to lsp-dist folder ..."
 vim.lsp.config['kotlinlsp'] = {
-    cmd = { '' .. lsp_folder .. '/app/bin/app' },
+    cmd = { '' .. lsp_folder .. '/app-0.1/bin/app' },
     filetypes = { 'kotlin' },
     root_dir = root_dir
 }

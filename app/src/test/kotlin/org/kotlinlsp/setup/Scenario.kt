@@ -53,9 +53,11 @@ fun scenario(projectName: String, testCase: (server: MyLanguageServer, client: L
     server.connect(client)
 
     // Run test case
-    testCase(server, client, "file://$cwd/test-projects/$projectName")
-
-    // Cleanup
-    moduleFile.delete()
-    File("$cwd/test-projects/$projectName/log.txt").delete()
+    try {
+        testCase(server, client, "file://$cwd/test-projects/$projectName")
+    } finally {
+        // Cleanup
+        moduleFile.delete()
+        File("$cwd/test-projects/$projectName/log.txt").delete()
+    }
 }
