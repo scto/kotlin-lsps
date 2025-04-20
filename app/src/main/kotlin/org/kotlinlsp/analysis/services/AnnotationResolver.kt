@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotations
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtAnnotated
+import org.kotlinlsp.utils.profile
 import org.kotlinlsp.utils.trace
 
 class AnnotationsResolverFactory : KotlinAnnotationsResolverFactory {
@@ -15,13 +16,13 @@ class AnnotationsResolverFactory : KotlinAnnotationsResolverFactory {
 
 // TODO Implement this
 class AnnotationsResolver : KotlinAnnotationsResolver {
-    override fun declarationsByAnnotation(annotationClassId: ClassId): Set<KtAnnotated> {
-        trace("[X] declarationsByAnnotation: $annotationClassId")
-        return emptySet()
-    }
+    override fun declarationsByAnnotation(annotationClassId: ClassId): Set<KtAnnotated> =
+        profile("[X] declarationsByAnnotation", "$annotationClassId") {
+            emptySet()
+        }
 
-    override fun annotationsOnDeclaration(declaration: KtAnnotated): Set<ClassId> {
-        trace("[X] annotationsOnDeclaration: $declaration")
-        return emptySet()
-    }
+    override fun annotationsOnDeclaration(declaration: KtAnnotated): Set<ClassId> =
+        profile("[X] annotationsOnDeclaration", "$declaration") {
+            emptySet()
+        }
 }

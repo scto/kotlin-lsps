@@ -11,6 +11,8 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import kotlin.io.path.absolutePathString
+import kotlin.time.Duration
+import kotlin.time.measureTime
 
 private enum class LogLevel(level: Int) {
     Trace(0),
@@ -20,8 +22,13 @@ private enum class LogLevel(level: Int) {
     Error(4),
     Off(5)
 }
+
+// Configure as needed
 private val logLevel = LogLevel.Trace
+private const val profileEnabled = true
+
 private lateinit var logFile: File
+private val profileInfo = mutableMapOf<String, Duration>()
 
 fun setupLogger(path: String) {
     val loggerPath = "$path/log.txt"
@@ -35,6 +42,37 @@ fun setupLogger(path: String) {
 
     // Also redirect stderr there (for analysis api logs)
     System.setErr(PrintStream(FileOutputStream(logFile)))
+}
+
+fun <T> profile(tag: String, message: String, fn: () -> T): T {
+    trace("$tag $message")
+
+    if(profileEnabled) {
+        var result: T?
+        val time = measureTime {
+            result = fn()
+        }
+        if(!profileInfo.containsKey(tag)) {
+            profileInfo[tag] = time
+        } else {
+            profileInfo[tag] = profileInfo[tag]!!.plus(time)
+        }
+        return result!!
+    } else {
+        return fn()
+    }
+}
+
+fun logProfileInfo() {
+    if (!profileEnabled) return
+
+    log("------------")
+    log("PROFILE INFO")
+    profileInfo.entries.sortedByDescending { it.value }.forEach {
+        log("${it.key}: ${it.value}")
+    }
+    log("------------")
+    profileInfo.clear()
 }
 
 private fun log(message: String) {

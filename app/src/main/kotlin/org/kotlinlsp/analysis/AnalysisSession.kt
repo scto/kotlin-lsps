@@ -49,6 +49,7 @@ import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.BuildSystemResolver
+import org.kotlinlsp.utils.logProfileInfo
 import org.kotlinlsp.utils.toLspRange
 import org.kotlinlsp.utils.toOffset
 import kotlin.io.path.absolutePathString
@@ -242,6 +243,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             return@analyze lspDiagnostics
         }
         onDiagnostics(PublishDiagnosticsParams("file://${ktFile.virtualFilePath}", syntaxDiagnostics + analysisDiagnostics))
+        logProfileInfo()
     }
 
     // TODO Use version to avoid conflicts

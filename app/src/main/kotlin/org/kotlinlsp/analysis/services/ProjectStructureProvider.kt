@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.kotlinlsp.utils.profile
 import org.kotlinlsp.utils.trace
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
@@ -16,15 +17,13 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
         this.rootModule = rootModule
     }
 
-    override fun getImplementingModules(module: KaModule): List<KaModule> {
-        trace("getImplementingModules: $module")
-        return emptyList()  // TODO
+    override fun getImplementingModules(module: KaModule): List<KaModule> = profile("getImplementingModules", "$module") {
+        emptyList()  // TODO
     }
 
-    override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule {
-        trace("getModule: $element, useSiteModule: $useSiteModule")
+    override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule = profile("getModule", "$element, useSiteModule: $useSiteModule") {
         val virtualFile = element.containingFile.virtualFile
-        return searchVirtualFileInModule(virtualFile, useSiteModule ?: rootModule)!!
+        searchVirtualFileInModule(virtualFile, useSiteModule ?: rootModule)!!
     }
 
     private fun searchVirtualFileInModule(virtualFile: VirtualFile, module: KaModule): KaModule? {

@@ -48,7 +48,7 @@ fun scenario(projectName: String, testCase: (server: MyLanguageServer, client: L
         )
     }
     val client = mock(LanguageClient::class.java)
-    server.initialize(initParams)
+    server.initialize(initParams).join()
     server.initialized(InitializedParams())
     server.connect(client)
 

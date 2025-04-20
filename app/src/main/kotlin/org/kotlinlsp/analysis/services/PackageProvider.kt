@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.kotlinlsp.analysis.services.utils.virtualFilesForPackage
+import org.kotlinlsp.utils.profile
 import org.kotlinlsp.utils.trace
 
 class PackageProviderFactory: KotlinPackageProviderFactory {
@@ -21,15 +22,12 @@ class PackageProviderFactory: KotlinPackageProviderFactory {
 }
 
 private class PackageProvider(project: Project, searchScope: GlobalSearchScope): KotlinPackageProviderBase(project, searchScope) {
-    override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean {
-        trace("doesKotlinOnlyPackageExist: $packageFqName")
-
-        return packageFqName.isRoot || virtualFilesForPackage(project, searchScope, packageFqName).iterator().hasNext()
+    override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean = profile("doesKotlinOnlyPackageExist", "$packageFqName") {
+        packageFqName.isRoot || virtualFilesForPackage(project, searchScope, packageFqName).iterator().hasNext()
     }
 
-    override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> {
-        trace("[X] getKotlinOnlySubpackageNames: $packageFqName")
-        return emptySet()
+    override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> = profile("[X] getKotlinOnlySubpackageNames", "$packageFqName") {
+        emptySet()
     }
 }
 
