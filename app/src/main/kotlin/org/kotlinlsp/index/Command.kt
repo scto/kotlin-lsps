@@ -6,5 +6,6 @@ import kotlin.time.Instant
 
 sealed class Command {
     data object Stop : Command()
+    data object IndexingFinished: Command()
     data class IndexFile @OptIn(ExperimentalTime::class) constructor(val ktFile: KtFile, val timestamp: Instant) : Command()
 }

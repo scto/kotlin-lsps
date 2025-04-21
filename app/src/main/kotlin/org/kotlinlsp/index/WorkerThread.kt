@@ -1,6 +1,7 @@
 package org.kotlinlsp.index
 
 import org.kotlinlsp.utils.getCachePath
+import org.kotlinlsp.utils.info
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.concurrent.ArrayBlockingQueue
@@ -19,6 +20,10 @@ class WorkerThread(private val rootFolder: String): Runnable {
                 is Command.Stop -> break
                 is Command.IndexFile -> {
                     // TODO
+                    info(command.ktFile.virtualFilePath)
+                }
+                is Command.IndexingFinished -> {
+                    info("Background indexing finished!")
                 }
             }
         }

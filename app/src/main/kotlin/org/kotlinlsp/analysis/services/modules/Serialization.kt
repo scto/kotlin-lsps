@@ -100,7 +100,7 @@ fun deserializeRootModule(
     return nodeMap[parsed.first().id]!!
 }
 
-private fun KaModule.id(): String = when(this) {
+fun KaModule.id(): String = when(this) {
     is SourceModule -> moduleName
     is LibraryModule -> libraryName
     else -> throw Exception("Unsupported KaModule!")
