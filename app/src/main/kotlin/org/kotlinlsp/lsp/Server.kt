@@ -9,9 +9,8 @@ import org.kotlinlsp.utils.info
 import org.kotlinlsp.utils.setupLogger
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
-import kotlin.system.exitProcess
 
-class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, LanguageClientAware {
+class MyLanguageServer(private val exitProcess: () -> Unit): LanguageServer, TextDocumentService, WorkspaceService, LanguageClientAware {
     private lateinit var client: LanguageClient
     private lateinit var analysisSession: AnalysisSession
     private lateinit var rootPath: String
@@ -50,7 +49,7 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
 
     override fun exit() {
         analysisSession.dispose()
-        exitProcess(0)
+        exitProcess()
     }
 
     override fun getTextDocumentService(): TextDocumentService = this

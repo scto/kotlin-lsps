@@ -5,6 +5,7 @@ import org.kotlinlsp.lsp.MyLanguageServer
 import org.kotlinlsp.utils.getLspVersion
 import org.kotlinlsp.utils.profileJvmStartup
 import java.util.concurrent.Executors
+import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
     profileJvmStartup()
@@ -13,7 +14,7 @@ fun main(args: Array<String>) {
         return
     }
 
-    val server = MyLanguageServer()
+    val server = MyLanguageServer(exitProcess = { exitProcess(0) })
     val threads = Executors.newSingleThreadExecutor {
         Thread(it, "client")
     }

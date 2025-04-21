@@ -3,25 +3,24 @@ package org.kotlinlsp.index
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
-import org.kotlinlsp.utils.getCachePath
-import java.sql.Connection
-import java.sql.DriverManager
-import kotlin.io.path.absolutePathString
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
-class Index(private val rootModule: KaModule, private val project: MockProject, private val rootFolder: String) {
-    private lateinit var connection: Connection
+class Index(private val rootModule: KaModule, private val project: MockProject, rootFolder: String) {
+    private val workerThreadRunner = WorkerThread(rootFolder)
+    private val workerThread = Thread(workerThreadRunner)
 
     fun syncIndexInBackground() {
-        val cacheFolder = getCachePath(rootFolder)
-        connection = DriverManager.getConnection("jdbc:h2:${cacheFolder.resolve("index").absolutePathString()}")
-        // TODO
+        workerThread.start()
     }
 
+    @OptIn(ExperimentalTime::class)
     fun queueOnFileChanged(ktFile: KtFile) {
-        // TODO Update index entry for this file
+        workerThreadRunner.submitCommand(Command.IndexFile(ktFile, Clock.System.now()))
     }
 
     fun close() {
-        connection.close()
+        workerThreadRunner.submitCommand(Command.Stop)
+        workerThread.join()
     }
 }

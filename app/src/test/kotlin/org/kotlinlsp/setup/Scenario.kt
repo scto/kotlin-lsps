@@ -5,6 +5,7 @@ import org.eclipse.lsp4j.InitializedParams
 import org.eclipse.lsp4j.WorkspaceFolder
 import org.eclipse.lsp4j.services.LanguageClient
 import org.kotlinlsp.lsp.MyLanguageServer
+import org.kotlinlsp.utils.removeCacheFolder
 import org.mockito.Mockito.mock
 import java.io.File
 import java.nio.file.Paths
@@ -39,7 +40,7 @@ fun scenario(projectName: String, testCase: (server: MyLanguageServer, client: L
     moduleFile.delete()
     moduleFile.writeText(moduleContents)
 
-    val server = MyLanguageServer()
+    val server = MyLanguageServer(exitProcess = { /* no op */ })
     val initParams = InitializeParams().apply {
         workspaceFolders = listOf(
             WorkspaceFolder().apply {
@@ -57,7 +58,9 @@ fun scenario(projectName: String, testCase: (server: MyLanguageServer, client: L
         testCase(server, client, "file://$cwd/test-projects/$projectName")
     } finally {
         // Cleanup
+        server.shutdown().join()
         moduleFile.delete()
         File("$cwd/test-projects/$projectName/log.txt").delete()
+        removeCacheFolder("$cwd/test-projects/$projectName")
     }
 }
