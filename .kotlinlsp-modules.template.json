@@ -4,8 +4,8 @@
     "dependencies": [
       "org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-7826",
       "com.jetbrains.intellij.platform:util:241.19416.19",
-      "org.jetbrains.kotlin:kotlin-compiler:2.2.0-dev-7826",
       "com.jetbrains.intellij.platform:core-impl:241.19416.19",
+      "org.jetbrains.kotlin:kotlin-compiler:2.2.0-dev-7826",
       "com.github.ben-manes.caffeine:caffeine:2.9.3",
       "org.jetbrains.kotlin:analysis-api-k2-for-ide:2.2.0-dev-7826",
       "org.jetbrains.kotlin:analysis-api-for-ide:2.2.0-dev-7826",
