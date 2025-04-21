@@ -49,23 +49,26 @@ import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.BuildSystemResolver
+import org.kotlinlsp.index.Index
 import org.kotlinlsp.utils.logProfileInfo
 import org.kotlinlsp.utils.toLspRange
 import org.kotlinlsp.utils.toOffset
 import kotlin.io.path.absolutePathString
 
-class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit, private val rootPath: String) {
+class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit, rootPath: String) {
     private val app: MockApplication
     private val project: MockProject
     private val commandProcessor: CommandProcessor
     private val psiDocumentManager: PsiDocumentManager
     private val buildSystemResolver: BuildSystemResolver
     private val openedFiles = mutableMapOf<String, KtFile>()
+    private val index: Index
 
     init {
         System.setProperty("java.awt.headless", "true")
         setupIdeaStandaloneExecution()
 
+        // Create core objects for Analysis API
         val projectDisposable = Disposer.newDisposable("LSPAnalysisAPISession.project")
         val compilerConfiguration = CompilerConfiguration()
         val appEnvironment = KotlinCoreEnvironment.getOrCreateApplicationEnvironment(
@@ -77,13 +80,19 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         project = coreEnvironment.project
         app = appEnvironment.application
 
+        // Register the LSP platform in the Analysis API
         val registrar = Registrar(project, app, projectDisposable)
         registrar.lspPlatform()
 
-        // Call the appropriate build system to get the modules to analyze
+        // Get the modules to analyze calling the appropriate build system
         buildSystemResolver = BuildSystemResolver(project, appEnvironment, rootPath)
         val rootModule = buildSystemResolver.resolveModuleDAG()
 
+        // Sync the index in the background
+        index = Index(rootModule, project, rootPath)
+        index.syncIndexInBackground()
+
+        // Prepare the dependencies index for the Analysis API
         project.setupHighestLanguageLevel()
         val librariesScope = ProjectScope.getLibrariesScope(project)
         val libraryRoots = mutableListOf<JavaRoot>()
@@ -132,6 +141,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         )
         val fileFinderFactory = CliVirtualFileFinderFactory(rootsIndex, false, perfManager = null)
 
+        // Register remaining services after setting up dependencies index
         registrar.lspPlatformPostInit(
             cliJavaModuleResolver = delegateJavaModuleResolver,
             cliVirtualFileFinderFactory = fileFinderFactory
@@ -143,7 +153,6 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         )
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
         (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project)
-        // Here libraryRoots should have .class files, not .jar files
         (project.getService(KotlinPackagePartProviderFactory::class.java) as PackagePartProviderFactory).setup(
             libraryRoots
         )
@@ -261,6 +270,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
                 ktFile.onContentReload()
             }, "onChangeFile", null)
         }
+        index.queueOnFileChanged(ktFile)    // Queue an update to the index
 
         // TODO Optimize the KaElementModificationType
         // TODO Add a debounce so analysis is not triggered on every keystroke adding lag
@@ -268,6 +278,10 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
             .handleElementModification(ktFile, KaElementModificationType.Unknown)
 
         updateDiagnostics(ktFile)
+    }
+
+    fun dispose() {
+        index.close()
     }
 
     fun hover(path: String, position: Position): Pair<String, Range>? {

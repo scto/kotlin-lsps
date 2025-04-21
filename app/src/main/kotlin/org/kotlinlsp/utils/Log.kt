@@ -6,12 +6,14 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import java.io.*
+import java.lang.management.ManagementFactory
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
 private enum class LogLevel(level: Int) {
@@ -24,11 +26,11 @@ private enum class LogLevel(level: Int) {
 }
 
 // Configure as needed
-private val logLevel = LogLevel.Trace
+private val logLevel = LogLevel.Error
 private const val profileEnabled = true
 
 private lateinit var logFile: File
-private val profileInfo = mutableMapOf<String, Duration>()
+private val profileInfo = mutableMapOf<String, Pair<Int, Duration>>()
 
 fun setupLogger(path: String) {
     val loggerPath = "$path/log.txt"
@@ -53,9 +55,10 @@ fun <T> profile(tag: String, message: String, fn: () -> T): T {
             result = fn()
         }
         if(!profileInfo.containsKey(tag)) {
-            profileInfo[tag] = time
+            profileInfo[tag] = Pair(1, time)
         } else {
-            profileInfo[tag] = profileInfo[tag]!!.plus(time)
+            val value = profileInfo[tag]!!
+            profileInfo[tag] = Pair(value.first + 1, value.second.plus(time))
         }
         return result!!
     } else {
@@ -63,16 +66,33 @@ fun <T> profile(tag: String, message: String, fn: () -> T): T {
     }
 }
 
+fun profileJvmStartup() {
+    val runtimeMXBean = ManagementFactory.getRuntimeMXBean()
+    val jvmStartTimeMillis = runtimeMXBean.startTime
+    val deltaMillis = System.currentTimeMillis() - jvmStartTimeMillis
+    profileInfo["JVM Startup"] = Pair(1, deltaMillis.milliseconds)
+}
+
 fun logProfileInfo() {
     if (!profileEnabled) return
 
     log("------------")
     log("PROFILE INFO")
-    profileInfo.entries.sortedByDescending { it.value }.forEach {
-        log("${it.key}: ${it.value}")
+    var totalDuration = Duration.ZERO
+    profileInfo.entries.sortedByDescending { it.value.second }.forEach {
+        val header = "${it.key} (x${it.value.first}):".padEnd(65)
+        val formattedDuration = formatDuration(it.value.second)
+        totalDuration += it.value.second
+        log("$header $formattedDuration")
     }
     log("------------")
+    log("TOTAL: ${formatDuration(totalDuration)}")
+    log("------------")
     profileInfo.clear()
+}
+
+private fun formatDuration(duration: Duration): String {
+    return "%.3f ms".format(duration.inWholeMicroseconds.toDouble() / 1000)
 }
 
 private fun log(message: String) {

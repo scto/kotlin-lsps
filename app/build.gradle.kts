@@ -38,6 +38,7 @@ dependencies {
     }
 
     implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0")
+    implementation("com.h2database:h2:2.3.232")
 
     testImplementation(platform("org.junit:junit-bom:5.12.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")

@@ -49,6 +49,7 @@ class MyLanguageServer: LanguageServer, TextDocumentService, WorkspaceService, L
     }
 
     override fun exit() {
+        analysisSession.dispose()
         exitProcess(0)
     }
 
