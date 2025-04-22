@@ -50,7 +50,7 @@ fun <T> profile(tag: String, message: String, fn: () -> T): T {
     trace("$tag $message")
 
     if(profileEnabled) {
-        var result: T?
+        var result: T
         val time = measureTime {
             result = fn()
         }
@@ -60,7 +60,7 @@ fun <T> profile(tag: String, message: String, fn: () -> T): T {
             val value = profileInfo[tag]!!
             profileInfo[tag] = Pair(value.first + 1, value.second.plus(time))
         }
-        return result!!
+        return result
     } else {
         return fn()
     }
