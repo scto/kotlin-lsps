@@ -15,15 +15,21 @@ class WorkerThread(private val rootFolder: String): Runnable {
         val connection = DriverManager.getConnection("jdbc:h2:${cacheFolder.resolve("index").absolutePathString()}")
         createTablesIfNeeded(connection)
 
+        var count = 0
+
         while(true) {
             when(val command = workQueue.take()) {
                 is Command.Stop -> break
                 is Command.IndexFile -> {
                     // TODO
-                    info(command.ktFile.virtualFilePath)
+                    count ++
+                }
+                is Command.IndexClassFile -> {
+                    // TODO
+                    count ++
                 }
                 is Command.IndexingFinished -> {
-                    info("Background indexing finished!")
+                    info("Background indexing finished!, $count files!")
                 }
             }
         }

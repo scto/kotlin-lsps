@@ -270,7 +270,9 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
                 ktFile.onContentReload()
             }, "onChangeFile", null)
         }
-        index.queueOnFileChanged(ktFile)    // Queue an update to the index
+
+        // Queue an update to the index
+        index.queueOnFileChanged(ktFile.copy() as KtFile)
 
         // TODO Optimize the KaElementModificationType
         // TODO Add a debounce so analysis is not triggered on every keystroke adding lag

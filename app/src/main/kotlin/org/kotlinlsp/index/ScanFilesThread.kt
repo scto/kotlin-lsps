@@ -1,6 +1,7 @@
 package org.kotlinlsp.index
 
 import com.intellij.mock.MockProject
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -9,6 +10,7 @@ import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.analysis.services.modules.id
 import java.io.File
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -20,39 +22,39 @@ class ScanFilesThread(
 ): Runnable {
     private val shouldStop = AtomicBoolean(false)
 
-    @OptIn(ExperimentalTime::class)
     override fun run() {
         processModule(rootModule)
             .takeWhile { !shouldStop.get() }
-            .mapNotNull {
-                VirtualFileManager.getInstance().findFileByUrl("file://$it")
-            }
-            .mapNotNull {
-                PsiManager.getInstance(project).findFile(it) as? KtFile
-            }
             .forEach {
-                worker.submitCommand(Command.IndexFile(it, Clock.System.now()))
+                val command = if(it.url.startsWith("file://")) {
+                    val ktFile = PsiManager.getInstance(project).findFile(it) as KtFile
+                    Command.IndexFile(ktFile)
+                } else {
+                    Command.IndexClassFile(it)
+                }
+                worker.submitCommand(command)
             }
+
         worker.submitCommand(Command.IndexingFinished)
     }
 
-    private fun processModule(module: KaModule, processedModules: MutableSet<String> = mutableSetOf()): Sequence<String> = sequence {
+    private fun processModule(module: KaModule, processedModules: MutableSet<String> = mutableSetOf()): Sequence<VirtualFile> = sequence {
         if(processedModules.contains(module.id())) return@sequence
 
         when(module) {
             is SourceModule -> {
-                File(module.folderPath)
-                    .walk()
-                    .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
-                    .forEach {
-                        yield(it.absolutePath)
-                    }
+                yieldAll(module.computeFiles())
+
                 module.directRegularDependencies.forEach {
                     yieldAll(processModule(it, processedModules))
                 }
             }
             is LibraryModule -> {
-                // TODO
+                yieldAll(module.computeFiles())
+
+                module.directRegularDependencies.forEach {
+                    yieldAll(processModule(it, processedModules))
+                }
             }
             else -> throw Exception("Unknown KaModule!")
         }

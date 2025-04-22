@@ -2,6 +2,7 @@ package org.kotlinlsp.analysis.services.modules
 
 import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -23,14 +24,18 @@ class SourceModule(
     private val mockProject: MockProject,
 ) : KaSourceModule, KaModuleBase() {
     private val scope: GlobalSearchScope by lazy {
-        val files = File(folderPath)
-            .walk()
-            .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
-            .mapNotNull { VirtualFileManager.getInstance().findFileByUrl("file://${it.absolutePath}") }
+        val files = computeFiles()
             .toList()
 
         return@lazy GlobalSearchScope.filesScope(mockProject, files)
     }
+
+    fun computeFiles(): Sequence<VirtualFile> =
+        File(folderPath)
+            .walk()
+            .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
+            .map { "file://${it.absolutePath}" }
+            .mapNotNull { VirtualFileManager.getInstance().findFileByUrl(it) }
 
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope

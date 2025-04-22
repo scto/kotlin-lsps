@@ -37,28 +37,11 @@ class LibraryModule(
     private val mockProject: MockProject,
     private val sourceModule: KaLibrarySourceModule? = null,
 ): KaLibraryModule, KaModuleBase() {
-    @OptIn(KaImplementationDetail::class)
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope by lazy {
-        val roots = if (isJdk) {
-            // This returns urls to the JMOD files in the jdk
-            LibraryUtils.findClassesFromJdkHome(binaryRoots.first(), isJre = false)
-        } else {
-            // These are JAR/class files
-            binaryRoots
-        }
-
         val virtualFileUrls = mutableSetOf<String>()
-        roots.asSequence()
-            .mapNotNull {
-                getVirtualFileForLibraryRoot(it, appEnvironment)
-            }
-            .map {
-                LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true)
-            }
-            .flatten()
-            .map { it.url }
-            .forEach { virtualFileUrls.add(it) }
+        computeFiles()
+            .forEach { virtualFileUrls.add(it.url) }
 
         return@lazy object : GlobalSearchScope(project) {
             override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
@@ -71,6 +54,26 @@ class LibraryModule(
                 it
             }
         }
+    }
+
+    @OptIn(KaImplementationDetail::class)
+    fun computeFiles(): Sequence<VirtualFile> {
+        val roots = if (isJdk) {
+            // This returns urls to the JMOD files in the jdk
+            LibraryUtils.findClassesFromJdkHome(binaryRoots.first(), isJre = false)
+        } else {
+            // These are JAR/class files
+            binaryRoots
+        }
+
+        return roots.asSequence()
+            .mapNotNull {
+                getVirtualFileForLibraryRoot(it, appEnvironment)
+            }
+            .map {
+                LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true)
+            }
+            .flatten()
     }
 
     override val binaryRoots: Collection<Path>

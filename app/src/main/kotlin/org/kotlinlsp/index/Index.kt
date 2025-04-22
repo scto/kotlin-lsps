@@ -3,8 +3,7 @@ package org.kotlinlsp.index
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
+import java.time.Instant
 
 class Index(rootModule: KaModule, project: MockProject, rootFolder: String) {
     private val workerThreadRunner = WorkerThread(rootFolder)
@@ -23,9 +22,8 @@ class Index(rootModule: KaModule, project: MockProject, rootFolder: String) {
         scanFilesThread.start()
     }
 
-    @OptIn(ExperimentalTime::class)
     fun queueOnFileChanged(ktFile: KtFile) {
-        workerThreadRunner.submitCommand(Command.IndexFile(ktFile, Clock.System.now()))
+        workerThreadRunner.submitCommand(Command.IndexFile(ktFile))
     }
 
     fun close() {
