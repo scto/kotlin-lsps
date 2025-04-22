@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.analysis.services.modules.id
-import java.io.File
+import org.kotlinlsp.common.findSourceFiles
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -41,12 +41,8 @@ class ScanFilesThread(
 
         when(module) {
             is SourceModule -> {
-                File(module.folderPath)
-                    .walk()
-                    .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
-                    .forEach {
-                        yield(it.absolutePath)
-                    }
+                yieldAll(findSourceFiles(module.folderPath))
+
                 module.directRegularDependencies.forEach {
                     yieldAll(processModule(it, processedModules))
                 }
