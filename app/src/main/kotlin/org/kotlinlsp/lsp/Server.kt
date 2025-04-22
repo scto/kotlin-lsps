@@ -4,9 +4,9 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.kotlinlsp.analysis.AnalysisSession
-import org.kotlinlsp.utils.getLspVersion
-import org.kotlinlsp.utils.info
-import org.kotlinlsp.utils.setupLogger
+import org.kotlinlsp.common.getLspVersion
+import org.kotlinlsp.common.info
+import org.kotlinlsp.common.setupLogger
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 

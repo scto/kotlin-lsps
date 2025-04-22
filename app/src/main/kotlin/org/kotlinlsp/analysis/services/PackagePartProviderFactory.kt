@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.JvmPackagePartProvider
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
-import org.kotlinlsp.utils.trace
+import org.kotlinlsp.common.trace
 
 class PackagePartProviderFactory: KotlinPackagePartProviderFactory {
     private lateinit var allLibraryRoots: List<JavaRoot>

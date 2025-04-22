@@ -5,7 +5,7 @@ import org.eclipse.lsp4j.InitializedParams
 import org.eclipse.lsp4j.WorkspaceFolder
 import org.eclipse.lsp4j.services.LanguageClient
 import org.kotlinlsp.lsp.MyLanguageServer
-import org.kotlinlsp.utils.removeCacheFolder
+import org.kotlinlsp.common.removeCacheFolder
 import org.mockito.Mockito.mock
 import java.io.File
 import java.nio.file.Paths

@@ -7,9 +7,8 @@ import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.packages.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.kotlinlsp.analysis.services.utils.virtualFilesForPackage
-import org.kotlinlsp.utils.profile
-import org.kotlinlsp.utils.trace
+import org.kotlinlsp.analysis.services.common.virtualFilesForPackage
+import org.kotlinlsp.common.profile
 
 class PackageProviderFactory: KotlinPackageProviderFactory {
     private lateinit var project: MockProject

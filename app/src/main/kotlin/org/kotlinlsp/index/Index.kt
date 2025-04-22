@@ -3,7 +3,6 @@ package org.kotlinlsp.index
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
-import org.kotlinlsp.utils.info
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 

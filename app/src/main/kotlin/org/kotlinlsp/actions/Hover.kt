@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtFile
-import org.kotlinlsp.utils.getElementRange
-import org.kotlinlsp.utils.toOffset
+import org.kotlinlsp.common.getElementRange
+import org.kotlinlsp.common.toOffset
 
 @OptIn(KaExperimentalApi::class)
 fun hoverAction(ktFile: KtFile, position: Position): Pair<String, Range>? {

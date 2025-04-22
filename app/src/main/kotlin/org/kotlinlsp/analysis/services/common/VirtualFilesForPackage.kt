@@ -1,4 +1,4 @@
-package org.kotlinlsp.analysis.services.utils
+package org.kotlinlsp.analysis.services.common
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -7,7 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.impl.VirtualFileEnumeration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.kotlinlsp.utils.warn
+import org.kotlinlsp.common.warn
 
 fun virtualFilesForPackage(project: Project, searchScope: GlobalSearchScope, packageFqName: FqName): Sequence<VirtualFile> = sequence {
     val files = VirtualFileEnumeration.extract(searchScope)?.filesIfCollection

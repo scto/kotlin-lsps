@@ -1,7 +1,7 @@
 package org.kotlinlsp.index
 
-import org.kotlinlsp.utils.getCachePath
-import org.kotlinlsp.utils.info
+import org.kotlinlsp.common.getCachePath
+import org.kotlinlsp.common.info
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.concurrent.ArrayBlockingQueue

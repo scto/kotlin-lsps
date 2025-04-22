@@ -1,4 +1,4 @@
-package org.kotlinlsp.utils
+package org.kotlinlsp.common
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil

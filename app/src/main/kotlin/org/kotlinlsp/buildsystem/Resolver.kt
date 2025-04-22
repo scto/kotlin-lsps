@@ -3,7 +3,7 @@ package org.kotlinlsp.buildsystem
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
-import org.kotlinlsp.utils.profile
+import org.kotlinlsp.common.profile
 import java.io.File
 
 class BuildSystemResolver(

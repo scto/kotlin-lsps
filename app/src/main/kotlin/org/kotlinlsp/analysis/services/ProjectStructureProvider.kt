@@ -7,8 +7,8 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
-import org.kotlinlsp.utils.profile
-import org.kotlinlsp.utils.trace
+import org.kotlinlsp.common.profile
+import org.kotlinlsp.common.trace
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     private lateinit var rootModule: KaModule

@@ -1,4 +1,4 @@
-package org.kotlinlsp.utils
+package org.kotlinlsp.common
 
 import java.nio.file.Files
 import java.nio.file.Path

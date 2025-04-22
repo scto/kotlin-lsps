@@ -5,8 +5,7 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotations
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtAnnotated
-import org.kotlinlsp.utils.profile
-import org.kotlinlsp.utils.trace
+import org.kotlinlsp.common.profile
 
 class AnnotationsResolverFactory : KotlinAnnotationsResolverFactory {
     override fun createAnnotationResolver(searchScope: GlobalSearchScope): KotlinAnnotationsResolver {

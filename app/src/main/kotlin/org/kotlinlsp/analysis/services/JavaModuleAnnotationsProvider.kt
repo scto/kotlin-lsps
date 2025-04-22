@@ -5,7 +5,7 @@ import org.jetbrains.kotlin.analysis.api.platform.java.KotlinJavaModuleJavaAnnot
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
 import org.jetbrains.kotlin.load.java.structure.JavaAnnotation
 import org.jetbrains.kotlin.name.ClassId
-import org.kotlinlsp.utils.trace
+import org.kotlinlsp.common.trace
 
 @OptIn(KaNonPublicApi::class)
 class JavaModuleAnnotationsProvider(

@@ -1,4 +1,4 @@
-package org.kotlinlsp.utils
+package org.kotlinlsp.common
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule

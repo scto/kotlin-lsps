@@ -2,8 +2,8 @@ package org.kotlinlsp
 
 import org.eclipse.lsp4j.launch.LSPLauncher
 import org.kotlinlsp.lsp.MyLanguageServer
-import org.kotlinlsp.utils.getLspVersion
-import org.kotlinlsp.utils.profileJvmStartup
+import org.kotlinlsp.common.getLspVersion
+import org.kotlinlsp.common.profileJvmStartup
 import java.util.concurrent.Executors
 import kotlin.system.exitProcess
 

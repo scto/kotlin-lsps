@@ -3,9 +3,9 @@ package org.kotlinlsp.actions
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Position
 import org.jetbrains.kotlin.psi.KtFile
-import org.kotlinlsp.utils.toLspRange
-import org.kotlinlsp.utils.toOffset
-import org.kotlinlsp.utils.warn
+import org.kotlinlsp.common.toLspRange
+import org.kotlinlsp.common.toOffset
+import org.kotlinlsp.common.warn
 
 fun goToDefinitionAction(ktFile: KtFile, position: Position): Location? {
     val offset = position.toOffset(ktFile)

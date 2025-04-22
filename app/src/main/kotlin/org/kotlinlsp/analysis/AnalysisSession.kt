@@ -50,9 +50,9 @@ import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.index.Index
-import org.kotlinlsp.utils.logProfileInfo
-import org.kotlinlsp.utils.toLspRange
-import org.kotlinlsp.utils.toOffset
+import org.kotlinlsp.common.logProfileInfo
+import org.kotlinlsp.common.toLspRange
+import org.kotlinlsp.common.toOffset
 import kotlin.io.path.absolutePathString
 
 class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit, rootPath: String) {
