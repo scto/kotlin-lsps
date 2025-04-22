@@ -49,11 +49,16 @@ class LibraryModule(
         }
 
         val virtualFileUrls = mutableSetOf<String>()
-        for (root in getVirtualFilesForLibraryRoots(roots, appEnvironment)) {
-            LibraryUtils.getAllVirtualFilesFromRoot(root, includeRoot = true)
-                .map { it.url }
-                .forEach { virtualFileUrls.add(it) }
-        }
+        roots.asSequence()
+            .mapNotNull {
+                getVirtualFileForLibraryRoot(it, appEnvironment)
+            }
+            .map {
+                LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true)
+            }
+            .flatten()
+            .map { it.url }
+            .forEach { virtualFileUrls.add(it) }
 
         return@lazy object : GlobalSearchScope(project) {
             override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
@@ -96,23 +101,21 @@ class LibraryModule(
 
 private const val JAR_SEPARATOR = "!/"
 
-private fun getVirtualFilesForLibraryRoots(
-    roots: Collection<Path>,
+private fun getVirtualFileForLibraryRoot(
+    root: Path,
     environment: CoreApplicationEnvironment,
-): List<VirtualFile> {
-    return roots.mapNotNull { path ->
-        val pathString = FileUtil.toSystemIndependentName(path.toAbsolutePath().toString())
+): VirtualFile? {
+    val pathString = FileUtil.toSystemIndependentName(root.toAbsolutePath().toString())
 
-        if (pathString.endsWith(JAR_PROTOCOL) || pathString.endsWith(KLIB_FILE_EXTENSION)) {
-            return@mapNotNull environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR)
-        }
+    if (pathString.endsWith(JAR_PROTOCOL) || pathString.endsWith(KLIB_FILE_EXTENSION)) {
+        return environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR)
+    }
 
-        if (pathString.contains(JAR_SEPARATOR)) {
-            val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
-            val adjustedPath = libHomePath + JAR_SEPARATOR + "modules/$pathInImage"
-            return@mapNotNull environment.jrtFileSystem?.findFileByPath(adjustedPath)
-        }
+    if (pathString.contains(JAR_SEPARATOR)) {
+        val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
+        val adjustedPath = libHomePath + JAR_SEPARATOR + "modules/$pathInImage"
+        return environment.jrtFileSystem?.findFileByPath(adjustedPath)
+    }
 
-        return@mapNotNull VirtualFileManager.getInstance().findFileByNioPath(path)
-    }.distinct()
+    return VirtualFileManager.getInstance().findFileByNioPath(root)
 }
