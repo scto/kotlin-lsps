@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.kotlinlsp.common.info
 import java.nio.file.Path
 
 class LibraryModule(
@@ -39,13 +40,32 @@ class LibraryModule(
     @OptIn(KaImplementationDetail::class)
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope by lazy {
-        val roots = if(isJdk) {
+        val roots = if (isJdk) {
+            // This returns urls to the JMOD files in the jdk
             LibraryUtils.findClassesFromJdkHome(binaryRoots.first(), isJre = false)
         } else {
+            // These are JAR/class files
             binaryRoots
         }
 
-        return@lazy buildLibrarySearchScope(mockProject, roots, appEnvironment)
+        val virtualFileUrls = mutableSetOf<String>()
+        for (root in getVirtualFilesForLibraryRoots(roots, appEnvironment)) {
+            LibraryUtils.getAllVirtualFilesFromRoot(root, includeRoot = true)
+                .map { it.url }
+                .forEach { virtualFileUrls.add(it) }
+        }
+
+        return@lazy object : GlobalSearchScope(project) {
+            override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
+
+            override fun isSearchInModuleContent(p0: com.intellij.openapi.module.Module): Boolean = false
+
+            override fun isSearchInLibraries(): Boolean = true
+
+            override fun toString(): String = virtualFileUrls.joinToString("\n") {
+                it
+            }
+        }
     }
 
     override val binaryRoots: Collection<Path>
@@ -76,62 +96,23 @@ class LibraryModule(
 
 private const val JAR_SEPARATOR = "!/"
 
-@OptIn(KaImplementationDetail::class)
-private fun buildLibrarySearchScope(project: MockProject, binaryRoots: Collection<Path>, appEnvironment: CoreApplicationEnvironment): GlobalSearchScope {
-    val virtualFileUrls = buildSet {
-        for (root in getVirtualFilesForLibraryRoots(binaryRoots, appEnvironment)) {
-            LibraryUtils.getAllVirtualFilesFromRoot(root, includeRoot = true)
-                .mapTo(this) { it.url }
-        }
-    }
-
-    return object : GlobalSearchScope(project) {
-        override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
-
-        override fun isSearchInModuleContent(p0: com.intellij.openapi.module.Module): Boolean = false
-
-        override fun isSearchInLibraries(): Boolean = true
-
-        override fun toString(): String = virtualFileUrls.joinToString("\n") {
-            it
-        }
-    }
-}
-
 private fun getVirtualFilesForLibraryRoots(
     roots: Collection<Path>,
     environment: CoreApplicationEnvironment,
 ): List<VirtualFile> {
     return roots.mapNotNull { path ->
         val pathString = FileUtil.toSystemIndependentName(path.toAbsolutePath().toString())
-        when {
-            pathString.endsWith(JAR_PROTOCOL) || pathString.endsWith(KLIB_FILE_EXTENSION) -> {
-                environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR)
-            }
 
-            pathString.contains(JAR_SEPARATOR) -> {
-                environment.jrtFileSystem?.findFileByPath(adjustModulePath(pathString))
-            }
-
-            else -> {
-                VirtualFileManager.getInstance().findFileByNioPath(path)
-            }
+        if (pathString.endsWith(JAR_PROTOCOL) || pathString.endsWith(KLIB_FILE_EXTENSION)) {
+            return@mapNotNull environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR)
         }
-    }.distinct()
-}
 
-private fun adjustModulePath(pathString: String): String {
-    return if (pathString.contains(JAR_SEPARATOR)) {
-        // URLs loaded from JDK point to module names in a JRT protocol format,
-        // e.g., "jrt:///path/to/jdk/home!/java.base" (JRT protocol prefix + JDK home path + JAR separator + module name)
-        // After protocol erasure, we will see "/path/to/jdk/home!/java.base" as a binary root.
-        // CoreJrtFileSystem.CoreJrtHandler#findFile, which uses Path#resolve, finds a virtual file path to the file itself,
-        // e.g., "/path/to/jdk/home!/modules/java.base". (JDK home path + JAR separator + actual file path)
-        // To work with that JRT handler, a hacky workaround here is to add "modules" before the module name so that it can
-        // find the actual file path.
-        // See [LLFirJavaFacadeForBinaries#getBinaryPath] and [StandaloneProjectFactory#getBinaryPath] for a similar hack.
-        val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
-        libHomePath + JAR_SEPARATOR + "modules/$pathInImage"
-    } else
-        pathString
+        if (pathString.contains(JAR_SEPARATOR)) {
+            val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
+            val adjustedPath = libHomePath + JAR_SEPARATOR + "modules/$pathInImage"
+            return@mapNotNull environment.jrtFileSystem?.findFileByPath(adjustedPath)
+        }
+
+        return@mapNotNull VirtualFileManager.getInstance().findFileByNioPath(path)
+    }.distinct()
 }
