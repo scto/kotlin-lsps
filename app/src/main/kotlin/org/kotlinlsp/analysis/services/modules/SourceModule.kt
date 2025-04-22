@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.kotlinlsp.common.findSourceFiles
 import java.io.File
 
 class SourceModule(
@@ -24,8 +23,10 @@ class SourceModule(
     private val mockProject: MockProject,
 ) : KaSourceModule, KaModuleBase() {
     private val scope: GlobalSearchScope by lazy {
-        val files = findSourceFiles(folderPath)
-            .mapNotNull { VirtualFileManager.getInstance().findFileByUrl("file://$it") }
+        val files = File(folderPath)
+            .walk()
+            .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
+            .mapNotNull { VirtualFileManager.getInstance().findFileByUrl("file://${it.absolutePath}") }
             .toList()
 
         return@lazy GlobalSearchScope.filesScope(mockProject, files)
