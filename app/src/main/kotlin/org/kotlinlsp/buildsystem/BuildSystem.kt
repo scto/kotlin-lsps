@@ -10,5 +10,6 @@ interface BuildSystem {
     // Returns null if cached version is up to date, otherwise
     // it returns the module DAG along with the current new version
     // cachedVersion = null if no cached module DAG is available
-    fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String>?
+    // If the returned version is null it means caching is disabled
+    fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String?>?
 }

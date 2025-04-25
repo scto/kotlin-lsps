@@ -16,14 +16,20 @@ class FileBasedBuildSystem(
     override val markerFiles: List<String>
         get() = listOf("$rootFolder/.kotlinlsp-modules.json")
 
-    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String> {
-        val contents = File("$rootFolder/.kotlinlsp-modules.json").readText()
+    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String>? {
+        val file = File("$rootFolder/.kotlinlsp-modules.json")
+        val currentVersion = file.lastModified()
+        if(cachedVersion != null) {
+            val cachedVersionLong = cachedVersion.toLong()
+            if(currentVersion <= cachedVersionLong) return null
+        }
+
+        val contents = file.readText()
         val rootModule = deserializeRootModule(
             contents,
             mockProject = project,
             appEnvironment = appEnvironment
         )
-        // TODO Implement caching resolution
-        return Pair(rootModule, "1")
+        return Pair(rootModule, currentVersion.toString())
     }
 }

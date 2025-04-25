@@ -25,8 +25,8 @@ class GradleBuildSystem(
         "$rootFolder/settings.gradle", "$rootFolder/settings.gradle.kts",
     )
 
-    @OptIn(KaImplementationDetail::class)
-    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String>? {
+    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String?> {
+        // TODO Implement caching checks
         val connection = GradleConnector.newConnector()
             .forProjectDirectory(File(rootFolder))
             .connect()
@@ -80,6 +80,6 @@ class GradleBuildSystem(
 
         // TODO Support multiple modules, for now take the last one
         val rootModule = modules.last()
-        return rootModule to ""
+        return Pair(rootModule, null)
     }
 }
