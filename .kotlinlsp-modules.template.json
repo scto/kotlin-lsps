@@ -1,229 +1,132 @@
 [
   {
-    "id": "main",
+    "id": "app",
     "dependencies": [
-      "org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-7826",
-      "com.jetbrains.intellij.platform:util:241.19416.19",
-      "com.jetbrains.intellij.platform:core-impl:241.19416.19",
-      "org.jetbrains.kotlin:kotlin-compiler:2.2.0-dev-7826",
-      "com.github.ben-manes.caffeine:caffeine:2.9.3",
-      "org.jetbrains.kotlin:analysis-api-k2-for-ide:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:analysis-api-for-ide:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:low-level-api-fir-for-ide:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:analysis-api-platform-interface-for-ide:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:symbol-light-classes-for-ide:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:analysis-api-impl-base-for-ide:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.2.0-dev-7826",
-      "org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0",
-      "JDK 21",
-      "org.jetbrains:annotations:24.0.0",
-      "com.jetbrains.intellij.platform:util-rt:241.19416.19",
-      "com.jetbrains.intellij.platform:util-base:241.19416.19",
-      "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:kotlin-script-runtime:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:kotlin-reflect:1.6.10",
-      "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0",
-      "com.jetbrains.intellij.platform:core:241.19416.19",
-      "org.checkerframework:checker-qual:3.19.0",
-      "com.google.errorprone:error_prone_annotations:2.36.0",
-      "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.24.0",
-      "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.0-dev-7826",
-      "com.jetbrains.intellij.platform:extensions:241.19416.19",
-      "com.jetbrains.intellij.platform:util-progress:241.19416.19",
-      "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.7",
-      "com.google.code.gson:gson:2.12.1"
+      "core-impl-241.19416.19.jar",
+      "kotlin-compiler-2.2.0-dev-7826.jar",
+      "core-241.19416.19.jar",
+      "extensions-241.19416.19.jar",
+      "kotlinx-coroutines-core-jvm-1.8.0.jar",
+      "kotlin-stdlib-jdk8-2.2.0-dev-7826.jar",
+      "kotlin-stdlib-jdk7-2.2.0-dev-7826.jar",
+      "kotlin-stdlib-2.2.0-dev-7826.jar",
+      "util-241.19416.19.jar",
+      "caffeine-2.9.3.jar",
+      "analysis-api-k2-for-ide-2.2.0-dev-7826.jar",
+      "analysis-api-for-ide-2.2.0-dev-7826.jar",
+      "low-level-api-fir-for-ide-2.2.0-dev-7826.jar",
+      "analysis-api-platform-interface-for-ide-2.2.0-dev-7826.jar",
+      "symbol-light-classes-for-ide-2.2.0-dev-7826.jar",
+      "analysis-api-impl-base-for-ide-2.2.0-dev-7826.jar",
+      "kotlin-compiler-common-for-ide-2.2.0-dev-7826.jar",
+      "kotlin-compiler-fir-for-ide-2.2.0-dev-7826.jar",
+      "org.eclipse.lsp4j-0.24.0.jar",
+      "h2-2.3.232.jar",
+      "gradle-tooling-api-8.12.jar",
+      "annotations-24.0.0.jar",
+      "util-progress-241.19416.19.jar",
+      "kotlinx-collections-immutable-jvm-0.3.7.jar",
+      "util-rt-241.19416.19.jar",
+      "util-base-241.19416.19.jar",
+      "kotlin-script-runtime-2.2.0-dev-7826.jar",
+      "kotlin-reflect-1.6.10.jar",
+      "checker-qual-3.19.0.jar",
+      "org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
+      "gson-2.13.1.jar",
+      "error_prone_annotations-2.38.0.jar",
+      "slf4j-api-1.7.36.jar",
+      "diagnostic-telemetry-241.19416.19.jar",
+      "util-xml-dom-241.19416.19.jar",
+      "diagnostic-241.19416.19.jar",
+      "util-coroutines-241.19416.19.jar",
+      "util-diff-241.19416.19.jar",
+      "util-jdom-241.19416.19.jar",
+      "util-class-loader-241.19416.19.jar",
+      "util-rt-java8-241.19416.19.jar",
+      "intellij-deps-fastutil-8.5.13-jb4.jar",
+      "aalto-xml-1.3.2.jar",
+      "automaton-1.12-4.jar",
+      "guava-33.0.0-jre.jar",
+      "opentelemetry-sdk-1.34.1.jar",
+      "opentelemetry-semconv-1.23.1-alpha.jar",
+      "log4j-over-slf4j-1.7.36.jar",
+      "jna-platform-5.14.0.jar",
+      "oro-2.0.8.jar",
+      "lz4-java-1.8.0.jar",
+      "commons-compress-1.26.1.jar",
+      "kotlinx-serialization-core-jvm-1.6.3.jar",
+      "kotlinx-serialization-json-jvm-1.6.3.jar",
+      "jaxen-1.2.0.jar",
+      "stax2-api-4.2.jar",
+      "failureaccess-1.0.2.jar",
+      "opentelemetry-sdk-trace-1.34.1.jar",
+      "opentelemetry-sdk-metrics-1.34.1.jar",
+      "opentelemetry-sdk-logs-1.34.1.jar",
+      "opentelemetry-sdk-common-1.34.1.jar",
+      "opentelemetry-extension-incubator-1.34.1-alpha.jar",
+      "opentelemetry-api-events-1.34.1-alpha.jar",
+      "opentelemetry-api-1.34.1.jar",
+      "annotations-java5-24.0.0.jar",
+      "jna-5.14.0.jar",
+      "commons-codec-1.16.1.jar",
+      "commons-io-2.15.1.jar",
+      "kotlinx-coroutines-debug-1.8.0.jar",
+      "opentelemetry-context-1.34.1.jar",
+      "junit-jupiter-5.12.2.jar",
+      "junit-jupiter-params-5.12.2.jar",
+      "junit-jupiter-api-5.12.2.jar",
+      "junit-platform-commons-1.12.2.jar",
+      "mockito-core-5.17.0.jar",
+      "byte-buddy-1.15.11.jar",
+      "byte-buddy-agent-1.15.11.jar",
+      "opentest4j-1.3.0.jar",
+      "apiguardian-api-1.1.2.jar",
+      "diagnostic-telemetry-241.19416.19.jar",
+      "util-xml-dom-241.19416.19.jar",
+      "diagnostic-241.19416.19.jar",
+      "util-coroutines-241.19416.19.jar",
+      "util-diff-241.19416.19.jar",
+      "junit-platform-launcher-1.12.2.jar",
+      "junit-jupiter-engine-5.12.2.jar",
+      "junit-platform-engine-1.12.2.jar",
+      "util-jdom-241.19416.19.jar",
+      "util-class-loader-241.19416.19.jar",
+      "util-rt-java8-241.19416.19.jar",
+      "intellij-deps-fastutil-8.5.13-jb4.jar",
+      "aalto-xml-1.3.2.jar",
+      "automaton-1.12-4.jar",
+      "guava-33.0.0-jre.jar",
+      "opentelemetry-sdk-1.34.1.jar",
+      "opentelemetry-semconv-1.23.1-alpha.jar",
+      "log4j-over-slf4j-1.7.36.jar",
+      "jna-platform-5.14.0.jar",
+      "oro-2.0.8.jar",
+      "lz4-java-1.8.0.jar",
+      "commons-compress-1.26.1.jar",
+      "kotlinx-serialization-core-jvm-1.6.3.jar",
+      "kotlinx-serialization-json-jvm-1.6.3.jar",
+      "objenesis-3.3.jar",
+      "jaxen-1.2.0.jar",
+      "stax2-api-4.2.jar",
+      "failureaccess-1.0.2.jar",
+      "opentelemetry-sdk-trace-1.34.1.jar",
+      "opentelemetry-sdk-metrics-1.34.1.jar",
+      "opentelemetry-sdk-logs-1.34.1.jar",
+      "opentelemetry-sdk-common-1.34.1.jar",
+      "opentelemetry-extension-incubator-1.34.1-alpha.jar",
+      "opentelemetry-api-events-1.34.1-alpha.jar",
+      "opentelemetry-api-1.34.1.jar",
+      "annotations-java5-24.0.0.jar",
+      "jna-5.14.0.jar",
+      "commons-codec-1.16.1.jar",
+      "commons-io-2.15.1.jar",
+      "kotlinx-coroutines-debug-1.8.0.jar",
+      "opentelemetry-context-1.34.1.jar",
+      "JDK 21"
     ],
     "javaVersion": "21",
-    "sourcePath": "<your-home-folder>/Projects/kotlin-lsp/app/src/main",
+    "sourcePath": "<your-home-folder>/Projects/kotlin-lsp/app",
     "kotlinVersion": "2.1"
-  },
-  {
-    "id": "com.google.code.gson:gson:2.12.1",
-    "dependencies": [
-      "com.google.errorprone:error_prone_annotations:2.36.0"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.12.1/4e773a317740b83b43cfc3d652962856041697cb/gson-2.12.1.jar"
-    ]
-  },
-  {
-    "id": "com.google.errorprone:error_prone_annotations:2.36.0",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.google.errorprone/error_prone_annotations/2.36.0/227d4d4957ccc3dc5761bd897e3a0ee587e750a7/error_prone_annotations-2.36.0.jar"
-    ]
-  },
-  {
-    "id": "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.7",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm/0.3.7/1cd4ff7059bcb437086b76311a9fc4775a887bcc/kotlinx-collections-immutable-jvm-0.3.7.jar"
-    ]
-  },
-  {
-    "id": "com.jetbrains.intellij.platform:util-progress:241.19416.19",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-progress/241.19416.19/a95ff5e4d9de82c7810e9351ccbea0930efbd546/util-progress-241.19416.19.jar"
-    ]
-  },
-  {
-    "id": "com.jetbrains.intellij.platform:extensions:241.19416.19",
-    "dependencies": [
-      "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/extensions/241.19416.19/f0cd5be01b6449b908a32a44729223a57c2bf890/extensions-241.19416.19.jar"
-    ]
-  },
-  {
-    "id": "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0",
-    "dependencies": [
-      "org.jetbrains:annotations:24.0.0",
-      "org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-7826"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.8.0/ac1dc37a30a93150b704022f8d895ee1bd3a36b3/kotlinx-coroutines-core-jvm-1.8.0.jar"
-    ]
-  },
-  {
-    "id": "org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-7826",
-    "dependencies": [
-      "org.jetbrains:annotations:24.0.0"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.2.0-dev-7826/263622e6ba20bd16a41ed4602be30bce9145b0d7/kotlin-stdlib-2.2.0-dev-7826.jar"
-    ]
-  },
-  {
-    "id": "org.jetbrains:annotations:24.0.0",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/24.0.0/69b8b443c437fdeefa8d20c18d257b94836a92b9/annotations-24.0.0.jar"
-    ]
-  },
-  {
-    "id": "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.0-dev-7826",
-    "dependencies": [
-      "org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-7826"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/2.2.0-dev-7826/aa98b507662e47bf2436185de9d91e909149723c/kotlin-stdlib-jdk7-2.2.0-dev-7826.jar"
-    ]
-  },
-  {
-    "id": "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.24.0",
-    "dependencies": [
-      "com.google.code.gson:gson:2.12.1"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/27512deb3601e0cbf71d61d1a5611fb99687ab8e/org.eclipse.lsp4j.jsonrpc-0.24.0.jar"
-    ]
-  },
-  {
-    "id": "org.checkerframework:checker-qual:3.19.0",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.checkerframework/checker-qual/3.19.0/838b42bb6f7f73315167b359d24649845cef1c48/checker-qual-3.19.0.jar"
-    ]
-  },
-  {
-    "id": "com.jetbrains.intellij.platform:core:241.19416.19",
-    "dependencies": [
-      "com.jetbrains.intellij.platform:util:241.19416.19",
-      "com.jetbrains.intellij.platform:extensions:241.19416.19",
-      "com.jetbrains.intellij.platform:util-progress:241.19416.19",
-      "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.7"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/core/241.19416.19/3e52cb8848c74ca17b0a888b85eeed79135d4401/core-241.19416.19.jar"
-    ]
-  },
-  {
-    "id": "com.jetbrains.intellij.platform:util:241.19416.19",
-    "dependencies": [
-      "org.jetbrains:annotations:24.0.0",
-      "com.jetbrains.intellij.platform:util-rt:241.19416.19",
-      "com.jetbrains.intellij.platform:util-base:241.19416.19"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util/241.19416.19/29585e92acae37fbf78115c39e10adf0e158e7ec/util-241.19416.19.jar"
-    ]
-  },
-  {
-    "id": "com.jetbrains.intellij.platform:util-base:241.19416.19",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-base/241.19416.19/4725251850d1a69245db204f50d1f49d33ae06b6/util-base-241.19416.19.jar"
-    ]
-  },
-  {
-    "id": "com.jetbrains.intellij.platform:util-rt:241.19416.19",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-rt/241.19416.19/e177a41e5bd51dbbca0d35308f1813866bdb4065/util-rt-241.19416.19.jar"
-    ]
-  },
-  {
-    "id": "org.jetbrains.kotlin:kotlin-reflect:1.6.10",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.6.10/1cbe9c92c12a94eea200d23c2bbaedaf3daf5132/kotlin-reflect-1.6.10.jar"
-    ]
-  },
-  {
-    "id": "org.jetbrains.kotlin:kotlin-script-runtime:2.2.0-dev-7826",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.2.0-dev-7826/246253e15c97f602cc855baf2c32d95b314a9b5/kotlin-script-runtime-2.2.0-dev-7826.jar"
-    ]
-  },
-  {
-    "id": "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.0-dev-7826",
-    "dependencies": [
-      "org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.2.0-dev-7826"
-    ],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/2.2.0-dev-7826/5e90a127bfc5318798ea8d6e3a950f7d031d0a6f/kotlin-stdlib-jdk8-2.2.0-dev-7826.jar"
-    ]
   },
   {
     "id": "JDK 21",
@@ -235,10 +138,584 @@
     ]
   },
   {
-    "id": "org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0",
-    "dependencies": [
-      "org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc:0.24.0"
-    ],
+    "id": "opentelemetry-context-1.34.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-context/1.34.1/3fcc87f3d810ce49d865ee54b40831559c5e129b/opentelemetry-context-1.34.1.jar"
+    ]
+  },
+  {
+    "id": "kotlinx-coroutines-debug-1.8.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-debug/1.8.0/5ae040b057e6b3f52e1d0fd50b381da61c700e29/kotlinx-coroutines-debug-1.8.0.jar"
+    ]
+  },
+  {
+    "id": "commons-io-2.15.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/commons-io/commons-io/2.15.1/f11560da189ab563a5c8e351941415430e9304ea/commons-io-2.15.1.jar"
+    ]
+  },
+  {
+    "id": "commons-codec-1.16.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/commons-codec/commons-codec/1.16.1/47bd4d333fba53406f6c6c51884ddbca435c8862/commons-codec-1.16.1.jar"
+    ]
+  },
+  {
+    "id": "jna-5.14.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna/5.14.0/67bf3eaea4f0718cb376a181a629e5f88fa1c9dd/jna-5.14.0.jar"
+    ]
+  },
+  {
+    "id": "annotations-java5-24.0.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations-java5/24.0.0/63a023e79ed9257c68077d8d50de87acc154a6e2/annotations-java5-24.0.0.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-api-1.34.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-api/1.34.1/b4aea155f6d6b1032eba85378564431cfd86f562/opentelemetry-api-1.34.1.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-api-events-1.34.1-alpha.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-api-events/1.34.1-alpha/dd49a639a9d6fa8a88083681ecb1b55903b1db1f/opentelemetry-api-events-1.34.1-alpha.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-extension-incubator-1.34.1-alpha.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-extension-incubator/1.34.1-alpha/9201e6a43a0a89515626f7516c7d1b2c349f76df/opentelemetry-extension-incubator-1.34.1-alpha.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-sdk-common-1.34.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-common/1.34.1/1fcd8bad38d7b8987f6fc93bd7e933240eb727e/opentelemetry-sdk-common-1.34.1.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-sdk-logs-1.34.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-logs/1.34.1/abad9abc80dfe6118a60413afa161696bbf8dd43/opentelemetry-sdk-logs-1.34.1.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-sdk-metrics-1.34.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-metrics/1.34.1/d88407ae475e5f4e859a81e4f61e362e939f7bc2/opentelemetry-sdk-metrics-1.34.1.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-sdk-trace-1.34.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-trace/1.34.1/121a75c2ba9ed8b80f5ff131c2411a5d460f38d0/opentelemetry-sdk-trace-1.34.1.jar"
+    ]
+  },
+  {
+    "id": "failureaccess-1.0.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.google.guava/failureaccess/1.0.2/c4a06a64e650562f30b7bf9aaec1bfed43aca12b/failureaccess-1.0.2.jar"
+    ]
+  },
+  {
+    "id": "stax2-api-4.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.codehaus.woodstox/stax2-api/4.2/13c2b30926bca0429c704c4b4ca0b5d0432b69cd/stax2-api-4.2.jar"
+    ]
+  },
+  {
+    "id": "jaxen-1.2.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/jaxen/jaxen/1.2.0/c10535a925bd35129a4329bc75065cc6b5293f2c/jaxen-1.2.0.jar"
+    ]
+  },
+  {
+    "id": "objenesis-3.3.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.objenesis/objenesis/3.3/1049c09f1de4331e8193e579448d0916d75b7631/objenesis-3.3.jar"
+    ]
+  },
+  {
+    "id": "kotlinx-serialization-json-jvm-1.6.3.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-json-jvm/1.6.3/2241746853abf04073e3ab0dcd9e6729d363b313/kotlinx-serialization-json-jvm-1.6.3.jar"
+    ]
+  },
+  {
+    "id": "kotlinx-serialization-core-jvm-1.6.3.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-core-jvm/1.6.3/6b6c17d0312ba7192893adea9d52959941d0119b/kotlinx-serialization-core-jvm-1.6.3.jar"
+    ]
+  },
+  {
+    "id": "commons-compress-1.26.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.apache.commons/commons-compress/1.26.1/44331c1130c370e726a2e1a3e6fba6d2558ef04a/commons-compress-1.26.1.jar"
+    ]
+  },
+  {
+    "id": "lz4-java-1.8.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.lz4/lz4-java/1.8.0/4b986a99445e49ea5fbf5d149c4b63f6ed6c6780/lz4-java-1.8.0.jar"
+    ]
+  },
+  {
+    "id": "oro-2.0.8.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/oro/oro/2.0.8/5592374f834645c4ae250f4c9fbb314c9369d698/oro-2.0.8.jar"
+    ]
+  },
+  {
+    "id": "jna-platform-5.14.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/net.java.dev.jna/jna-platform/5.14.0/28934d48aed814f11e4c584da55c49fa7032b31b/jna-platform-5.14.0.jar"
+    ]
+  },
+  {
+    "id": "log4j-over-slf4j-1.7.36.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.slf4j/log4j-over-slf4j/1.7.36/2a753acda077203a4794f106871bb237501c9a53/log4j-over-slf4j-1.7.36.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-semconv-1.23.1-alpha.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry.semconv/opentelemetry-semconv/1.23.1-alpha/218e361772670212a46be5940010222d68e66f2a/opentelemetry-semconv-1.23.1-alpha.jar"
+    ]
+  },
+  {
+    "id": "opentelemetry-sdk-1.34.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk/1.34.1/ab49eb621d6d01f0ad2f016989d0352ef18ea9a2/opentelemetry-sdk-1.34.1.jar"
+    ]
+  },
+  {
+    "id": "guava-33.0.0-jre.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.google.guava/guava/33.0.0-jre/161ba27964a62f241533807a46b8711b13c1d94b/guava-33.0.0-jre.jar"
+    ]
+  },
+  {
+    "id": "automaton-1.12-4.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/dk.brics/automaton/1.12-4/664a98c97a976d210ff70b34e10f3947bfb8675b/automaton-1.12-4.jar"
+    ]
+  },
+  {
+    "id": "aalto-xml-1.3.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.fasterxml/aalto-xml/1.3.2/9f2d26b8fc000c13471b95e54f84da00de214319/aalto-xml-1.3.2.jar"
+    ]
+  },
+  {
+    "id": "intellij-deps-fastutil-8.5.13-jb4.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.intellij.deps.fastutil/intellij-deps-fastutil/8.5.13-jb4/12de686f29a7684ede155b081bdbf0037667594b/intellij-deps-fastutil-8.5.13-jb4.jar"
+    ]
+  },
+  {
+    "id": "util-rt-java8-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-rt-java8/241.19416.19/745f5ced90ed26d08ea7b5da345c0ac3fcb63a26/util-rt-java8-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "util-class-loader-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-class-loader/241.19416.19/b5b7540ffea9abce991f8404dd30b60039b30fc4/util-class-loader-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "util-jdom-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-jdom/241.19416.19/d9731a3ccafc3c315025f43b5b357d1b2226f4a3/util-jdom-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "junit-platform-engine-1.12.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-engine/1.12.2/8519ece93f91b8115705d36be2c36d49808935cd/junit-platform-engine-1.12.2.jar"
+    ]
+  },
+  {
+    "id": "junit-jupiter-engine-5.12.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter-engine/5.12.2/b8df7575b8cd3a94dbe27b481d1cd52c57864559/junit-jupiter-engine-5.12.2.jar"
+    ]
+  },
+  {
+    "id": "junit-platform-launcher-1.12.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-launcher/1.12.2/79d49ad13017c67a8bf76e10ba5ac8937d811772/junit-platform-launcher-1.12.2.jar"
+    ]
+  },
+  {
+    "id": "util-diff-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-diff/241.19416.19/14523b604506b4f8a3a56de5d3ca0dbdbde649ec/util-diff-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "util-coroutines-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-coroutines/241.19416.19/3f1af986f0884fb5cf06701fc6fad52e8ac63652/util-coroutines-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "diagnostic-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/diagnostic/241.19416.19/9ac7100ebdbb22c99257b2f13a29653bc8670dac/diagnostic-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "util-xml-dom-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-xml-dom/241.19416.19/9758cb7a12b1a39fa3467285d382ff619e150d3c/util-xml-dom-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "diagnostic-telemetry-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/diagnostic-telemetry/241.19416.19/171c203b7f86e8f2cb53dcceedca0ac21410aafc/diagnostic-telemetry-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "apiguardian-api-1.1.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.apiguardian/apiguardian-api/1.1.2/a231e0d844d2721b0fa1b238006d15c6ded6842a/apiguardian-api-1.1.2.jar"
+    ]
+  },
+  {
+    "id": "opentest4j-1.3.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.opentest4j/opentest4j/1.3.0/152ea56b3a72f655d4fd677fc0ef2596c3dd5e6e/opentest4j-1.3.0.jar"
+    ]
+  },
+  {
+    "id": "byte-buddy-agent-1.15.11.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.15.11/a38b16385e867f59a641330f0362ebe742788ed8/byte-buddy-agent-1.15.11.jar"
+    ]
+  },
+  {
+    "id": "byte-buddy-1.15.11.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.15.11/f61886478e0f9ee4c21d09574736f0ff45e0a46c/byte-buddy-1.15.11.jar"
+    ]
+  },
+  {
+    "id": "mockito-core-5.17.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.mockito/mockito-core/5.17.0/f5fe5a2f94eb65f4f83ca0607bfe13ec0d9c6f3b/mockito-core-5.17.0.jar"
+    ]
+  },
+  {
+    "id": "junit-platform-commons-1.12.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.junit.platform/junit-platform-commons/1.12.2/b89e88a89ee009937374a4c96912e007b34c8e35/junit-platform-commons-1.12.2.jar"
+    ]
+  },
+  {
+    "id": "junit-jupiter-api-5.12.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter-api/5.12.2/6de3a3256c5d90f4a439edcb6c2e8dc5180907b0/junit-jupiter-api-5.12.2.jar"
+    ]
+  },
+  {
+    "id": "junit-jupiter-params-5.12.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter-params/5.12.2/ff1434a66d1fb84c2c709cde2e2d56d5c8f4fad3/junit-jupiter-params-5.12.2.jar"
+    ]
+  },
+  {
+    "id": "junit-jupiter-5.12.2.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.junit.jupiter/junit-jupiter/5.12.2/64d3ec64ae06517bc14b7faaaec7c996b0d05bea/junit-jupiter-5.12.2.jar"
+    ]
+  },
+  {
+    "id": "slf4j-api-1.7.36.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/1.7.36/6c62681a2f655b49963a5983b8b0950a6120ae14/slf4j-api-1.7.36.jar"
+    ]
+  },
+  {
+    "id": "error_prone_annotations-2.38.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.google.errorprone/error_prone_annotations/2.38.0/fc0ae991433e8590ba51cd558421478318a74c8c/error_prone_annotations-2.38.0.jar"
+    ]
+  },
+  {
+    "id": "gson-2.13.1.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.google.code.gson/gson/2.13.1/853ce06c11316b33a8eae5e9095da096a9528b8f/gson-2.13.1.jar"
+    ]
+  },
+  {
+    "id": "org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.eclipse.lsp4j/org.eclipse.lsp4j.jsonrpc/0.24.0/27512deb3601e0cbf71d61d1a5611fb99687ab8e/org.eclipse.lsp4j.jsonrpc-0.24.0.jar"
+    ]
+  },
+  {
+    "id": "checker-qual-3.19.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.checkerframework/checker-qual/3.19.0/838b42bb6f7f73315167b359d24649845cef1c48/checker-qual-3.19.0.jar"
+    ]
+  },
+  {
+    "id": "kotlin-reflect-1.6.10.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-reflect/1.6.10/1cbe9c92c12a94eea200d23c2bbaedaf3daf5132/kotlin-reflect-1.6.10.jar"
+    ]
+  },
+  {
+    "id": "kotlin-script-runtime-2.2.0-dev-7826.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.2.0-dev-7826/246253e15c97f602cc855baf2c32d95b314a9b5/kotlin-script-runtime-2.2.0-dev-7826.jar"
+    ]
+  },
+  {
+    "id": "util-base-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-base/241.19416.19/4725251850d1a69245db204f50d1f49d33ae06b6/util-base-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "util-rt-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-rt/241.19416.19/e177a41e5bd51dbbca0d35308f1813866bdb4065/util-rt-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "kotlinx-collections-immutable-jvm-0.3.7.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-collections-immutable-jvm/0.3.7/1cd4ff7059bcb437086b76311a9fc4775a887bcc/kotlinx-collections-immutable-jvm-0.3.7.jar"
+    ]
+  },
+  {
+    "id": "util-progress-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util-progress/241.19416.19/a95ff5e4d9de82c7810e9351ccbea0930efbd546/util-progress-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "annotations-24.0.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/24.0.0/69b8b443c437fdeefa8d20c18d257b94836a92b9/annotations-24.0.0.jar"
+    ]
+  },
+  {
+    "id": "gradle-tooling-api-8.12.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.gradle/gradle-tooling-api/8.12/3971af8e5d4163396ffd9e4ca7d0ca12092fa78/gradle-tooling-api-8.12.jar"
+    ]
+  },
+  {
+    "id": "h2-2.3.232.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.h2database/h2/2.3.232/4fcc05d966ccdb2812ae8b9a718f69226c0cf4e2/h2-2.3.232.jar"
+    ]
+  },
+  {
+    "id": "org.eclipse.lsp4j-0.24.0.jar",
+    "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
@@ -246,7 +723,7 @@
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.2.0-dev-7826",
+    "id": "kotlin-compiler-fir-for-ide-2.2.0-dev-7826.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
@@ -255,7 +732,7 @@
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.2.0-dev-7826",
+    "id": "kotlin-compiler-common-for-ide-2.2.0-dev-7826.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
@@ -264,7 +741,7 @@
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:analysis-api-impl-base-for-ide:2.2.0-dev-7826",
+    "id": "analysis-api-impl-base-for-ide-2.2.0-dev-7826.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
@@ -273,7 +750,7 @@
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:symbol-light-classes-for-ide:2.2.0-dev-7826",
+    "id": "symbol-light-classes-for-ide-2.2.0-dev-7826.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
@@ -282,7 +759,7 @@
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:analysis-api-platform-interface-for-ide:2.2.0-dev-7826",
+    "id": "analysis-api-platform-interface-for-ide-2.2.0-dev-7826.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
@@ -291,7 +768,7 @@
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:low-level-api-fir-for-ide:2.2.0-dev-7826",
+    "id": "low-level-api-fir-for-ide-2.2.0-dev-7826.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
@@ -300,7 +777,7 @@
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:analysis-api-for-ide:2.2.0-dev-7826",
+    "id": "analysis-api-for-ide-2.2.0-dev-7826.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
@@ -309,7 +786,7 @@
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:analysis-api-k2-for-ide:2.2.0-dev-7826",
+    "id": "analysis-api-k2-for-ide-2.2.0-dev-7826.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
@@ -318,11 +795,8 @@
     ]
   },
   {
-    "id": "com.github.ben-manes.caffeine:caffeine:2.9.3",
-    "dependencies": [
-      "org.checkerframework:checker-qual:3.19.0",
-      "com.google.errorprone:error_prone_annotations:2.36.0"
-    ],
+    "id": "caffeine-2.9.3.jar",
+    "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
@@ -330,29 +804,84 @@
     ]
   },
   {
-    "id": "com.jetbrains.intellij.platform:core-impl:241.19416.19",
-    "dependencies": [
-      "com.jetbrains.intellij.platform:core:241.19416.19",
-      "org.jetbrains.kotlin:kotlin-stdlib:2.2.0-dev-7826"
-    ],
+    "id": "util-241.19416.19.jar",
+    "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/core-impl/241.19416.19/abe0e29443c689686c74753037456f93dd58bb9f/core-impl-241.19416.19.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/util/241.19416.19/29585e92acae37fbf78115c39e10adf0e158e7ec/util-241.19416.19.jar"
     ]
   },
   {
-    "id": "org.jetbrains.kotlin:kotlin-compiler:2.2.0-dev-7826",
-    "dependencies": [
-      "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:kotlin-script-runtime:2.2.0-dev-7826",
-      "org.jetbrains.kotlin:kotlin-reflect:1.6.10",
-      "org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0"
-    ],
+    "id": "kotlin-stdlib-2.2.0-dev-7826.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.2.0-dev-7826/263622e6ba20bd16a41ed4602be30bce9145b0d7/kotlin-stdlib-2.2.0-dev-7826.jar"
+    ]
+  },
+  {
+    "id": "kotlin-stdlib-jdk7-2.2.0-dev-7826.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/2.2.0-dev-7826/aa98b507662e47bf2436185de9d91e909149723c/kotlin-stdlib-jdk7-2.2.0-dev-7826.jar"
+    ]
+  },
+  {
+    "id": "kotlin-stdlib-jdk8-2.2.0-dev-7826.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/2.2.0-dev-7826/5e90a127bfc5318798ea8d6e3a950f7d031d0a6f/kotlin-stdlib-jdk8-2.2.0-dev-7826.jar"
+    ]
+  },
+  {
+    "id": "kotlinx-coroutines-core-jvm-1.8.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-coroutines-core-jvm/1.8.0/ac1dc37a30a93150b704022f8d895ee1bd3a36b3/kotlinx-coroutines-core-jvm-1.8.0.jar"
+    ]
+  },
+  {
+    "id": "extensions-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/extensions/241.19416.19/f0cd5be01b6449b908a32a44729223a57c2bf890/extensions-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "core-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/core/241.19416.19/3e52cb8848c74ca17b0a888b85eeed79135d4401/core-241.19416.19.jar"
+    ]
+  },
+  {
+    "id": "kotlin-compiler-2.2.0-dev-7826.jar",
+    "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
       "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler/2.2.0-dev-7826/1170a3824432506d623c04d949ed0c1e82a33a68/kotlin-compiler-2.2.0-dev-7826.jar"
+    ]
+  },
+  {
+    "id": "core-impl-241.19416.19.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.jetbrains.intellij.platform/core-impl/241.19416.19/abe0e29443c689686c74753037456f93dd58bb9f/core-impl-241.19416.19.jar"
     ]
   }
 ]
