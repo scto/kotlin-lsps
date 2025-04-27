@@ -4,8 +4,14 @@ import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
 import java.time.Instant
+import java.util.concurrent.locks.ReadWriteLock
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
-class Index(rootModule: KaModule, project: MockProject, rootFolder: String) {
+class Index(
+    rootModule: KaModule,
+    project: MockProject,
+    rootFolder: String
+) {
     private val workerThreadRunner = WorkerThread(rootFolder)
     private val workerThread = Thread(workerThreadRunner)
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule, project)

@@ -49,10 +49,9 @@ import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.BuildSystemResolver
+import org.kotlinlsp.common.*
 import org.kotlinlsp.index.Index
-import org.kotlinlsp.common.logProfileInfo
-import org.kotlinlsp.common.toLspRange
-import org.kotlinlsp.common.toOffset
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.io.path.absolutePathString
 
 class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit, rootPath: String) {
@@ -63,6 +62,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     private val buildSystemResolver: BuildSystemResolver
     private val openedFiles = mutableMapOf<String, KtFile>()
     private val index: Index
+    private val rwLock = ReentrantReadWriteLock()
 
     init {
         System.setProperty("java.awt.headless", "true")
@@ -78,6 +78,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         )
         val coreEnvironment = KotlinCoreProjectEnvironment(projectDisposable, appEnvironment)
         project = coreEnvironment.project
+        project.registerRWLock()
         app = appEnvironment.application
 
         // Register the LSP platform in the Analysis API
@@ -87,10 +88,6 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         // Get the modules to analyze calling the appropriate build system
         buildSystemResolver = BuildSystemResolver(project, appEnvironment, rootPath)
         val rootModule = buildSystemResolver.resolveModuleDAG()
-
-        // Sync the index in the background
-        index = Index(rootModule, project, rootPath)
-        index.syncIndexInBackground()
 
         // Prepare the dependencies index for the Analysis API
         project.setupHighestLanguageLevel()
@@ -149,7 +146,8 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
         // Setup platform services
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(
-            rootModule
+            rootModule,
+            project
         )
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
         (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project)
@@ -159,6 +157,10 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
         commandProcessor = app.getService(CommandProcessor::class.java)
         psiDocumentManager = PsiDocumentManager.getInstance(project)
+
+        // Sync the index in the background
+        index = Index(rootModule, project, rootPath)
+        index.syncIndexInBackground()
     }
 
     @OptIn(KaPlatformInterface::class, KaImplementationDetail::class)
@@ -223,33 +225,37 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     }
 
     private fun loadKtFile(path: String): KtFile {
-        val virtualFile = VirtualFileManager.getInstance()
-            .findFileByUrl(path)!!
-        return PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile
+        val virtualFile = project.read { VirtualFileManager.getInstance()
+            .findFileByUrl(path)!! }
+        return project.read { PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile }
     }
 
     private fun updateDiagnostics(ktFile: KtFile) {
-        val syntaxDiagnostics = PsiTreeUtil.collectElementsOfType(ktFile, PsiErrorElement::class.java).map {
-            return@map Diagnostic(
-                it.textRange.toLspRange(ktFile),
-                it.errorDescription,
-                DiagnosticSeverity.Error,
-                "Kotlin LSP"
-            )
-        }
-        val analysisDiagnostics = analyze(ktFile) {
-            val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
-
-            val lspDiagnostics = diagnostics.map {
+        val syntaxDiagnostics = project.read {
+            PsiTreeUtil.collectElementsOfType(ktFile, PsiErrorElement::class.java).map {
                 return@map Diagnostic(
-                    it.textRanges.first().toLspRange(ktFile),
-                    it.defaultMessage,
-                    it.severity.toLspSeverity(),
+                    it.textRange.toLspRange(ktFile),
+                    it.errorDescription,
+                    DiagnosticSeverity.Error,
                     "Kotlin LSP"
                 )
             }
+        }
+        val analysisDiagnostics = project.read {
+            analyze(ktFile) {
+                val diagnostics = ktFile.collectDiagnostics(KaDiagnosticCheckerFilter.EXTENDED_AND_COMMON_CHECKERS)
 
-            return@analyze lspDiagnostics
+                val lspDiagnostics = diagnostics.map {
+                    return@map Diagnostic(
+                        it.textRanges.first().toLspRange(ktFile),
+                        it.defaultMessage,
+                        it.severity.toLspSeverity(),
+                        "Kotlin LSP"
+                    )
+                }
+
+                return@analyze lspDiagnostics
+            }
         }
         onDiagnostics(PublishDiagnosticsParams("file://${ktFile.virtualFilePath}", syntaxDiagnostics + analysisDiagnostics))
         logProfileInfo()
@@ -258,21 +264,23 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     // TODO Use version to avoid conflicts
     fun onChangeFile(path: String, version: Int, changes: List<TextDocumentContentChangeEvent>) {
         val ktFile = openedFiles[path]!!
-        val doc = psiDocumentManager.getDocument(ktFile)!!
+        val doc = project.read { psiDocumentManager.getDocument(ktFile)!! }
 
-        changes.forEach {
-            commandProcessor.executeCommand(project, {
-                val startOffset = it.range.start.toOffset(ktFile)
-                val endOffset = it.range.end.toOffset(ktFile)
+        project.write {
+            changes.forEach {
+                commandProcessor.executeCommand(project, {
+                    val startOffset = it.range.start.toOffset(ktFile)
+                    val endOffset = it.range.end.toOffset(ktFile)
 
-                doc.replaceString(startOffset, endOffset, it.text)
-                psiDocumentManager.commitDocument(doc)
-                ktFile.onContentReload()
-            }, "onChangeFile", null)
+                    doc.replaceString(startOffset, endOffset, it.text)
+                    psiDocumentManager.commitDocument(doc)
+                    ktFile.onContentReload()
+                }, "onChangeFile", null)
+            }
         }
 
         // Queue an update to the index
-        index.queueOnFileChanged(ktFile.copy() as KtFile)
+        index.queueOnFileChanged(ktFile)
 
         // TODO Optimize the KaElementModificationType
         // TODO Add a debounce so analysis is not triggered on every keystroke adding lag
@@ -288,12 +296,12 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
 
     fun hover(path: String, position: Position): Pair<String, Range>? {
         val ktFile = openedFiles[path]!!
-        return hoverAction(ktFile, position)
+        return project.read { hoverAction(ktFile, position) }
     }
 
     fun goToDefinition(path: String, position: Position): Location? {
         val ktFile = openedFiles[path]!!
-        return goToDefinitionAction(ktFile, position)
+        return project.read { goToDefinitionAction(ktFile, position) }
     }
 }
 

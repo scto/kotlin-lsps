@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.kotlinlsp.common.info
+import org.kotlinlsp.common.read
 import java.nio.file.Path
 
 class LibraryModule(
@@ -60,7 +61,7 @@ class LibraryModule(
     fun computeFiles(): Sequence<VirtualFile> {
         val roots = if (isJdk) {
             // This returns urls to the JMOD files in the jdk
-            LibraryUtils.findClassesFromJdkHome(binaryRoots.first(), isJre = false)
+            project.read { LibraryUtils.findClassesFromJdkHome(binaryRoots.first(), isJre = false) }
         } else {
             // These are JAR/class files
             binaryRoots
@@ -68,10 +69,10 @@ class LibraryModule(
 
         return roots.asSequence()
             .mapNotNull {
-                getVirtualFileForLibraryRoot(it, appEnvironment)
+                getVirtualFileForLibraryRoot(it, appEnvironment, mockProject)
             }
             .map {
-                LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true)
+                project.read { LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true) }
             }
             .flatten()
     }
@@ -107,18 +108,19 @@ private const val JAR_SEPARATOR = "!/"
 private fun getVirtualFileForLibraryRoot(
     root: Path,
     environment: CoreApplicationEnvironment,
+    project: MockProject
 ): VirtualFile? {
     val pathString = FileUtil.toSystemIndependentName(root.toAbsolutePath().toString())
 
     if (pathString.endsWith(JAR_PROTOCOL) || pathString.endsWith(KLIB_FILE_EXTENSION)) {
-        return environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR)
+        return project.read { environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR) }
     }
 
     if (pathString.contains(JAR_SEPARATOR)) {
         val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
         val adjustedPath = libHomePath + JAR_SEPARATOR + "modules/$pathInImage"
-        return environment.jrtFileSystem?.findFileByPath(adjustedPath)
+        return project.read { environment.jrtFileSystem?.findFileByPath(adjustedPath) }
     }
 
-    return VirtualFileManager.getInstance().findFileByNioPath(root)
+    return project.read { VirtualFileManager.getInstance().findFileByNioPath(root) }
 }

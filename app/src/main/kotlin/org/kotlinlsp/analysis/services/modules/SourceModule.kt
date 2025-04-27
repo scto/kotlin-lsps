@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.kotlinlsp.common.read
 import java.io.File
 
 class SourceModule(
@@ -35,7 +36,7 @@ class SourceModule(
             .walk()
             .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
             .map { "file://${it.absolutePath}" }
-            .mapNotNull { VirtualFileManager.getInstance().findFileByUrl(it) }
+            .mapNotNull { project.read { VirtualFileManager.getInstance().findFileByUrl(it) } }
 
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope

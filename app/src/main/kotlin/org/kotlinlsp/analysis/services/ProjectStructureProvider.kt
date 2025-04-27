@@ -8,13 +8,16 @@ import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
 import org.kotlinlsp.common.profile
+import org.kotlinlsp.common.read
 import org.kotlinlsp.common.trace
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     private lateinit var rootModule: KaModule
+    private lateinit var project: Project
 
-    fun setup(rootModule: KaModule) {
+    fun setup(rootModule: KaModule, project: Project) {
         this.rootModule = rootModule
+        this.project = project
     }
 
     override fun getImplementingModules(module: KaModule): List<KaModule> = profile("getImplementingModules", "$module") {
@@ -22,7 +25,7 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     }
 
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule = profile("getModule", "$element, useSiteModule: $useSiteModule") {
-        val virtualFile = element.containingFile.virtualFile
+        val virtualFile = project.read { element.containingFile.virtualFile }
         searchVirtualFileInModule(virtualFile, useSiteModule ?: rootModule)!!
     }
 

@@ -9,9 +9,11 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.analysis.services.modules.id
+import org.kotlinlsp.common.read
 import java.io.File
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReadWriteLock
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -27,7 +29,7 @@ class ScanFilesThread(
             .takeWhile { !shouldStop.get() }
             .forEach {
                 val command = if(it.url.startsWith("file://")) {
-                    val ktFile = PsiManager.getInstance(project).findFile(it) as KtFile
+                    val ktFile = project.read { PsiManager.getInstance(project).findFile(it) } as KtFile
                     Command.IndexFile(ktFile)
                 } else {
                     Command.IndexClassFile(it)

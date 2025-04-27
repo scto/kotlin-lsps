@@ -7,6 +7,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.impl.VirtualFileEnumeration
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
+import org.kotlinlsp.common.read
 import org.kotlinlsp.common.warn
 
 fun virtualFilesForPackage(project: Project, searchScope: GlobalSearchScope, packageFqName: FqName): Sequence<VirtualFile> = sequence {
@@ -17,7 +18,7 @@ fun virtualFilesForPackage(project: Project, searchScope: GlobalSearchScope, pac
     }
 
     for(file in files) {
-        val ktFile = PsiManager.getInstance(project).findFile(file)!! as KtFile
+        val ktFile = project.read { PsiManager.getInstance(project).findFile(file)!! as KtFile }
         if(ktFile.packageDirective?.fqName == packageFqName) {
             yield(file)
         }

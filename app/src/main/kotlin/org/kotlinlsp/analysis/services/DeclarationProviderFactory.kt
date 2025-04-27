@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.kotlinlsp.analysis.services.common.virtualFilesForPackage
 import org.kotlinlsp.common.profile
+import org.kotlinlsp.common.read
 
 class DeclarationProvider(val scope: GlobalSearchScope, private val project: Project): KotlinDeclarationProvider {
     override val hasSpecificCallablePackageNamesComputation: Boolean
@@ -53,13 +54,15 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? =
         profile("getClassLikeDeclarationByClassId", "$classId") {
             virtualFilesForPackage(project, scope, classId.packageFqName).forEach {
-                val ktFile = PsiManager.getInstance(project).findFile(it)!!
-                val declaration = ktFile.children
-                    .filterIsInstance<KtClassLikeDeclaration>()
-                    .find {
-                        val itClassId = it.getClassId() ?: return@find false
-                        return@find itClassId == classId
-                    }
+                val ktFile = project.read { PsiManager.getInstance(project).findFile(it)!! }
+                val declaration = project.read {
+                    ktFile.children
+                        .filterIsInstance<KtClassLikeDeclaration>()
+                        .find {
+                            val itClassId = it.getClassId() ?: return@find false
+                            return@find itClassId == classId
+                        }
+                }
 
                 if (declaration != null) {
                     return@profile declaration
@@ -72,7 +75,7 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
         profile("getTopLevelCallableFiles", "$callableId") {
             val files = mutableListOf<KtFile>()
             virtualFilesForPackage(project, scope, callableId.packageName).forEach {
-                val ktFile = PsiManager.getInstance(project).findFile(it)!! as KtFile
+                val ktFile = project.read { PsiManager.getInstance(project).findFile(it)!! as KtFile }
                 files.add(ktFile)
             }
             files
@@ -88,9 +91,9 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
             val names = mutableSetOf<Name>()
 
             virtualFilesForPackage(project, scope, packageFqName).forEach {
-                val ktFile = PsiManager.getInstance(project).findFile(it)!!
+                val ktFile = project.read { PsiManager.getInstance(project).findFile(it)!! }
                 val declarations =
-                    ktFile.children.filterIsInstance<KtClassLikeDeclaration>().map { Name.identifier(it.name!!) }
+                    project.read { ktFile.children.filterIsInstance<KtClassLikeDeclaration>().map { Name.identifier(it.name!!) } }
                 names.addAll(declarations)
             }
 
@@ -102,9 +105,11 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
             val names = mutableSetOf<Name>()
 
             virtualFilesForPackage(project, scope, packageFqName).forEach { it ->
-                val ktFile = PsiManager.getInstance(project).findFile(it)!!
-                val declarations = ktFile.children.filterIsInstance<KtCallableDeclaration>().mapNotNull { it.name }
-                    .map { Name.identifier(it) }
+                val ktFile = project.read { PsiManager.getInstance(project).findFile(it)!! }
+                val declarations = project.read {
+                    ktFile.children.filterIsInstance<KtCallableDeclaration>().mapNotNull { it.name }
+                        .map { Name.identifier(it) }
+                }
                 names.addAll(declarations)
             }
 
