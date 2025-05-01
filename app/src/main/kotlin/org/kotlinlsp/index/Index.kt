@@ -16,6 +16,7 @@ class Index(
     private val workerThread = Thread(workerThreadRunner)
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule, project)
     private val scanFilesThread = Thread(scanFilesThreadRunner)
+    private val dbConnection = createDbConnection(rootFolder)
 
     fun syncIndexInBackground() {
         // We have 2 threads here
@@ -37,5 +38,6 @@ class Index(
         workerThreadRunner.submitCommand(Command.Stop)
         scanFilesThread.join()
         workerThread.join()
+        dbConnection.close()
     }
 }
