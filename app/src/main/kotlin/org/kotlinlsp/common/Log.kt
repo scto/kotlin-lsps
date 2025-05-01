@@ -26,7 +26,7 @@ private enum class LogLevel(level: Int) {
 }
 
 // Configure as needed
-private val logLevel = LogLevel.Info
+private val logLevel = LogLevel.Debug
 private const val profileEnabled = true
 
 private lateinit var logFile: File

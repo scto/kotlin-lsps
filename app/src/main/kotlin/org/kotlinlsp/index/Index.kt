@@ -12,7 +12,7 @@ class Index(
     project: MockProject,
     rootFolder: String
 ) {
-    private val workerThreadRunner = WorkerThread(rootFolder)
+    private val workerThreadRunner = WorkerThread(rootFolder, project)
     private val workerThread = Thread(workerThreadRunner)
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule, project)
     private val scanFilesThread = Thread(scanFilesThreadRunner)

@@ -2,12 +2,13 @@ package org.kotlinlsp.actions
 
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Position
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.common.toLspRange
 import org.kotlinlsp.common.toOffset
 import org.kotlinlsp.common.warn
 
-fun goToDefinitionAction(ktFile: KtFile, position: Position): Location? {
+fun goToDefinitionAction(ktFile: KtFile, position: Position): Location? = analyze(ktFile) {
     val offset = position.toOffset(ktFile)
     val ref = ktFile.findReferenceAt(offset) ?: return null
     val element = ref.resolve() ?: return null

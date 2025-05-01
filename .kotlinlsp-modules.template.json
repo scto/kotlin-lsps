@@ -125,7 +125,7 @@
       "JDK 21"
     ],
     "javaVersion": "21",
-    "sourcePath": "<your-home-folder>/Projects/kotlin-lsp/app",
+    "sourcePath": "<your-home-folder>/Projects/kotlin-lsp/app/src",
     "kotlinVersion": "2.1"
   },
   {

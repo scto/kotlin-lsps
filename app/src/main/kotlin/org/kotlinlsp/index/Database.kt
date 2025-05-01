@@ -31,9 +31,6 @@ private fun createTablesIfNeeded(connection: Connection) {
             endOffset INT NOT NULL,
             name VARCHAR NOT NULL,
             kind INT NOT NULL,
-            visibility INT NOT NULL,
-            isStatic BOOLEAN NOT NULL,
-            extensionFunctionSymbol INT,
             parentSymbol INT
         );
         """.trimIndent()
