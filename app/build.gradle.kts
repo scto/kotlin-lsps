@@ -1,6 +1,6 @@
 val lspVersion = "0.1"
-val analysisApiKotlinVersion = "2.2.0-dev-7826" // 3-March-2025
-val intellijVersion = "241.19416.19"    // Same as KSP uses, upgrading to latest gives runtime errors (incompatible with Analysis API for now)
+val analysisApiKotlinVersion = "2.2.0-dev-15683" // 2-May-2025 (version that KSP uses)
+val intellijVersion = "241.19416.19"
 
 plugins {
     kotlin("jvm") version "2.1.0"

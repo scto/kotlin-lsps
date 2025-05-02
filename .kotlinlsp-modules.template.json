@@ -3,23 +3,23 @@
     "id": "app",
     "dependencies": [
       "core-impl-241.19416.19.jar",
-      "kotlin-compiler-2.2.0-dev-7826.jar",
+      "kotlin-compiler-2.2.0-dev-15683.jar",
       "core-241.19416.19.jar",
       "extensions-241.19416.19.jar",
       "kotlinx-coroutines-core-jvm-1.8.0.jar",
-      "kotlin-stdlib-jdk8-2.2.0-dev-7826.jar",
-      "kotlin-stdlib-jdk7-2.2.0-dev-7826.jar",
-      "kotlin-stdlib-2.2.0-dev-7826.jar",
+      "kotlin-stdlib-jdk8-2.2.0-dev-15683.jar",
+      "kotlin-stdlib-jdk7-2.2.0-dev-15683.jar",
+      "kotlin-stdlib-2.2.0-dev-15683.jar",
       "util-241.19416.19.jar",
       "caffeine-2.9.3.jar",
-      "analysis-api-k2-for-ide-2.2.0-dev-7826.jar",
-      "analysis-api-for-ide-2.2.0-dev-7826.jar",
-      "low-level-api-fir-for-ide-2.2.0-dev-7826.jar",
-      "analysis-api-platform-interface-for-ide-2.2.0-dev-7826.jar",
-      "symbol-light-classes-for-ide-2.2.0-dev-7826.jar",
-      "analysis-api-impl-base-for-ide-2.2.0-dev-7826.jar",
-      "kotlin-compiler-common-for-ide-2.2.0-dev-7826.jar",
-      "kotlin-compiler-fir-for-ide-2.2.0-dev-7826.jar",
+      "analysis-api-k2-for-ide-2.2.0-dev-15683.jar",
+      "analysis-api-for-ide-2.2.0-dev-15683.jar",
+      "low-level-api-fir-for-ide-2.2.0-dev-15683.jar",
+      "analysis-api-platform-interface-for-ide-2.2.0-dev-15683.jar",
+      "symbol-light-classes-for-ide-2.2.0-dev-15683.jar",
+      "analysis-api-impl-base-for-ide-2.2.0-dev-15683.jar",
+      "kotlin-compiler-common-for-ide-2.2.0-dev-15683.jar",
+      "kotlin-compiler-fir-for-ide-2.2.0-dev-15683.jar",
       "org.eclipse.lsp4j-0.24.0.jar",
       "h2-2.3.232.jar",
       "gradle-tooling-api-8.12.jar",
@@ -28,7 +28,7 @@
       "kotlinx-collections-immutable-jvm-0.3.7.jar",
       "util-rt-241.19416.19.jar",
       "util-base-241.19416.19.jar",
-      "kotlin-script-runtime-2.2.0-dev-7826.jar",
+      "kotlin-script-runtime-2.2.0-dev-15683.jar",
       "kotlin-reflect-1.6.10.jar",
       "checker-qual-3.19.0.jar",
       "org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
@@ -125,7 +125,7 @@
       "JDK 21"
     ],
     "javaVersion": "21",
-    "sourcePath": "<your-home-folder>/Projects/kotlin-lsp/app/src",
+    "sourcePath": "<your-home-folder>/Projects/kotlin-lsp/app",
     "kotlinVersion": "2.1"
   },
   {
@@ -642,12 +642,12 @@
     ]
   },
   {
-    "id": "kotlin-script-runtime-2.2.0-dev-7826.jar",
+    "id": "kotlin-script-runtime-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.2.0-dev-7826/246253e15c97f602cc855baf2c32d95b314a9b5/kotlin-script-runtime-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.2.0-dev-15683/56f9c38a9ab17479829815aec599227fe4e1a187/kotlin-script-runtime-2.2.0-dev-15683.jar"
     ]
   },
   {
@@ -723,75 +723,75 @@
     ]
   },
   {
-    "id": "kotlin-compiler-fir-for-ide-2.2.0-dev-7826.jar",
+    "id": "kotlin-compiler-fir-for-ide-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-fir-for-ide/2.2.0-dev-7826/4daec39a1f78c27c5a402d41a7e233c2041805b9/kotlin-compiler-fir-for-ide-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-fir-for-ide/2.2.0-dev-15683/e70bdcfdd75044fd7a6647416e3b6bd16e644e3e/kotlin-compiler-fir-for-ide-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "kotlin-compiler-common-for-ide-2.2.0-dev-7826.jar",
+    "id": "kotlin-compiler-common-for-ide-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-common-for-ide/2.2.0-dev-7826/5b0b8e59ff39f4246948a367a1f3d65b90b6a072/kotlin-compiler-common-for-ide-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-common-for-ide/2.2.0-dev-15683/37d9b97ca605e324bdb71b931131c1535f614557/kotlin-compiler-common-for-ide-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "analysis-api-impl-base-for-ide-2.2.0-dev-7826.jar",
+    "id": "analysis-api-impl-base-for-ide-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-impl-base-for-ide/2.2.0-dev-7826/bb02f9977512c04f25607ef4a8a6b1416c543547/analysis-api-impl-base-for-ide-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-impl-base-for-ide/2.2.0-dev-15683/9ec0046d2a540c147ade82a114efd6a3ce99b055/analysis-api-impl-base-for-ide-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "symbol-light-classes-for-ide-2.2.0-dev-7826.jar",
+    "id": "symbol-light-classes-for-ide-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/symbol-light-classes-for-ide/2.2.0-dev-7826/15710019956d374df2c864f729af8587583c14ed/symbol-light-classes-for-ide-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/symbol-light-classes-for-ide/2.2.0-dev-15683/6ed5fc291a80def1e2a843b4013568af32c60af7/symbol-light-classes-for-ide-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "analysis-api-platform-interface-for-ide-2.2.0-dev-7826.jar",
+    "id": "analysis-api-platform-interface-for-ide-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-platform-interface-for-ide/2.2.0-dev-7826/23637be781f5dc62c0d3b4c3e871849dc0b2e405/analysis-api-platform-interface-for-ide-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-platform-interface-for-ide/2.2.0-dev-15683/9d3afa9431c72781594f45d943db8ffd48c767d7/analysis-api-platform-interface-for-ide-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "low-level-api-fir-for-ide-2.2.0-dev-7826.jar",
+    "id": "low-level-api-fir-for-ide-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/low-level-api-fir-for-ide/2.2.0-dev-7826/5e348b559cb8afe2ef74ca80bc3c27d244655c9/low-level-api-fir-for-ide-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/low-level-api-fir-for-ide/2.2.0-dev-15683/891ca0320c30cb3331fe9953d0b4625597f79d03/low-level-api-fir-for-ide-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "analysis-api-for-ide-2.2.0-dev-7826.jar",
+    "id": "analysis-api-for-ide-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-for-ide/2.2.0-dev-7826/7c4c43263cf019f32d15a744c73087d3c01ccc55/analysis-api-for-ide-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-for-ide/2.2.0-dev-15683/fddb8a407b1d84e7e08cd394aac5c62a0d127b59/analysis-api-for-ide-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "analysis-api-k2-for-ide-2.2.0-dev-7826.jar",
+    "id": "analysis-api-k2-for-ide-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-k2-for-ide/2.2.0-dev-7826/fad2bbd0dc89b12d3ca500d14b3eab2c5499739e/analysis-api-k2-for-ide-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-k2-for-ide/2.2.0-dev-15683/4d80b832e7f240866486c1db32125ce53bd1bd65/analysis-api-k2-for-ide-2.2.0-dev-15683.jar"
     ]
   },
   {
@@ -813,30 +813,30 @@
     ]
   },
   {
-    "id": "kotlin-stdlib-2.2.0-dev-7826.jar",
+    "id": "kotlin-stdlib-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.2.0-dev-7826/263622e6ba20bd16a41ed4602be30bce9145b0d7/kotlin-stdlib-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.2.0-dev-15683/89cdb84d2949dc5a7356e10357b09dca54a63b6c/kotlin-stdlib-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "kotlin-stdlib-jdk7-2.2.0-dev-7826.jar",
+    "id": "kotlin-stdlib-jdk7-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/2.2.0-dev-7826/aa98b507662e47bf2436185de9d91e909149723c/kotlin-stdlib-jdk7-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/2.2.0-dev-15683/fcfc8637e2a008625803c558b0acd7263d95436b/kotlin-stdlib-jdk7-2.2.0-dev-15683.jar"
     ]
   },
   {
-    "id": "kotlin-stdlib-jdk8-2.2.0-dev-7826.jar",
+    "id": "kotlin-stdlib-jdk8-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/2.2.0-dev-7826/5e90a127bfc5318798ea8d6e3a950f7d031d0a6f/kotlin-stdlib-jdk8-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/2.2.0-dev-15683/950708cc2a072671a43f3d61d4b3eab5fe70b82d/kotlin-stdlib-jdk8-2.2.0-dev-15683.jar"
     ]
   },
   {
@@ -867,12 +867,12 @@
     ]
   },
   {
-    "id": "kotlin-compiler-2.2.0-dev-7826.jar",
+    "id": "kotlin-compiler-2.2.0-dev-15683.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler/2.2.0-dev-7826/1170a3824432506d623c04d949ed0c1e82a33a68/kotlin-compiler-2.2.0-dev-7826.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler/2.2.0-dev-15683/9f32677e4deab63c85990de5f6cca5229a6cb7f5/kotlin-compiler-2.2.0-dev-15683.jar"
     ]
   },
   {
