@@ -4,6 +4,9 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 
 fun Registrar.analysisApiImplBase() {
+    Registry.get(
+        "kotlin.analysis.statistics"
+    ).setValue(false)
     projectService(
         "org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade",
         "org.jetbrains.kotlin.analysis.api.impl.base.java.KaBaseKotlinJavaPsiFacade"

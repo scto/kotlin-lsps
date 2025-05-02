@@ -18,6 +18,9 @@ fun Registrar.lowLevelApiFir() {
         "kotlin.parallel.resolve.under.global.lock"
     ).setValue(false)
     Registry.get(
+        "kotlin.analysis.ll.locking.interval"
+    ).setValue("100")
+    Registry.get(
         "kotlin.analysis.jvmBuiltinActualizationForStdlibSources"
     ).setValue(true)
     projectService(
