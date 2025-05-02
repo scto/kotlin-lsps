@@ -1,26 +1,16 @@
 package org.kotlinlsp.index
 
-import com.intellij.mock.MockProject
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.analysis.services.modules.id
-import org.kotlinlsp.common.read
-import java.io.File
-import java.time.Instant
+import org.kotlinlsp.index.worker.WorkerThread
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.ReadWriteLock
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 class ScanFilesThread(
     private val worker: WorkerThread,
-    private val rootModule: KaModule,
-    private val project: MockProject
+    private val rootModule: KaModule
 ): Runnable {
     private val shouldStop = AtomicBoolean(false)
 
@@ -28,12 +18,7 @@ class ScanFilesThread(
         processModule(rootModule)
             .takeWhile { !shouldStop.get() }
             .forEach {
-                val command = if(it.url.startsWith("file://")) {
-                    val ktFile = project.read { PsiManager.getInstance(project).findFile(it) } as KtFile
-                    Command.IndexFile(ktFile)
-                } else {
-                    Command.IndexClassFile(it)
-                }
+                val command = Command.IndexFile(it)
                 worker.submitCommand(command)
             }
 

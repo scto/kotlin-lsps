@@ -1,4 +1,4 @@
-package org.kotlinlsp.index
+package org.kotlinlsp.index.db
 
 import org.kotlinlsp.common.getCachePath
 import java.sql.Connection

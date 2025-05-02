@@ -3,9 +3,8 @@ package org.kotlinlsp.index
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
-import java.time.Instant
-import java.util.concurrent.locks.ReadWriteLock
-import java.util.concurrent.locks.ReentrantReadWriteLock
+import org.kotlinlsp.index.db.createDbConnection
+import org.kotlinlsp.index.worker.WorkerThread
 
 class Index(
     rootModule: KaModule,
@@ -14,7 +13,7 @@ class Index(
 ) {
     private val workerThreadRunner = WorkerThread(rootFolder, project)
     private val workerThread = Thread(workerThreadRunner)
-    private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule, project)
+    private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
     private val scanFilesThread = Thread(scanFilesThreadRunner)
     private val dbConnection = createDbConnection(rootFolder)
 
@@ -30,7 +29,7 @@ class Index(
     }
 
     fun queueOnFileChanged(ktFile: KtFile) {
-        workerThreadRunner.submitCommand(Command.IndexFile(ktFile))
+        workerThreadRunner.submitCommand(Command.IndexModifiedFile(ktFile))
     }
 
     fun close() {
