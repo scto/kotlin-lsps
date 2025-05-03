@@ -52,7 +52,7 @@ import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.common.*
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.IndexNotifier
-import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
 
 interface DiagnosticsNotifier {
@@ -71,7 +71,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     private val commandProcessor: CommandProcessor
     private val psiDocumentManager: PsiDocumentManager
     private val buildSystemResolver: BuildSystemResolver
-    private val openedFiles = mutableMapOf<String, KtFile>()
+    private val openedFiles: MutableMap<String, KtFile> = ConcurrentHashMap()
     private val index: Index
 
     init {
@@ -272,7 +272,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     }
 
     // TODO Use version to avoid conflicts
-    fun onChangeFile(path: String, version: Int, changes: List<TextDocumentContentChangeEvent>) {
+    fun editFile(path: String, version: Int, changes: List<TextDocumentContentChangeEvent>) {
         val ktFile = openedFiles[path]!!
         val doc = project.read { psiDocumentManager.getDocument(ktFile)!! }
 
@@ -289,14 +289,14 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
             }
         }
 
-        // Queue an update to the index
-        index.queueOnFileChanged(ktFile)
-
         // TODO Optimize the KaElementModificationType
-        // TODO Add a debounce so analysis is not triggered on every keystroke adding lag
         KaSourceModificationService.getInstance(project)
             .handleElementModification(ktFile, KaElementModificationType.Unknown)
+    }
 
+    fun lintFile(path: String) {
+        val ktFile = openedFiles[path]!!
+        index.queueOnFileChanged(ktFile)
         updateDiagnostics(ktFile)
     }
 

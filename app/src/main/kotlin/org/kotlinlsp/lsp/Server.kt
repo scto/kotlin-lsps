@@ -10,6 +10,9 @@ import org.kotlinlsp.common.info
 import org.kotlinlsp.common.setupLogger
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 interface KotlinLanguageServerNotifier {
     fun onExit() {}
@@ -22,6 +25,8 @@ class KotlinLanguageServer(
     private lateinit var client: LanguageClient
     private lateinit var analysisSession: AnalysisSession
     private lateinit var rootPath: String
+    private val lintExecutor = Executors.newSingleThreadScheduledExecutor()
+    private var lintFuture: ScheduledFuture<*>? = null
 
     private val analysisSessionNotifier = object : AnalysisSessionNotifier {
         override fun onBackgroundIndexFinished() {
@@ -86,7 +91,14 @@ class KotlinLanguageServer(
     }
 
     override fun didChange(params: DidChangeTextDocumentParams) {
-        analysisSession.onChangeFile(params.textDocument.uri, params.textDocument.version, params.contentChanges)
+        val uri = params.textDocument.uri
+        analysisSession.editFile(uri, params.textDocument.version, params.contentChanges)
+
+        // Debounce the linting so it is not triggered on every keystroke
+        lintFuture?.cancel(false)
+        lintFuture = lintExecutor.schedule({
+            analysisSession.lintFile(uri)
+        }, 250, TimeUnit.MILLISECONDS)
     }
 
     override fun didClose(params: DidCloseTextDocumentParams) {

@@ -20,11 +20,11 @@ fun main(args: Array<String>) {
             exitProcess(0)
         }
     }
-    val server = KotlinLanguageServer(notifier)
-    val threads = Executors.newSingleThreadExecutor {
+    val executor = Executors.newSingleThreadExecutor {
         Thread(it, "client")
     }
-    val launcher = LSPLauncher.createServerLauncher(server, System.`in`, System.out, threads) { it }
+    val server = KotlinLanguageServer(notifier)
+    val launcher = LSPLauncher.createServerLauncher(server, System.`in`, System.out, executor) { it }
 
     server.connect(launcher.remoteProxy)
     launcher.startListening()
