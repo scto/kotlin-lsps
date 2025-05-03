@@ -49,39 +49,23 @@ private fun createDb(rootFolder: String) {
         );
         """
         )
-        it.execute(
-            """
-        CREATE TABLE IF NOT EXISTS Files (
-            id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-            path VARCHAR NOT NULL,
-            packageFqName VARCHAR NOT NULL,
-            lastModified TIMESTAMP NOT NULL
-        );
-        """
-        )
-        it.execute(
-            """
-        CREATE TABLE IF NOT EXISTS Symbols (
-            id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-            file INT NOT NULL,
-            startOffset INT NOT NULL,
-            endOffset INT NOT NULL,
-            name VARCHAR NOT NULL,
-            kind INT NOT NULL,
-            parentSymbol INT
-        );
-        """
-        )
-        it.execute(
-            """
-        CREATE TABLE IF NOT EXISTS References (
-            id INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-            symbolId INT NOT NULL,
-            startOffset INT NOT NULL,
-            endOffset INT NOT NULL
-        );
-        """
-        )
+        it.createFilesTable()
+        it.createSymbolsTable()
+        it.createReferencesTable()
         it.executeUpdate("INSERT INTO SchemaMetadata (version) VALUES ($CURRENT_SCHEMA_VERSION)")
+    }
+}
+
+fun <T> Connection.transaction(block: Connection.() -> T): T {
+    autoCommit = false
+    try {
+        val result = block()
+        commit()
+        return result
+    } catch (e: Exception) {
+        rollback()
+        throw e
+    } finally {
+        autoCommit = true
     }
 }
