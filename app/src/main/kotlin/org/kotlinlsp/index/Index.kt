@@ -6,12 +6,17 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.index.db.createDbConnection
 import org.kotlinlsp.index.worker.WorkerThread
 
+interface IndexNotifier {
+    fun onBackgroundIndexFinished()
+}
+
 class Index(
     rootModule: KaModule,
     project: MockProject,
-    rootFolder: String
+    rootFolder: String,
+    notifier: IndexNotifier
 ) {
-    private val workerThreadRunner = WorkerThread(rootFolder, project)
+    private val workerThreadRunner = WorkerThread(rootFolder, project, notifier)
     private val workerThread = Thread(workerThreadRunner)
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
     private val scanFilesThread = Thread(scanFilesThreadRunner)

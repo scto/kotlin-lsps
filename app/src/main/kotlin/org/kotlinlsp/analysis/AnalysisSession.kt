@@ -51,10 +51,21 @@ import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.common.*
 import org.kotlinlsp.index.Index
+import org.kotlinlsp.index.IndexNotifier
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.io.path.absolutePathString
 
-class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsParams) -> Unit, rootPath: String) {
+interface DiagnosticsNotifier {
+    fun onDiagnostics(params: PublishDiagnosticsParams)
+}
+
+interface ProgressNotifier {
+    fun onReportProgress(phase: WorkDoneProgressKind, progressToken: String, text: String)
+}
+
+interface AnalysisSessionNotifier: IndexNotifier, DiagnosticsNotifier, ProgressNotifier
+
+class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: String) {
     private val app: MockApplication
     private val project: MockProject
     private val commandProcessor: CommandProcessor
@@ -62,7 +73,6 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
     private val buildSystemResolver: BuildSystemResolver
     private val openedFiles = mutableMapOf<String, KtFile>()
     private val index: Index
-    private val rwLock = ReentrantReadWriteLock()
 
     init {
         System.setProperty("java.awt.headless", "true")
@@ -159,7 +169,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
         psiDocumentManager = PsiDocumentManager.getInstance(project)
 
         // Sync the index in the background
-        index = Index(rootModule, project, rootPath)
+        index = Index(rootModule, project, rootPath, notifier)
         index.syncIndexInBackground()
     }
 
@@ -257,7 +267,7 @@ class AnalysisSession(private val onDiagnostics: (params: PublishDiagnosticsPara
                 return@analyze lspDiagnostics
             }
         }
-        onDiagnostics(PublishDiagnosticsParams("file://${ktFile.virtualFilePath}", syntaxDiagnostics + analysisDiagnostics))
+        notifier.onDiagnostics(PublishDiagnosticsParams("file://${ktFile.virtualFilePath}", syntaxDiagnostics + analysisDiagnostics))
         logProfileInfo()
     }
 

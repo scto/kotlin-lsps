@@ -4,13 +4,17 @@ import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializedParams
 import org.eclipse.lsp4j.WorkspaceFolder
 import org.eclipse.lsp4j.services.LanguageClient
-import org.kotlinlsp.lsp.MyLanguageServer
+import org.kotlinlsp.lsp.KotlinLanguageServer
 import org.kotlinlsp.common.removeCacheFolder
+import org.kotlinlsp.lsp.KotlinLanguageServerNotifier
 import org.mockito.Mockito.mock
 import java.io.File
 import java.nio.file.Paths
 
-fun scenario(projectName: String, testCase: (server: MyLanguageServer, client: LanguageClient, projectUrl: String) -> Unit) {
+fun scenario(
+    projectName: String,
+    testCase: (server: KotlinLanguageServer, client: LanguageClient, projectUrl: String, notifier: KotlinLanguageServerNotifier) -> Unit
+) {
     // Setup
     val cwd = Paths.get("").toAbsolutePath().toString()
     val jdkHome = System.getProperty("java.home")
@@ -40,7 +44,8 @@ fun scenario(projectName: String, testCase: (server: MyLanguageServer, client: L
     moduleFile.delete()
     moduleFile.writeText(moduleContents)
 
-    val server = MyLanguageServer(exitProcess = { /* no op */ })
+    val notifier = mock(KotlinLanguageServerNotifier::class.java)
+    val server = KotlinLanguageServer(notifier)
     val initParams = InitializeParams().apply {
         workspaceFolders = listOf(
             WorkspaceFolder().apply {
@@ -55,7 +60,7 @@ fun scenario(projectName: String, testCase: (server: MyLanguageServer, client: L
 
     // Run test case
     try {
-        testCase(server, client, "file://$cwd/test-projects/$projectName")
+        testCase(server, client, "file://$cwd/test-projects/$projectName", notifier)
     } finally {
         // Cleanup
         server.shutdown().join()

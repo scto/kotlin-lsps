@@ -4,16 +4,47 @@ import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
 import org.kotlinlsp.analysis.AnalysisSession
+import org.kotlinlsp.analysis.AnalysisSessionNotifier
 import org.kotlinlsp.common.getLspVersion
 import org.kotlinlsp.common.info
 import org.kotlinlsp.common.setupLogger
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
 
-class MyLanguageServer(private val exitProcess: () -> Unit): LanguageServer, TextDocumentService, WorkspaceService, LanguageClientAware {
+interface KotlinLanguageServerNotifier {
+    fun onExit() {}
+    fun onBackgroundIndexingFinished() {}
+}
+
+class KotlinLanguageServer(
+    private val notifier: KotlinLanguageServerNotifier
+): LanguageServer, TextDocumentService, WorkspaceService, LanguageClientAware {
     private lateinit var client: LanguageClient
     private lateinit var analysisSession: AnalysisSession
     private lateinit var rootPath: String
+
+    private val analysisSessionNotifier = object : AnalysisSessionNotifier {
+        override fun onBackgroundIndexFinished() {
+            notifier.onBackgroundIndexingFinished()
+        }
+
+        override fun onDiagnostics(params: PublishDiagnosticsParams) {
+            client.publishDiagnostics(params)
+        }
+
+        override fun onReportProgress(phase: WorkDoneProgressKind, progressToken: String, text: String) {
+            val notification = when(phase) {
+                WorkDoneProgressKind.begin -> WorkDoneProgressBegin().apply { title = text }
+                WorkDoneProgressKind.report -> WorkDoneProgressReport().apply { message = text }
+                WorkDoneProgressKind.end -> WorkDoneProgressEnd().apply { message = text }
+            }
+            val params = ProgressParams().apply {
+                token = Either.forLeft(progressToken)
+                value = Either.forLeft(notification)
+            }
+            client.notifyProgress(params)
+        }
+    }
 
     override fun initialize(params: InitializeParams): CompletableFuture<InitializeResult> {
         val capabilities = ServerCapabilities().apply {
@@ -34,12 +65,7 @@ class MyLanguageServer(private val exitProcess: () -> Unit): LanguageServer, Tex
         setupLogger(rootPath)
         info(rootPath)
 
-        analysisSession = AnalysisSession(
-            onDiagnostics = {
-                client.publishDiagnostics(it)
-            },
-            rootPath = rootPath
-        )
+        analysisSession = AnalysisSession(analysisSessionNotifier, rootPath)
     }
 
     override fun shutdown(): CompletableFuture<Any> {
@@ -49,7 +75,7 @@ class MyLanguageServer(private val exitProcess: () -> Unit): LanguageServer, Tex
 
     override fun exit() {
         analysisSession.dispose()
-        exitProcess()
+        notifier.onExit()
     }
 
     override fun getTextDocumentService(): TextDocumentService = this

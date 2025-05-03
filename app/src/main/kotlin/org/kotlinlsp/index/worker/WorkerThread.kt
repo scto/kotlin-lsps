@@ -6,13 +6,15 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.common.info
 import org.kotlinlsp.common.read
 import org.kotlinlsp.index.Command
+import org.kotlinlsp.index.IndexNotifier
 import org.kotlinlsp.index.db.createDbConnection
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.LinkedBlockingDeque
 
 class WorkerThread(
     private val rootFolder: String,
-    private val project: Project
+    private val project: Project,
+    private val notifier: IndexNotifier
 ): Runnable {
     companion object {
         const val INDEX_QUEUE_SIZE = 100
@@ -45,6 +47,7 @@ class WorkerThread(
                 }
                 is Command.IndexingFinished -> {
                     info("Background indexing finished!, $count files!")
+                    notifier.onBackgroundIndexFinished()
                 }
             }
         }

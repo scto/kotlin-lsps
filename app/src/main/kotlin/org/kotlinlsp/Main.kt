@@ -1,9 +1,10 @@
 package org.kotlinlsp
 
 import org.eclipse.lsp4j.launch.LSPLauncher
-import org.kotlinlsp.lsp.MyLanguageServer
+import org.kotlinlsp.lsp.KotlinLanguageServer
 import org.kotlinlsp.common.getLspVersion
 import org.kotlinlsp.common.profileJvmStartup
+import org.kotlinlsp.lsp.KotlinLanguageServerNotifier
 import java.util.concurrent.Executors
 import kotlin.system.exitProcess
 
@@ -14,7 +15,12 @@ fun main(args: Array<String>) {
         return
     }
 
-    val server = MyLanguageServer(exitProcess = { exitProcess(0) })
+    val notifier = object : KotlinLanguageServerNotifier {
+        override fun onExit() {
+            exitProcess(0)
+        }
+    }
+    val server = KotlinLanguageServer(notifier)
     val threads = Executors.newSingleThreadExecutor {
         Thread(it, "client")
     }
