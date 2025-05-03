@@ -96,7 +96,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         registrar.lspPlatform()
 
         // Get the modules to analyze calling the appropriate build system
-        buildSystemResolver = BuildSystemResolver(project, appEnvironment, rootPath)
+        buildSystemResolver = BuildSystemResolver(project, appEnvironment, notifier, rootPath)
         val rootModule = buildSystemResolver.resolveModuleDAG()
 
         // Prepare the dependencies index for the Analysis API

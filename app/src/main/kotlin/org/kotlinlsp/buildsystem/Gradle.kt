@@ -1,6 +1,7 @@
 package org.kotlinlsp.buildsystem
 
 import com.intellij.mock.MockProject
+import org.eclipse.lsp4j.WorkDoneProgressKind
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.events.OperationType
 import org.gradle.tooling.model.idea.IdeaProject
@@ -10,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.kotlinlsp.analysis.ProgressNotifier
 import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.common.debug
@@ -18,8 +20,13 @@ import java.io.File
 class GradleBuildSystem(
     private val project: MockProject,
     private val appEnvironment: KotlinCoreApplicationEnvironment,
-    private val rootFolder: String
+    private val rootFolder: String,
+    private val progressNotifier: ProgressNotifier
 ) : BuildSystem {
+    companion object {
+        const val PROGRESS_TOKEN = "GradleBuildSystem"
+    }
+
     override val markerFiles: List<String> = listOf(
         "$rootFolder/build.gradle", "$rootFolder/build.gradle.kts",
         "$rootFolder/settings.gradle", "$rootFolder/settings.gradle.kts",
@@ -27,13 +34,16 @@ class GradleBuildSystem(
 
     override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String?> {
         // TODO Implement caching checks
+        progressNotifier.onReportProgress(WorkDoneProgressKind.begin, PROGRESS_TOKEN, "[GRADLE] Resolving project...")
         val connection = GradleConnector.newConnector()
             .forProjectDirectory(File(rootFolder))
             .connect()
 
         val model = connection.model(IdeaProject::class.java)
 
-        model.addProgressListener({ debug("[GRADLE] ${it.displayName}") }, OperationType.PROJECT_CONFIGURATION)
+        model.addProgressListener({
+            progressNotifier.onReportProgress(WorkDoneProgressKind.report, PROGRESS_TOKEN, "[GRADLE] ${it.displayName}")
+        }, OperationType.PROJECT_CONFIGURATION)
 
         val ideaProject = model.get()
 
@@ -80,6 +90,7 @@ class GradleBuildSystem(
 
         // TODO Support multiple modules, for now take the last one
         val rootModule = modules.last()
+        progressNotifier.onReportProgress(WorkDoneProgressKind.end, PROGRESS_TOKEN, "[GRADLE] Done")
         return Pair(rootModule, null)
     }
 }
