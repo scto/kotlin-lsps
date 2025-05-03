@@ -7,13 +7,20 @@ import org.kotlinlsp.common.info
 import org.kotlinlsp.common.read
 import org.kotlinlsp.index.Command
 import org.kotlinlsp.index.db.createDbConnection
+import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.LinkedBlockingDeque
 
 class WorkerThread(
     private val rootFolder: String,
     private val project: Project
 ): Runnable {
-    private val workQueue = LinkedBlockingDeque<Command>(100)
+    companion object {
+        const val INDEX_QUEUE_SIZE = 100
+        const val EDITS_QUEUE_SIZE = 20
+    }
+    private val indexQueue = ArrayBlockingQueue<Command>(INDEX_QUEUE_SIZE)
+    private val editsQueue = LinkedBlockingDeque<Command>(EDITS_QUEUE_SIZE)
+    private val workQueue = LinkedBlockingDeque<Command>(INDEX_QUEUE_SIZE + EDITS_QUEUE_SIZE)
 
     override fun run() {
         val connection = createDbConnection(rootFolder)
@@ -46,11 +53,16 @@ class WorkerThread(
     }
 
     fun submitCommand(command: Command) {
+        // Edits queue has more priority than index queue
         when(command) {
-            // Incremental edits take priority over regular indexing operations
-            // TODO Prevent blocking on IndexModifiedFile command if the queue gets full
-            is Command.IndexModifiedFile -> workQueue.putFirst(command)
-            else -> workQueue.putLast(command)
+            is Command.IndexModifiedFile -> {
+                editsQueue.putFirst(command)
+                workQueue.putFirst(editsQueue.take())
+            }
+            else -> {
+                indexQueue.put(command)
+                workQueue.putLast(indexQueue.take())
+            }
         }
     }
 }
