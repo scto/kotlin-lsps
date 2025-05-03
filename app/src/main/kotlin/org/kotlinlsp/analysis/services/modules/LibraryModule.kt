@@ -58,7 +58,7 @@ class LibraryModule(
     }
 
     @OptIn(KaImplementationDetail::class)
-    fun computeFiles(): Sequence<VirtualFile> {
+    override fun computeFiles(): Sequence<VirtualFile> {
         val roots = if (isJdk) {
             // This returns urls to the JMOD files in the jdk
             project.read { LibraryUtils.findClassesFromJdkHome(binaryRoots.first(), isJre = false) }

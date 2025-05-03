@@ -31,7 +31,7 @@ class SourceModule(
         return@lazy GlobalSearchScope.filesScope(mockProject, files)
     }
 
-    fun computeFiles(): Sequence<VirtualFile> =
+    override fun computeFiles(): Sequence<VirtualFile> =
         File(folderPath)
             .walk()
             .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }

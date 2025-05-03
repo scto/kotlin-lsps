@@ -28,22 +28,10 @@ class ScanFilesThread(
     private fun processModule(module: Module, processedModules: MutableSet<String> = mutableSetOf()): Sequence<VirtualFile> = sequence {
         if(processedModules.contains(module.id)) return@sequence
 
-        when(module) {
-            is SourceModule -> {
-                yieldAll(module.computeFiles())
+        yieldAll(module.computeFiles())
 
-                module.dependencies.forEach {
-                    yieldAll(processModule(it, processedModules))
-                }
-            }
-            is LibraryModule -> {
-                yieldAll(module.computeFiles())
-
-                module.dependencies.forEach {
-                    yieldAll(processModule(it, processedModules))
-                }
-            }
-            else -> throw Exception("Unknown KaModule!")
+        module.dependencies.forEach {
+            yieldAll(processModule(it, processedModules))
         }
 
         processedModules.add(module.id)
