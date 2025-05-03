@@ -1,6 +1,6 @@
 package org.kotlinlsp.buildsystem
 
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.kotlinlsp.analysis.services.modules.Module
 
 interface BuildSystem {
     // List of files used to trigger this build system
@@ -11,5 +11,5 @@ interface BuildSystem {
     // it returns the module DAG along with the current new version
     // cachedVersion = null if no cached module DAG is available
     // If the returned version is null it means caching is disabled
-    fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String?>?
+    fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<Module, String?>?
 }

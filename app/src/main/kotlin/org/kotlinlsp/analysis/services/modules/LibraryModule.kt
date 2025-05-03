@@ -32,12 +32,12 @@ class LibraryModule(
     val appEnvironment: KotlinCoreApplicationEnvironment,
     val roots: List<Path>,
     val javaVersion: JvmTarget,
-    val dependencies: MutableList<KaModule> = mutableListOf(),
+    override val dependencies: MutableList<Module> = mutableListOf(),
     val isJdk: Boolean = false,
     val name: String,
     private val mockProject: MockProject,
     private val sourceModule: KaLibrarySourceModule? = null,
-): KaLibraryModule, KaModuleBase() {
+): KaLibraryModule, Module, KaModuleBase() {
     @KaPlatformInterface
     override val baseContentScope: GlobalSearchScope by lazy {
         val virtualFileUrls = mutableSetOf<String>()
@@ -101,6 +101,9 @@ class LibraryModule(
         get() = mockProject
     override val targetPlatform: TargetPlatform
         get() = JvmPlatforms.jvmPlatformByTargetVersion(javaVersion)
+
+    override val id: String
+        get() = libraryName
 }
 
 private const val JAR_SEPARATOR = "!/"

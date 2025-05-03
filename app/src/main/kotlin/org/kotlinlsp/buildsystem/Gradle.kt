@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.kotlinlsp.analysis.ProgressNotifier
 import org.kotlinlsp.analysis.services.modules.LibraryModule
+import org.kotlinlsp.analysis.services.modules.Module
 import org.kotlinlsp.analysis.services.modules.SourceModule
 import org.kotlinlsp.common.debug
 import java.io.File
@@ -32,7 +33,7 @@ class GradleBuildSystem(
         "$rootFolder/settings.gradle", "$rootFolder/settings.gradle.kts",
     )
 
-    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String?> {
+    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<Module, String?> {
         // TODO Implement caching checks
         progressNotifier.onReportProgress(WorkDoneProgressKind.begin, PROGRESS_TOKEN, "[GRADLE] Resolving project...")
         val connection = GradleConnector.newConnector()
@@ -73,7 +74,7 @@ class GradleBuildSystem(
                     )
                 }
 
-            val allDependencies: MutableList<KaModule> = dependencies.toMutableList()
+            val allDependencies: MutableList<Module> = dependencies.toMutableList()
             if (jdkModule != null) {
                 allDependencies.add(jdkModule)
             }

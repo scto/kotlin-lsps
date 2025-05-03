@@ -18,12 +18,12 @@ import java.io.File
 
 class SourceModule(
     val folderPath: String,
-    val dependencies: MutableList<KaModule>,
+    override val dependencies: MutableList<Module>,
     val javaVersion: JvmTarget,
     val kotlinVersion: LanguageVersion,
     val moduleName: String,
     private val mockProject: MockProject,
-) : KaSourceModule, KaModuleBase() {
+) : KaSourceModule, Module, KaModuleBase() {
     private val scope: GlobalSearchScope by lazy {
         val files = computeFiles()
             .toList()
@@ -59,4 +59,7 @@ class SourceModule(
         get() = mockProject
     override val targetPlatform: TargetPlatform
         get() = JvmPlatforms.jvmPlatformByTargetVersion(javaVersion)
+
+    override val id: String
+        get() = moduleName
 }

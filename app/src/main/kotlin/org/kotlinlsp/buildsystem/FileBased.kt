@@ -3,6 +3,7 @@ package org.kotlinlsp.buildsystem
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
+import org.kotlinlsp.analysis.services.modules.Module
 import org.kotlinlsp.analysis.services.modules.deserializeRootModule
 import java.io.File
 
@@ -16,7 +17,7 @@ class FileBasedBuildSystem(
     override val markerFiles: List<String>
         get() = listOf("$rootFolder/.kotlinlsp-modules.json")
 
-    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<KaModule, String>? {
+    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<Module, String>? {
         val file = File("$rootFolder/.kotlinlsp-modules.json")
         val currentVersion = file.lastModified()
         if(cachedVersion != null) {

@@ -5,6 +5,7 @@ import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.kotlinlsp.analysis.ProgressNotifier
+import org.kotlinlsp.analysis.services.modules.Module
 import org.kotlinlsp.analysis.services.modules.deserializeRootModule
 import org.kotlinlsp.analysis.services.modules.serializeRootModule
 import org.kotlinlsp.common.getCachePath
@@ -31,7 +32,7 @@ class BuildSystemResolver(
         GradleBuildSystem(project, appEnvironment, rootFolder, progressNotifier)
     )
 
-    fun resolveModuleDAG(): KaModule = profile("BuildSystemResolver", "") {
+    fun resolveModuleDAG(): Module = profile("BuildSystemResolver", "") {
         val version = readVersionFile(versionFile)
 
         BUILD_SYSTEMS.forEach {
@@ -83,7 +84,7 @@ class BuildSystemResolver(
         return version.version
     }
 
-    private fun getCachedModules(): KaModule? {
+    private fun getCachedModules(): Module? {
         val file = File(cachedModulesFile.toUri())
         if(!file.exists()) return null
         try {

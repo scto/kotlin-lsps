@@ -24,14 +24,14 @@ private data class SerializedModule(
 )
 
 @OptIn(KaPlatformInterface::class)
-fun serializeRootModule(rootModule: KaModule): String {
+fun serializeRootModule(rootModule: Module): String {
     val visited = LinkedHashMap<String, SerializedModule>()
-    val stack = ArrayDeque<KaModule>()
+    val stack = ArrayDeque<Module>()
     stack.add(rootModule)
 
     while (stack.isNotEmpty()) {
         val current = stack.removeLast()
-        val id = current.id()
+        val id = current.id
         if(visited.containsKey(id)) continue
 
         visited[id] = when(current) {
@@ -40,18 +40,18 @@ fun serializeRootModule(rootModule: KaModule): String {
                 sourcePath = current.folderPath,
                 kotlinVersion = current.kotlinVersion.versionString,
                 javaVersion = current.javaVersion.toString(),
-                dependencies = current.directRegularDependencies.map { it.id() }
+                dependencies = current.dependencies.map { it.id }
             )
             is LibraryModule -> SerializedModule(
                 id = id,
                 libraryRoots = current.binaryRoots.map { it.absolutePathString() },
                 isJdk = current.isSdk,
                 javaVersion = current.javaVersion.toString(),
-                dependencies = current.directRegularDependencies.map { it.id() }
+                dependencies = current.dependencies.map { it.id }
             )
             else -> throw Exception("Unsupported KaModule!")
         }
-        stack.addAll(current.directRegularDependencies)
+        stack.addAll(current.dependencies)
     }
 
     return GsonBuilder().setPrettyPrinting().create().toJson(visited.values)
@@ -61,10 +61,10 @@ fun deserializeRootModule(
     data: String,
     appEnvironment: KotlinCoreApplicationEnvironment,
     mockProject: MockProject
-): KaModule {
+): Module {
     val gson = Gson()
     val parsed: List<SerializedModule> = gson.fromJson(data, Array<SerializedModule>::class.java).toList()
-    val nodeMap = parsed.associate {
+    val nodeMap: Map<String, Module> = parsed.associate {
         val module = if(it.sourcePath != null) {
             SourceModule(
                 kotlinVersion = LanguageVersion.fromVersionString(it.kotlinVersion!!)!!,
@@ -89,19 +89,9 @@ fun deserializeRootModule(
     }
 
     for (serial in parsed) {
-        val deps = when(val node = nodeMap[serial.id]!!) {
-            is SourceModule -> node.dependencies
-            is LibraryModule -> node.dependencies
-            else -> throw Exception("Unsupported KaModule!")
-        }
+        val deps = nodeMap[serial.id]!!.dependencies
         deps += serial.dependencies.map { nodeMap[it]!! }
     }
 
     return nodeMap[parsed.first().id]!!
-}
-
-fun KaModule.id(): String = when(this) {
-    is SourceModule -> moduleName
-    is LibraryModule -> libraryName
-    else -> throw Exception("Unsupported KaModule!")
 }
