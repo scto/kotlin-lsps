@@ -31,6 +31,7 @@ fun indexKtFile(project: Project, ktFile: KtFile, connection: Connection) {
 
     // Check if the file record has been modified since last time
     // I think the case of overflowing modificationStamp is not worth to be considered as it is 64bit int
+    // (a trillion modifications on the same file in the same coding session)
     val existingFileRecord = connection.queryFileRecord(fileRecord.path)
     if (
         existingFileRecord != null &&
@@ -38,8 +39,6 @@ fun indexKtFile(project: Project, ktFile: KtFile, connection: Connection) {
         existingFileRecord.modificationStamp >= fileRecord.modificationStamp &&
         (fileRecord.modificationStamp != 0L || existingFileRecord.modificationStamp == 0L)
         ) return
-    
-    info("UPDATE ${ktFile.virtualFile.url}")
 
     // TODO Process the KtFile and get symbols and references
     /*ktFile.accept(object : KtTreeVisitorVoid() {
