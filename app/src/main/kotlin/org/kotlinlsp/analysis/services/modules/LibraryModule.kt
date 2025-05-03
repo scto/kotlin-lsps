@@ -104,6 +104,8 @@ class LibraryModule(
 
     override val id: String
         get() = libraryName
+    override val isSourceModule: Boolean
+        get() = false
 }
 
 private const val JAR_SEPARATOR = "!/"

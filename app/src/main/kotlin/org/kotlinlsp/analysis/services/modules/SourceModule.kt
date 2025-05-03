@@ -62,4 +62,6 @@ class SourceModule(
 
     override val id: String
         get() = moduleName
+    override val isSourceModule: Boolean
+        get() = true
 }

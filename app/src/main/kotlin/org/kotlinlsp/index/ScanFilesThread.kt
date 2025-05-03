@@ -1,10 +1,8 @@
 package org.kotlinlsp.index
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.kotlinlsp.analysis.services.modules.LibraryModule
 import org.kotlinlsp.analysis.services.modules.Module
-import org.kotlinlsp.analysis.services.modules.SourceModule
+import org.kotlinlsp.common.info
 import org.kotlinlsp.index.worker.WorkerThread
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -15,7 +13,10 @@ class ScanFilesThread(
     private val shouldStop = AtomicBoolean(false)
 
     override fun run() {
-        processModule(rootModule)
+        getModuleList(rootModule)
+            .sortedByDescending { it.isSourceModule }   // Index source files first so initial analysis takes less time
+            .map { it.computeFiles() }
+            .flatten()
             .takeWhile { !shouldStop.get() }
             .forEach {
                 val command = Command.IndexFile(it)
@@ -25,13 +26,13 @@ class ScanFilesThread(
         worker.submitCommand(Command.IndexingFinished)
     }
 
-    private fun processModule(module: Module, processedModules: MutableSet<String> = mutableSetOf()): Sequence<VirtualFile> = sequence {
+    private fun getModuleList(module: Module, processedModules: MutableSet<String> = mutableSetOf()): Sequence<Module> = sequence {
         if(processedModules.contains(module.id)) return@sequence
 
-        yieldAll(module.computeFiles())
+        yield(module)
 
         module.dependencies.forEach {
-            yieldAll(processModule(it, processedModules))
+            yieldAll(getModuleList(it, processedModules))
         }
 
         processedModules.add(module.id)

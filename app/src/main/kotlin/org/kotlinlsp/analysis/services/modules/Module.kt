@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 interface Module: KaModule {
     val id: String
     val dependencies: MutableList<Module>
+    val isSourceModule: Boolean
 
     fun computeFiles(): Sequence<VirtualFile>
 }
