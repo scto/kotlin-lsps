@@ -3,8 +3,10 @@ package org.kotlinlsp.index
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
+import org.kotlinlsp.index.db.checkDbSchema
 import org.kotlinlsp.index.db.createDbConnection
 import org.kotlinlsp.index.worker.WorkerThread
+import java.sql.Connection
 
 interface IndexNotifier {
     fun onBackgroundIndexFinished()
@@ -20,7 +22,12 @@ class Index(
     private val workerThread = Thread(workerThreadRunner)
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
     private val scanFilesThread = Thread(scanFilesThreadRunner)
-    private val dbConnection = createDbConnection(rootFolder)
+    private val dbConnection: Connection
+
+    init {
+        checkDbSchema(rootFolder)
+        dbConnection = createDbConnection(rootFolder)
+    }
 
     fun syncIndexInBackground() {
         // We have 2 threads here
