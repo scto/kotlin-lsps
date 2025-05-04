@@ -24,6 +24,9 @@ fun Statement.createFilesTable() {
         );
         """
     )
+    execute("""
+        CREATE INDEX idx_packageFqName ON Files(packageFqName);
+    """)
 }
 
 fun Connection.queryFileRecord(path: String): FileRecord? {
