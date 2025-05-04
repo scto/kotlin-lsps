@@ -42,10 +42,12 @@ class WorkerThread(
                     count ++
                 }
                 is Command.IndexingFinished -> {
+                    // TODO Should remove in this point files which do not exist anymore
                     info("Background indexing finished!, $count files!")
                     notifier.onBackgroundIndexFinished()
                 }
                 Command.SourceIndexingFinished -> {
+                    // TODO Should remove in this point files which do not exist anymore
                     info("Source file indexing finished!, $count files!")
                     notifier.onSourceFileIndexingFinished()
                 }

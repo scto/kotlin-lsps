@@ -1,9 +1,11 @@
 package org.kotlinlsp.index.queries
 
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.name.FqName
 import org.kotlinlsp.index.Index
 
-fun Index.filesForPackage(fqName: FqName): List<String> = query { conn ->
+// TODO Use searchScope for correct behaviour
+fun Index.filesForPackage(fqName: FqName, searchScope: GlobalSearchScope): List<String> = query { conn ->
     val query = "SELECT path FROM Files WHERE packageFqName = ?"
     conn.prepareStatement(query).use {
         it.setString(1, fqName.asString())

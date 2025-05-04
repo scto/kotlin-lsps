@@ -24,6 +24,7 @@ class DeclarationProvider(
     private val project: Project,
     private val index: Index
 ): KotlinDeclarationProvider {
+    // This cache prevents parsing KtFiles over and over
     private val ktFileCache = Caffeine.newBuilder()
         .maximumSize(100)
         .build<String, KtFile>()
@@ -85,12 +86,7 @@ class DeclarationProvider(
 
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> =
         profile("getTopLevelCallableFiles", "$callableId") {
-            val files = mutableListOf<KtFile>()
-            virtualFilesForPackage(callableId.packageName).forEach {
-                val ktFile = getKtFile(it)
-                files.add(ktFile)
-            }
-            files
+            virtualFilesForPackage(callableId.packageName).map { getKtFile(it) }.toList()
         }
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
@@ -100,32 +96,27 @@ class DeclarationProvider(
 
     override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> =
         profile("getTopLevelKotlinClassLikeDeclarationNamesInPackage", "$packageFqName") {
-            val names = mutableSetOf<Name>()
-
-            virtualFilesForPackage(packageFqName).forEach {
+            virtualFilesForPackage(packageFqName).map {
                 val ktFile = getKtFile(it)
-                val declarations =
-                    project.read { ktFile.children.filterIsInstance<KtClassLikeDeclaration>().map { Name.identifier(it.name!!) } }
-                names.addAll(declarations)
+                project.read {
+                    ktFile.children.filterIsInstance<KtClassLikeDeclaration>().map { Name.identifier(it.name!!) }
+                }.asSequence()
             }
-
-            names
+                .flatten()
+                .toSet()
         }
 
     override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> =
         profile("getTopLevelCallableNamesInPackage", "$packageFqName") {
-            val names = mutableSetOf<Name>()
-
-            virtualFilesForPackage(packageFqName).forEach { it ->
+            virtualFilesForPackage(packageFqName).map { it ->
                 val ktFile = getKtFile(it)
-                val declarations = project.read {
+                project.read {
                     ktFile.children.filterIsInstance<KtCallableDeclaration>().mapNotNull { it.name }
-                        .map { Name.identifier(it) }
+                        .map { Name.identifier(it) }.asSequence()
                 }
-                names.addAll(declarations)
             }
-
-            names
+                .flatten()
+                .toSet()
         }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> =
@@ -134,7 +125,7 @@ class DeclarationProvider(
         }
 
     private fun virtualFilesForPackage(fqName: FqName): Sequence<VirtualFile> {
-        return index.filesForPackage(fqName).asSequence().map { VirtualFileManager.getInstance().findFileByUrl(it)!! }
+        return index.filesForPackage(fqName, scope).asSequence().map { VirtualFileManager.getInstance().findFileByUrl(it)!! }
     }
 
     private fun getKtFile(virtualFile: VirtualFile): KtFile {
