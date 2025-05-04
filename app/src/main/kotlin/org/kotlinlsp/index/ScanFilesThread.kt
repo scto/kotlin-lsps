@@ -13,15 +13,23 @@ class ScanFilesThread(
     private val shouldStop = AtomicBoolean(false)
 
     override fun run() {
+        var gotFirstLibraryFile = false
+
         getModuleList(rootModule)
             .sortedByDescending { it.isSourceModule }   // Index source files first so initial analysis takes less time
             .map { it.computeFiles() }
             .flatten()
             .takeWhile { !shouldStop.get() }
             .forEach {
+                if(!it.url.endsWith(".kt") && !gotFirstLibraryFile) {
+                    worker.submitCommand(Command.SourceIndexingFinished)
+                    gotFirstLibraryFile = true
+                }
                 val command = Command.IndexFile(it)
                 worker.submitCommand(command)
             }
+
+        if(!gotFirstLibraryFile) worker.submitCommand(Command.SourceIndexingFinished)
 
         worker.submitCommand(Command.IndexingFinished)
     }

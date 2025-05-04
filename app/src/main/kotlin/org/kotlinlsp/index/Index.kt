@@ -2,12 +2,15 @@ package org.kotlinlsp.index
 
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.services.modules.Module
 import org.kotlinlsp.index.db.checkDbSchema
 import org.kotlinlsp.index.db.createDbConnection
 import org.kotlinlsp.index.worker.WorkerThread
+import org.kotlinlsp.index.worker.WorkerThreadNotifier
 import java.sql.Connection
+import java.util.concurrent.CountDownLatch
 
 interface IndexNotifier {
     fun onBackgroundIndexFinished()
@@ -19,14 +22,22 @@ class Index(
     rootFolder: String,
     notifier: IndexNotifier
 ) {
-    private val workerThreadRunner = WorkerThread(rootFolder, project, notifier)
+    private val sourceFileIndexingFinishedSignal = CountDownLatch(1)
+    private val workerThreadNotifier = object : WorkerThreadNotifier {
+        override fun onSourceFileIndexingFinished() {
+            sourceFileIndexingFinishedSignal.countDown()
+        }
+
+        override fun onBackgroundIndexFinished() = notifier.onBackgroundIndexFinished()
+    }
+    private val workerThreadRunner = WorkerThread(rootFolder, project, workerThreadNotifier)
     private val workerThread = Thread(workerThreadRunner)
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
     private val scanFilesThread = Thread(scanFilesThreadRunner)
     private val dbConnection: Connection
 
     init {
-        checkDbSchema(rootFolder)
+        checkDbSchema(rootFolder)   // This needs to be called before any connection is made
         dbConnection = createDbConnection(rootFolder)
     }
 
@@ -51,5 +62,10 @@ class Index(
         scanFilesThread.join()
         workerThread.join()
         dbConnection.close()
+    }
+
+    fun <T> query(block: (connection: Connection) -> T): T {
+        sourceFileIndexingFinishedSignal.await()
+        return block(dbConnection)
     }
 }

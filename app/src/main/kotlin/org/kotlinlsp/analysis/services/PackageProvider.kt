@@ -9,23 +9,33 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.kotlinlsp.analysis.services.common.virtualFilesForPackage
 import org.kotlinlsp.common.profile
+import org.kotlinlsp.index.Index
+import org.kotlinlsp.index.queries.packageExistsInSourceFiles
 
 class PackageProviderFactory: KotlinPackageProviderFactory {
     private lateinit var project: MockProject
+    private lateinit var index: Index
 
-    fun setup(project: MockProject) {
+    fun setup(project: MockProject, index: Index) {
         this.project = project
+        this.index = index
     }
 
-    override fun createPackageProvider(searchScope: GlobalSearchScope): KotlinPackageProvider = PackageProvider(project, searchScope)
+    override fun createPackageProvider(searchScope: GlobalSearchScope): KotlinPackageProvider = PackageProvider(project, searchScope, index)
 }
 
-private class PackageProvider(project: Project, searchScope: GlobalSearchScope): KotlinPackageProviderBase(project, searchScope) {
+private class PackageProvider(
+    project: Project,
+    searchScope: GlobalSearchScope,
+    private val index: Index
+): KotlinPackageProviderBase(project, searchScope) {
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean = profile("doesKotlinOnlyPackageExist", "$packageFqName") {
-        packageFqName.isRoot || virtualFilesForPackage(project, searchScope, packageFqName).iterator().hasNext()
+        // TODO Use searchScope for correct behaviour across multiple source modules
+        packageFqName.isRoot || index.packageExistsInSourceFiles(packageFqName)
     }
 
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> = profile("[X] getKotlinOnlySubpackageNames", "$packageFqName") {
+        // TODO
         emptySet()
     }
 }

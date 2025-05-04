@@ -99,6 +99,9 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         buildSystemResolver = BuildSystemResolver(project, appEnvironment, notifier, rootPath)
         val rootModule = buildSystemResolver.resolveModuleDAG()
 
+        // Create the index
+        index = Index(rootModule, project, rootPath, notifier)
+
         // Prepare the dependencies index for the Analysis API
         project.setupHighestLanguageLevel()
         val librariesScope = ProjectScope.getLibrariesScope(project)
@@ -159,7 +162,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
             rootModule,
             project
         )
-        (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project)
+        (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project, index)
         (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project)
         (project.getService(KotlinPackagePartProviderFactory::class.java) as PackagePartProviderFactory).setup(
             libraryRoots
@@ -169,7 +172,6 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         psiDocumentManager = PsiDocumentManager.getInstance(project)
 
         // Sync the index in the background
-        index = Index(rootModule, project, rootPath, notifier)
         index.syncIndexInBackground()
     }
 

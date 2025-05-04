@@ -9,10 +9,14 @@ import org.kotlinlsp.index.Command
 import org.kotlinlsp.index.IndexNotifier
 import org.kotlinlsp.index.db.createDbConnection
 
+interface WorkerThreadNotifier: IndexNotifier {
+    fun onSourceFileIndexingFinished()
+}
+
 class WorkerThread(
     private val rootFolder: String,
     private val project: Project,
-    private val notifier: IndexNotifier
+    private val notifier: WorkerThreadNotifier
 ): Runnable {
     private val workQueue = WorkQueue<Command>()
 
@@ -40,6 +44,10 @@ class WorkerThread(
                 is Command.IndexingFinished -> {
                     info("Background indexing finished!, $count files!")
                     notifier.onBackgroundIndexFinished()
+                }
+                Command.SourceIndexingFinished -> {
+                    info("Source file indexing finished!, $count files!")
+                    notifier.onSourceFileIndexingFinished()
                 }
             }
         }
