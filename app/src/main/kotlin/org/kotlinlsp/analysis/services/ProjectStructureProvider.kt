@@ -21,7 +21,7 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     }
 
     override fun getImplementingModules(module: KaModule): List<KaModule> = profile("getImplementingModules", "$module") {
-        emptyList()  // TODO
+        emptyList()  // TODO Implement for KMP support
     }
 
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule = profile("getModule", "$element, useSiteModule: $useSiteModule") {

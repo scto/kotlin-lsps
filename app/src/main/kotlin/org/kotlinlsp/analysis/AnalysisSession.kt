@@ -163,7 +163,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
             project
         )
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project, index)
-        (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project)
+        (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project, index)
         (project.getService(KotlinPackagePartProviderFactory::class.java) as PackagePartProviderFactory).setup(
             libraryRoots
         )

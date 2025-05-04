@@ -1,6 +1,9 @@
 package org.kotlinlsp.analysis.services
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.declarations.*
@@ -11,11 +14,20 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.kotlinlsp.analysis.services.common.virtualFilesForPackage
 import org.kotlinlsp.common.profile
 import org.kotlinlsp.common.read
+import org.kotlinlsp.index.Index
+import org.kotlinlsp.index.queries.filesForPackage
 
-class DeclarationProvider(val scope: GlobalSearchScope, private val project: Project): KotlinDeclarationProvider {
+class DeclarationProvider(
+    val scope: GlobalSearchScope,
+    private val project: Project,
+    private val index: Index
+): KotlinDeclarationProvider {
+    private val ktFileCache = Caffeine.newBuilder()
+        .maximumSize(100)
+        .build<String, KtFile>()
+
     override val hasSpecificCallablePackageNamesComputation: Boolean
         get() = false   // TODO 
     override val hasSpecificClassifierPackageNamesComputation: Boolean
@@ -53,8 +65,8 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? =
         profile("getClassLikeDeclarationByClassId", "$classId") {
-            virtualFilesForPackage(project, scope, classId.packageFqName).forEach {
-                val ktFile = project.read { PsiManager.getInstance(project).findFile(it)!! }
+            virtualFilesForPackage(classId.packageFqName).forEach {
+                val ktFile = getKtFile(it)
                 val declaration = project.read {
                     ktFile.children
                         .filterIsInstance<KtClassLikeDeclaration>()
@@ -74,8 +86,8 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> =
         profile("getTopLevelCallableFiles", "$callableId") {
             val files = mutableListOf<KtFile>()
-            virtualFilesForPackage(project, scope, callableId.packageName).forEach {
-                val ktFile = project.read { PsiManager.getInstance(project).findFile(it)!! as KtFile }
+            virtualFilesForPackage(callableId.packageName).forEach {
+                val ktFile = getKtFile(it)
                 files.add(ktFile)
             }
             files
@@ -90,8 +102,8 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
         profile("getTopLevelKotlinClassLikeDeclarationNamesInPackage", "$packageFqName") {
             val names = mutableSetOf<Name>()
 
-            virtualFilesForPackage(project, scope, packageFqName).forEach {
-                val ktFile = project.read { PsiManager.getInstance(project).findFile(it)!! }
+            virtualFilesForPackage(packageFqName).forEach {
+                val ktFile = getKtFile(it)
                 val declarations =
                     project.read { ktFile.children.filterIsInstance<KtClassLikeDeclaration>().map { Name.identifier(it.name!!) } }
                 names.addAll(declarations)
@@ -104,8 +116,8 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
         profile("getTopLevelCallableNamesInPackage", "$packageFqName") {
             val names = mutableSetOf<Name>()
 
-            virtualFilesForPackage(project, scope, packageFqName).forEach { it ->
-                val ktFile = project.read { PsiManager.getInstance(project).findFile(it)!! }
+            virtualFilesForPackage(packageFqName).forEach { it ->
+                val ktFile = getKtFile(it)
                 val declarations = project.read {
                     ktFile.children.filterIsInstance<KtCallableDeclaration>().mapNotNull { it.name }
                         .map { Name.identifier(it) }
@@ -120,20 +132,35 @@ class DeclarationProvider(val scope: GlobalSearchScope, private val project: Pro
         profile("[X] getTopLevelProperties", "$callableId") {
             emptyList()  // TODO
         }
+
+    private fun virtualFilesForPackage(fqName: FqName): Sequence<VirtualFile> {
+        return index.filesForPackage(fqName).asSequence().map { VirtualFileManager.getInstance().findFileByUrl(it)!! }
+    }
+
+    private fun getKtFile(virtualFile: VirtualFile): KtFile {
+        val cachedKtFile = ktFileCache.getIfPresent(virtualFile.url)
+        if(cachedKtFile != null) return cachedKtFile
+
+        val ktFile = project.read { PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile }
+        ktFileCache.put(virtualFile.url, ktFile)
+        return ktFile
+    }
 }
 
 class DeclarationProviderFactory: KotlinDeclarationProviderFactory {
     private lateinit var project: Project
+    private lateinit var index: Index
 
-    fun setup(project: Project) {
+    fun setup(project: Project, index: Index) {
         this.project = project
+        this.index = index
     }
 
     override fun createDeclarationProvider(
         scope: GlobalSearchScope,
         contextualModule: KaModule?
     ): KotlinDeclarationProvider {
-        return DeclarationProvider(scope, project)
+        return DeclarationProvider(scope, project, index)
     }
 }
 
