@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.platform.declarations.*
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -14,11 +15,13 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isTopLevelKtOrJavaMember
 import org.kotlinlsp.common.profile
 import org.kotlinlsp.common.read
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.queries.filesForPackage
 
+// TODO Use the scope for correct behaviour
 class DeclarationProvider(
     val scope: GlobalSearchScope,
     private val project: Project,
@@ -39,95 +42,128 @@ class DeclarationProvider(
             emptyList()  // TODO
         }
 
-    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> =
-        profile("[X] findFilesForFacadeByPackage", "$packageFqName") {
-            emptyList()  // TODO
-        }
-
-    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> =
-        profile("[X] findFilesForScript", "$scriptFqName") {
-            emptyList()  // TODO
-        }
-
     override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> =
         profile("[X] findInternalFilesForFacade", "$facadeFqName") {
             emptyList()  // TODO
         }
 
+    override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> =
+        profile("findFilesForFacadeByPackage", "$packageFqName") {
+            virtualFilesForPackage(packageFqName).map { getKtFile(it) }.toList()
+        }
+
+    override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> =
+        profile("findFilesForScript", "$scriptFqName") {
+            virtualFilesForPackage(scriptFqName).map { getKtFile(it) }.mapNotNull { it.script }.toList()
+        }
+
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> =
-        profile("[X] getAllClassesByClassId", "$classId") {
-            emptyList()  // TODO
+        profile("getAllClassesByClassId", "$classId") {
+            virtualFilesForPackage(classId.packageFqName)
+                .map { getKtFile(it) }
+                .map {
+                    project.read {
+                        PsiTreeUtil.collectElementsOfType(it, KtClassOrObject::class.java).asSequence()
+                    }
+                }
+                .flatten()
+                .filter { it.getClassId() == classId }
+                .toList()
         }
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> =
-        profile("[X] getAllTypeAliasesByClassId", "$classId") {
-            emptyList()  // TODO
+        profile("getAllTypeAliasesByClassId", "$classId") {
+            virtualFilesForPackage(classId.packageFqName)
+                .map { getKtFile(it) }
+                .map {
+                    project.read {
+                        PsiTreeUtil.collectElementsOfType(it, KtTypeAlias::class.java).asSequence()
+                    }
+                }
+                .flatten()
+                .filter { it.getClassId() == classId }
+                .toList()
         }
 
     override fun getClassLikeDeclarationByClassId(classId: ClassId): KtClassLikeDeclaration? =
         profile("getClassLikeDeclarationByClassId", "$classId") {
-            virtualFilesForPackage(classId.packageFqName).forEach {
-                val ktFile = getKtFile(it)
-                val declaration = project.read {
-                    ktFile.children
-                        .filterIsInstance<KtClassLikeDeclaration>()
-                        .find {
-                            val itClassId = it.getClassId() ?: return@find false
-                            return@find itClassId == classId
-                        }
-                }
-
-                if (declaration != null) {
-                    return@profile declaration
-                }
-            }
-            null
+            getAllClassesByClassId(classId).firstOrNull()
+                ?: getAllTypeAliasesByClassId(classId).firstOrNull()
         }
 
     override fun getTopLevelCallableFiles(callableId: CallableId): Collection<KtFile> =
         profile("getTopLevelCallableFiles", "$callableId") {
-            virtualFilesForPackage(callableId.packageName).map { getKtFile(it) }.toList()
+            buildSet {
+                getTopLevelProperties(callableId).mapTo(this) { it.containingKtFile }
+                getTopLevelFunctions(callableId).mapTo(this) { it.containingKtFile }
+            }
         }
 
     override fun getTopLevelFunctions(callableId: CallableId): Collection<KtNamedFunction> =
-        profile("[X] getTopLevelFunctions", "$callableId") {
-            emptyList()  // TODO
+        profile("getTopLevelFunctions", "$callableId") {
+            virtualFilesForPackage(callableId.packageName)
+                .map { getKtFile(it) }
+                .map {
+                    project.read {
+                        PsiTreeUtil.collectElementsOfType(it, KtNamedFunction::class.java).asSequence()
+                    }
+                }
+                .flatten()
+                .filter { it.isTopLevel }
+                .filter { it.nameAsName == callableId.callableName }
+                .toList()
         }
 
     override fun getTopLevelKotlinClassLikeDeclarationNamesInPackage(packageFqName: FqName): Set<Name> =
         profile("getTopLevelKotlinClassLikeDeclarationNamesInPackage", "$packageFqName") {
-            virtualFilesForPackage(packageFqName).map {
-                val ktFile = getKtFile(it)
-                project.read {
-                    ktFile.children.filterIsInstance<KtClassLikeDeclaration>().map { Name.identifier(it.name!!) }
-                }.asSequence()
-            }
+            virtualFilesForPackage(packageFqName)
+                .map { getKtFile(it) }
+                .map {
+                    project.read {
+                        PsiTreeUtil.collectElementsOfType(it, KtClassLikeDeclaration::class.java).asSequence()
+                    }
+                }
                 .flatten()
+                .filter { it.isTopLevelKtOrJavaMember() }
+                .mapNotNull { it.nameAsName }
                 .toSet()
         }
 
     override fun getTopLevelCallableNamesInPackage(packageFqName: FqName): Set<Name> =
         profile("getTopLevelCallableNamesInPackage", "$packageFqName") {
-            virtualFilesForPackage(packageFqName).map { it ->
-                val ktFile = getKtFile(it)
-                project.read {
-                    ktFile.children.filterIsInstance<KtCallableDeclaration>().mapNotNull { it.name }
-                        .map { Name.identifier(it) }.asSequence()
+            virtualFilesForPackage(packageFqName)
+                .map { getKtFile(it) }
+                .map {
+                    project.read {
+                        PsiTreeUtil.collectElementsOfType(it, KtCallableDeclaration::class.java).asSequence()
+                    }
                 }
-            }
                 .flatten()
+                .filter { it.isTopLevelKtOrJavaMember() }
+                .mapNotNull { it.nameAsName }
                 .toSet()
         }
 
     override fun getTopLevelProperties(callableId: CallableId): Collection<KtProperty> =
-        profile("[X] getTopLevelProperties", "$callableId") {
-            emptyList()  // TODO
+        profile("getTopLevelProperties", "$callableId") {
+            virtualFilesForPackage(callableId.packageName)
+                .map { getKtFile(it) }
+                .map {
+                    project.read {
+                        PsiTreeUtil.collectElementsOfType(it, KtProperty::class.java).asSequence()
+                    }
+                }
+                .flatten()
+                .filter { it.isTopLevel }
+                .filter { it.nameAsName == callableId.callableName }
+                .toList()
         }
 
     private fun virtualFilesForPackage(fqName: FqName): Sequence<VirtualFile> {
         return index.filesForPackage(fqName, scope).asSequence().map { VirtualFileManager.getInstance().findFileByUrl(it)!! }
     }
 
+    // TODO Look in opened files first to take in memory modifications into account
     private fun getKtFile(virtualFile: VirtualFile): KtFile {
         val cachedKtFile = ktFileCache.getIfPresent(virtualFile.url)
         if(cachedKtFile != null) return cachedKtFile
