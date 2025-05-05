@@ -1,17 +1,17 @@
 package org.kotlinlsp.common
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
+import org.kotlinlsp.analysis.services.modules.LibraryModule
+import org.kotlinlsp.analysis.services.modules.SourceModule
 import java.io.*
 import java.lang.management.ManagementFactory
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
-import kotlin.concurrent.withLock
+import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
@@ -29,9 +29,8 @@ private enum class LogLevel(level: Int) {
 private val logLevel = LogLevel.Debug
 private const val profileEnabled = true
 
-private val lock = ReentrantLock()
 private lateinit var logFile: File
-private val profileInfo = ConcurrentHashMap<String, Pair<Int, Duration>>()
+private val profileInfo = mutableMapOf<String, Pair<Int, Duration>>()
 
 fun setupLogger(path: String) {
     val loggerPath = "$path/log.txt"
@@ -50,30 +49,32 @@ fun setupLogger(path: String) {
 fun <T> profile(tag: String, message: String, fn: () -> T): T {
     trace("$tag $message")
 
-    if (!profileEnabled) return fn()
-
-    var result: T
-    val time = measureTime {
-        result = fn()
-    }
-    if (!profileInfo.containsKey(tag)) {
-        profileInfo[tag] = Pair(1, time)
+    if(profileEnabled) {
+        var result: T
+        val time = measureTime {
+            result = fn()
+        }
+        if(!profileInfo.containsKey(tag)) {
+            profileInfo[tag] = Pair(1, time)
+        } else {
+            val value = profileInfo[tag]!!
+            profileInfo[tag] = Pair(value.first + 1, value.second.plus(time))
+        }
+        return result
     } else {
-        val value = profileInfo[tag]!!
-        profileInfo[tag] = Pair(value.first + 1, value.second.plus(time))
+        return fn()
     }
-    return result
 }
 
-fun profileJvmStartup() = lock.withLock {
+fun profileJvmStartup() {
     val runtimeMXBean = ManagementFactory.getRuntimeMXBean()
     val jvmStartTimeMillis = runtimeMXBean.startTime
     val deltaMillis = System.currentTimeMillis() - jvmStartTimeMillis
     profileInfo["JVM Startup"] = Pair(1, deltaMillis.milliseconds)
 }
 
-fun logProfileInfo() = lock.withLock {
-    if (!profileEnabled) return@withLock
+fun logProfileInfo() {
+    if (!profileEnabled) return
 
     log("------------")
     log("PROFILE INFO")
@@ -102,29 +103,50 @@ private fun log(message: String) {
     }
 }
 
-fun debug(message: String) = lock.withLock {
-    if(logLevel > LogLevel.Debug) return@withLock
+fun debug(message: String) {
+    if(logLevel > LogLevel.Debug) return
     log("[DEBUG]: $message")
 }
 
-fun info(message: String) = lock.withLock {
-    if(logLevel > LogLevel.Info) return@withLock
+fun info(message: String) {
+    if(logLevel > LogLevel.Info) return
     log("[INFO]: $message")
 }
 
-fun error(message: String) = lock.withLock {
-    if(logLevel > LogLevel.Error) return@withLock
+fun error(message: String) {
+    if(logLevel > LogLevel.Error) return
     log("[ERROR]: $message")
 }
 
-fun trace(message: String) = lock.withLock {
-    if(logLevel > LogLevel.Trace) return@withLock
+fun trace(message: String) {
+    if(logLevel > LogLevel.Trace) return
     log("[TRACE]: $message")
 }
 
-fun warn(message: String) = lock.withLock {
-    if(logLevel > LogLevel.Warning) return@withLock
+fun warn(message: String) {
+    if(logLevel > LogLevel.Warning) return
     log("[WARN]: $message")
+}
+
+fun printModule(rootModule: KaModule, level: Int = 0) {
+    val indent = "\t".repeat(level)
+    when (rootModule) {
+        is SourceModule -> {
+            info("$indent- ${rootModule.name}")
+        }
+
+        is LibraryModule -> {
+            info("$indent- ${rootModule.libraryName}")
+            info("$indent* ${rootModule.binaryRoots.first().absolutePathString().substringAfterLast("/")}")
+        }
+
+        else -> {
+            throw Exception("Invalid KaModule!")
+        }
+    }
+    rootModule.directRegularDependencies.forEach {
+        printModule(it, level + 1)
+    }
 }
 
 private class JULRedirector: Handler() {
@@ -146,19 +168,17 @@ private class JULRedirector: Handler() {
     override fun close() {}
 }
 
-fun printPsiTree(ktFile: KtFile, project: Project) = printPsiNode(ktFile.node.psi, project)
+fun printPsiTree(ktFile: KtFile) {
+    val rootNode = ktFile.node.psi
 
-fun printPsiNode(node: PsiElement, project: Project, depth: Int = 0) = project.read {
-    val output = buildString {
-        appendPsiNode(node, depth)
-    }
-    debug(output)
+    printPsiNode(rootNode, 0)
 }
 
-private fun StringBuilder.appendPsiNode(node: PsiElement, depth: Int) {
+fun printPsiNode(node: PsiElement, depth: Int = 0) {
     val indent = "  ".repeat(depth)
-    appendLine("$indent${node.javaClass.simpleName}: ${node.text}")
+    debug("$indent${node.javaClass.simpleName}: ${node.text}")
+
     for (child in node.children) {
-        appendPsiNode(child, depth + 1)
+        printPsiNode(child, depth + 1)
     }
 }
