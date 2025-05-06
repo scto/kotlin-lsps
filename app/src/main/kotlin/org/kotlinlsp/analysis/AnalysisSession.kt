@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModifica
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -159,6 +160,9 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         )
 
         // Setup platform services
+        (project.getService(KotlinModuleDependentsProvider::class.java) as ModuleDependentsProvider).setup(
+            rootModule.kaModule
+        )
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(
             rootModule.kaModule,
             project
