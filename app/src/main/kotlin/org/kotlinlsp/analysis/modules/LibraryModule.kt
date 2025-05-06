@@ -37,34 +37,20 @@ class LibraryModule(
     val name: String,
     private val mockProject: MockProject,
     private val sourceModule: KaLibrarySourceModule? = null,
-): KaLibraryModule, Module, KaModuleBase() {
-    @KaPlatformInterface
-    override val baseContentScope: GlobalSearchScope by lazy {
-        val virtualFileUrls = mutableSetOf<String>()
-        computeFiles()
-            .forEach { virtualFileUrls.add(it.url) }
-
-        return@lazy object : GlobalSearchScope(project) {
-            override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
-
-            override fun isSearchInModuleContent(p0: com.intellij.openapi.module.Module): Boolean = false
-
-            override fun isSearchInLibraries(): Boolean = true
-
-            override fun toString(): String = virtualFileUrls.joinToString("\n") {
-                it
-            }
-        }
-    }
+): Module {
+    override val id: String
+        get() = name
+    override val isSourceModule: Boolean
+        get() = false
 
     @OptIn(KaImplementationDetail::class)
     override fun computeFiles(): Sequence<VirtualFile> {
         val roots = if (isJdk) {
             // This returns urls to the JMOD files in the jdk
-            project.read { LibraryUtils.findClassesFromJdkHome(binaryRoots.first(), isJre = false) }
+            mockProject.read { LibraryUtils.findClassesFromJdkHome(roots.first(), isJre = false) }
         } else {
             // These are JAR/class files
-            binaryRoots
+            roots
         }
 
         return roots.asSequence()
@@ -72,40 +58,58 @@ class LibraryModule(
                 getVirtualFileForLibraryRoot(it, appEnvironment, mockProject)
             }
             .map {
-                project.read { LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true) }
+                mockProject.read { LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true) }
             }
             .flatten()
     }
 
-    override val binaryRoots: Collection<Path>
-        get() = roots
+    override val kaModule: KaModule by lazy {
+        object : KaLibraryModule, KaModuleBase() {
+            @KaPlatformInterface
+            override val baseContentScope: GlobalSearchScope by lazy {
+                val virtualFileUrls = mutableSetOf<String>()
+                computeFiles()
+                    .forEach { virtualFileUrls.add(it.url) }
 
-    @KaExperimentalApi
-    override val binaryVirtualFiles: Collection<VirtualFile>
-        get() = emptyList() // Not supporting in-memory libraries
-    override val directDependsOnDependencies: List<KaModule>
-        get() = emptyList() // Not supporting KMP right now
-    override val directFriendDependencies: List<KaModule>
-        get() = emptyList() // No support for this right now
-    override val directRegularDependencies: List<KaModule>
-        get() = dependencies
+                return@lazy object : GlobalSearchScope(project) {
+                    override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
 
-    @KaPlatformInterface
-    override val isSdk: Boolean
-        get() = isJdk
-    override val libraryName: String
-        get() = name
-    override val librarySources: KaLibrarySourceModule?
-        get() = sourceModule
-    override val project: Project
-        get() = mockProject
-    override val targetPlatform: TargetPlatform
-        get() = JvmPlatforms.jvmPlatformByTargetVersion(javaVersion)
+                    override fun isSearchInModuleContent(p0: com.intellij.openapi.module.Module): Boolean = false
 
-    override val id: String
-        get() = libraryName
-    override val isSourceModule: Boolean
-        get() = false
+                    override fun isSearchInLibraries(): Boolean = true
+
+                    override fun toString(): String = virtualFileUrls.joinToString("\n") {
+                        it
+                    }
+                }
+            }
+
+            override val binaryRoots: Collection<Path>
+                get() = roots
+
+            @KaExperimentalApi
+            override val binaryVirtualFiles: Collection<VirtualFile>
+                get() = emptyList() // Not supporting in-memory libraries
+            override val directDependsOnDependencies: List<KaModule>
+                get() = emptyList() // Not supporting KMP right now
+            override val directFriendDependencies: List<KaModule>
+                get() = emptyList() // No support for this right now
+            override val directRegularDependencies: List<KaModule>
+                get() = dependencies.map { it.kaModule }
+
+            @KaPlatformInterface
+            override val isSdk: Boolean
+                get() = isJdk
+            override val libraryName: String
+                get() = name
+            override val librarySources: KaLibrarySourceModule?
+                get() = sourceModule
+            override val project: Project
+                get() = mockProject
+            override val targetPlatform: TargetPlatform
+                get() = JvmPlatforms.jvmPlatformByTargetVersion(javaVersion)
+        }
+    }
 }
 
 private const val JAR_SEPARATOR = "!/"

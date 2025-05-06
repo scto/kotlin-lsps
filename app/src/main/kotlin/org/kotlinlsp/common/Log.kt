@@ -1,10 +1,10 @@
 package org.kotlinlsp.common
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.modules.LibraryModule
 import org.kotlinlsp.analysis.modules.SourceModule
+import org.kotlinlsp.analysis.modules.Module
 import java.io.*
 import java.lang.management.ManagementFactory
 import java.util.logging.Handler
@@ -128,23 +128,23 @@ fun warn(message: String) {
     log("[WARN]: $message")
 }
 
-fun printModule(rootModule: KaModule, level: Int = 0) {
+fun printModule(rootModule: Module, level: Int = 0) {
     val indent = "\t".repeat(level)
     when (rootModule) {
         is SourceModule -> {
-            info("$indent- ${rootModule.name}")
+            info("$indent- ${rootModule.id}")
         }
 
         is LibraryModule -> {
-            info("$indent- ${rootModule.libraryName}")
-            info("$indent* ${rootModule.binaryRoots.first().absolutePathString().substringAfterLast("/")}")
+            info("$indent- ${rootModule.id}")
+            info("$indent* ${rootModule.roots.first().absolutePathString().substringAfterLast("/")}")
         }
 
         else -> {
             throw Exception("Invalid KaModule!")
         }
     }
-    rootModule.directRegularDependencies.forEach {
+    rootModule.dependencies.forEach {
         printModule(it, level + 1)
     }
 }

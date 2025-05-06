@@ -44,8 +44,8 @@ fun serializeRootModule(rootModule: Module): String {
             )
             is LibraryModule -> SerializedModule(
                 id = id,
-                libraryRoots = current.binaryRoots.map { it.absolutePathString() },
-                isJdk = current.isSdk,
+                libraryRoots = current.roots.map { it.absolutePathString() },
+                isJdk = current.isJdk,
                 javaVersion = current.javaVersion.toString(),
                 dependencies = current.dependencies.map { it.id }
             )

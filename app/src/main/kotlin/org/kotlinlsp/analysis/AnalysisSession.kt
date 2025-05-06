@@ -47,6 +47,7 @@ import org.kotlinlsp.analysis.registration.lspPlatform
 import org.kotlinlsp.analysis.registration.lspPlatformPostInit
 import org.kotlinlsp.analysis.services.*
 import org.kotlinlsp.analysis.modules.LibraryModule
+import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.analysis.modules.SourceModule
 import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.common.*
@@ -159,7 +160,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
 
         // Setup platform services
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(
-            rootModule,
+            rootModule.kaModule,
             project
         )
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project, index)
@@ -175,35 +176,35 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         index.syncIndexInBackground()
     }
 
-    @OptIn(KaPlatformInterface::class, KaImplementationDetail::class)
-    private fun fetchLibraryRoots(module: KaModule, roots: MutableList<JavaRoot>, cache: MutableMap<String, Boolean> = mutableMapOf()) {
+    @OptIn(KaImplementationDetail::class)
+    private fun fetchLibraryRoots(module: Module, roots: MutableList<JavaRoot>, cache: MutableSet<String> = mutableSetOf()) {
         when(module) {
             is SourceModule -> {
-                module.directRegularDependencies.forEach {
+                module.dependencies.forEach {
                     fetchLibraryRoots(it, roots, cache)
                 }
             }
             is LibraryModule -> {
-                if(cache.get(module.libraryName) == null) {
-                    if(module.isSdk) {
-                        val jdkRoots = LibraryUtils.findClassesFromJdkHome(module.binaryRoots.first(), isJre = false).map {
-                            val adjustedPath = adjustModulePath(it.absolutePathString())
-                            val virtualFile = CoreJrtFileSystem().findFileByPath(adjustedPath)!!
-                            return@map JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
-                        }
-                        roots.addAll(jdkRoots)
-                    } else {
-                        module.binaryRoots.forEach {
-                            val virtualFile = CoreJarFileSystem().findFileByPath("${it.absolutePathString()}!/")!!
-                            val root = JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
-                            roots.add(root)
-                        }
-                        module.directRegularDependencies.forEach {
-                            fetchLibraryRoots(it, roots, cache)
-                        }
+                if (cache.contains(module.id)) return
+
+                if (module.isJdk) {
+                    val jdkRoots = LibraryUtils.findClassesFromJdkHome(module.roots.first(), isJre = false).map {
+                        val adjustedPath = adjustModulePath(it.absolutePathString())
+                        val virtualFile = CoreJrtFileSystem().findFileByPath(adjustedPath)!!
+                        return@map JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
                     }
-                    cache.set(module.libraryName, true)
+                    roots.addAll(jdkRoots)
+                } else {
+                    module.roots.forEach {
+                        val virtualFile = CoreJarFileSystem().findFileByPath("${it.absolutePathString()}!/")!!
+                        val root = JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
+                        roots.add(root)
+                    }
+                    module.dependencies.forEach {
+                        fetchLibraryRoots(it, roots, cache)
+                    }
                 }
+                cache.add(module.id)
             }
             else -> throw Exception("Unsupported KaModule! $module")
         }
