@@ -21,7 +21,7 @@ Right now, this language server is at its infancy and thus not ready to use for 
 - ✅ Real time diagnostics: working for this codebase
 - 🚧 Go to definition: working except for kotlin binary dependencies (considering using the background index for this if we cannot make it work), it would also be nice to use a decompiler to jump into .class files (the analysis api provides `KotlinClassFileDecompiler` for kotlin .class files, fernflower may be used for java .class files)
 - 🚧 Hover: mostly working, there are some declaration types from libraries which need ironing out, see `TODO` in `Hover.kt` file for details
-- 🚧 Build system integration: there is initial basic support single module gradle projects available, but needs work to support multimodule projects and Android projects.
+- 🚧 Build system integration: there is basic support for single module gradle projects available, but needs work to support multimodule projects and Android projects.
 
 ## Building and running
 

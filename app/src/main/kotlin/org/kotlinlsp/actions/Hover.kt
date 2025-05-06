@@ -35,10 +35,13 @@ fun hoverAction(ktFile: KtFile, position: Position): Pair<String, Range>? {
 
     val text =
         (ktElement as? KtDeclaration ?: ktFile.findReferenceAt(offset)?.resolve() as? KtDeclaration)?.let {
+            // This branch works for source file declarations
             analyze(it) {
                 it.symbol.render(renderer)
             }
         } ?: ktElement.parentOfType<KtReferenceExpression>()?.let {
+            // This branch works (mostly) for library declarations
+            // TODO Iron out the remaining cases
             analyze(it) {
                 val call = it.resolveToCall()
                 val successfulCall =
