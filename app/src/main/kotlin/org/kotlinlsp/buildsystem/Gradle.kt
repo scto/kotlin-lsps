@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.kotlinlsp.analysis.ProgressNotifier
-import org.kotlinlsp.analysis.services.modules.LibraryModule
-import org.kotlinlsp.analysis.services.modules.Module
-import org.kotlinlsp.analysis.services.modules.SourceModule
+import org.kotlinlsp.analysis.modules.LibraryModule
+import org.kotlinlsp.analysis.modules.Module
+import org.kotlinlsp.analysis.modules.SourceModule
 import org.kotlinlsp.common.debug
 import java.io.File
 

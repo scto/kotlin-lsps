@@ -1,4 +1,4 @@
-package org.kotlinlsp.analysis.services.modules
+package org.kotlinlsp.analysis.modules
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

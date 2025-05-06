@@ -3,8 +3,8 @@ package org.kotlinlsp.common
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.psi.KtFile
-import org.kotlinlsp.analysis.services.modules.LibraryModule
-import org.kotlinlsp.analysis.services.modules.SourceModule
+import org.kotlinlsp.analysis.modules.LibraryModule
+import org.kotlinlsp.analysis.modules.SourceModule
 import java.io.*
 import java.lang.management.ManagementFactory
 import java.util.logging.Handler

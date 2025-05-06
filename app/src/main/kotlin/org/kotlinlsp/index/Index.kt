@@ -4,7 +4,7 @@ import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
-import org.kotlinlsp.analysis.services.modules.Module
+import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.index.db.checkDbSchema
 import org.kotlinlsp.index.db.createDbConnection
 import org.kotlinlsp.index.worker.WorkerThread

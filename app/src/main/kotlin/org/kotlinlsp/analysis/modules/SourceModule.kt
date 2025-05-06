@@ -1,4 +1,4 @@
-package org.kotlinlsp.analysis.services.modules
+package org.kotlinlsp.analysis.modules
 
 import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project

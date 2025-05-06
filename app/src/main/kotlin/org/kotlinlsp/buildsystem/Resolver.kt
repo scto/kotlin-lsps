@@ -5,9 +5,9 @@ import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.kotlinlsp.analysis.ProgressNotifier
-import org.kotlinlsp.analysis.services.modules.Module
-import org.kotlinlsp.analysis.services.modules.deserializeRootModule
-import org.kotlinlsp.analysis.services.modules.serializeRootModule
+import org.kotlinlsp.analysis.modules.Module
+import org.kotlinlsp.analysis.modules.deserializeRootModule
+import org.kotlinlsp.analysis.modules.serializeRootModule
 import org.kotlinlsp.common.getCachePath
 import org.kotlinlsp.common.info
 import org.kotlinlsp.common.profile

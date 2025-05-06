@@ -1,4 +1,4 @@
-package org.kotlinlsp.analysis.services.modules
+package org.kotlinlsp.analysis.modules
 
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule

@@ -1,6 +1,6 @@
 package org.kotlinlsp.buildsystem
 
-import org.kotlinlsp.analysis.services.modules.Module
+import org.kotlinlsp.analysis.modules.Module
 
 interface BuildSystem {
     // List of files used to trigger this build system

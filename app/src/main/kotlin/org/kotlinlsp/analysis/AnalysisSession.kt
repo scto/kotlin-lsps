@@ -46,8 +46,8 @@ import org.kotlinlsp.analysis.registration.Registrar
 import org.kotlinlsp.analysis.registration.lspPlatform
 import org.kotlinlsp.analysis.registration.lspPlatformPostInit
 import org.kotlinlsp.analysis.services.*
-import org.kotlinlsp.analysis.services.modules.LibraryModule
-import org.kotlinlsp.analysis.services.modules.SourceModule
+import org.kotlinlsp.analysis.modules.LibraryModule
+import org.kotlinlsp.analysis.modules.SourceModule
 import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.common.*
 import org.kotlinlsp.index.Index

@@ -3,8 +3,8 @@ package org.kotlinlsp.buildsystem
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
-import org.kotlinlsp.analysis.services.modules.Module
-import org.kotlinlsp.analysis.services.modules.deserializeRootModule
+import org.kotlinlsp.analysis.modules.Module
+import org.kotlinlsp.analysis.modules.deserializeRootModule
 import java.io.File
 
 // This build system is used to integrate projects are not supported by the LSP

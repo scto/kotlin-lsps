@@ -1,7 +1,7 @@
 package org.kotlinlsp.index
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.kotlinlsp.analysis.services.modules.Module
+import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.common.info
 import org.kotlinlsp.index.worker.WorkerThread
 import java.util.concurrent.atomic.AtomicBoolean
