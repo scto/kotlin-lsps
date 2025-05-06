@@ -20,6 +20,13 @@ import org.kotlinlsp.common.toOffset
 @OptIn(KaExperimentalApi::class)
 private val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES
 
+/*
+ * TODO Cases which are not working (only from library declarations, from source files these work fine)
+ * - Enums
+ * - Class properties which are not getters
+ * - Static class
+ * - Types coming from libraries
+ */
 @OptIn(KaExperimentalApi::class)
 fun hoverAction(ktFile: KtFile, position: Position): Pair<String, Range>? {
     val offset = position.toOffset(ktFile)

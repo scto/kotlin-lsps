@@ -18,10 +18,10 @@ Right now, this language server is at its infancy and thus not ready to use for 
 - Indexing solution: to provide features like autocomplete, go to definition and search references, we need to create an index where we store all the references used in the project. For this we are using an H2 SQL embedded database on disk and perform a background indexing of the whole project, and incrementally update it as the user modifies the source files. One of the goals of this LS is to provide a fast startup time, so diagnostics are reported as quick as possible.
 
 ### Implemented features
-- 🚧 Real time diagnostics: mostly working for this codebase, need to finish implement the Analysis API platform to solve the remaining diagnostics false errors
+- ✅ Real time diagnostics: working for this codebase
 - 🚧 Go to definition: working except for kotlin binary dependencies (considering using the background index for this if we cannot make it work), it would also be nice to use a decompiler to jump into .class files (the analysis api provides `KotlinClassFileDecompiler` for kotlin .class files, fernflower may be used for java .class files)
-- 🚧 Hover: only implemented for function calls, need to implement for the rest of use cases
-- 🚧 Build system integration: there is initial basic support for gradle at this [PR](https://github.com/amgdev9/kotlin-lsp/pull/1), but needs work to be usable
+- 🚧 Hover: mostly working, there are some declaration types from libraries which need ironing out, see `TODO` in `Hover.kt` file for details
+- 🚧 Build system integration: there is initial basic support single module gradle projects available, but needs work to support multimodule projects and Android projects.
 
 ## Building and running
 
