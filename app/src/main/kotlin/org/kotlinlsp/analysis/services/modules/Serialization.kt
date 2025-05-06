@@ -4,10 +4,10 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.intellij.mock.MockProject
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.kotlinlsp.common.printModule
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
@@ -63,35 +63,53 @@ fun deserializeRootModule(
     mockProject: MockProject
 ): Module {
     val gson = Gson()
-    val parsed: List<SerializedModule> = gson.fromJson(data, Array<SerializedModule>::class.java).toList()
-    val nodeMap: Map<String, Module> = parsed.associate {
-        val module = if(it.sourcePath != null) {
-            SourceModule(
-                kotlinVersion = LanguageVersion.fromVersionString(it.kotlinVersion!!)!!,
-                javaVersion = JvmTarget.fromString(it.javaVersion)!!,
-                moduleName = it.id,
-                folderPath = it.sourcePath,
-                dependencies = mutableListOf(),
-                mockProject = mockProject
-            )
-        } else {
-            LibraryModule(
-                javaVersion = JvmTarget.fromString(it.javaVersion)!!,
-                isJdk = it.isJdk!!,
-                name = it.id,
-                roots = it.libraryRoots!!.map { Path(it) },
-                dependencies = mutableListOf(),
-                mockProject = mockProject,
-                appEnvironment = appEnvironment,
-            )
-        }
-        it.id to module
+    val modules: List<SerializedModule> = gson.fromJson(data, Array<SerializedModule>::class.java).toList()
+
+    val allIds = modules.map { it.id }.toSet()
+    val dependencyIds = modules.flatMap { it.dependencies }.toSet()
+    val rootIds = allIds - dependencyIds
+    val rootId = rootIds.first()
+
+    val moduleMap = modules.associateBy { it.id }
+    val built = mutableMapOf<String, Module>()
+
+    fun build(id: String): Module {
+        if (built.containsKey(id)) return built[id]!!
+        val serialized = moduleMap[id]!!
+        val deps = serialized.dependencies.map { build(it) }
+        val module = buildModule(serialized, deps, mockProject, appEnvironment)
+        built[id] = module
+        return module
     }
 
-    for (serial in parsed) {
-        val deps = nodeMap[serial.id]!!.dependencies
-        deps += serial.dependencies.map { nodeMap[it]!! }
-    }
-
-    return nodeMap[parsed.first().id]!!
+    val rootModule = build(rootId)
+    printModule(rootModule)
+    return rootModule
 }
+
+private fun buildModule(
+    it: SerializedModule,
+    deps: List<Module>,
+    mockProject: MockProject,
+    appEnvironment: KotlinCoreApplicationEnvironment
+): Module =
+    if(it.sourcePath != null) {
+        SourceModule(
+            kotlinVersion = LanguageVersion.fromVersionString(it.kotlinVersion!!)!!,
+            javaVersion = JvmTarget.fromString(it.javaVersion)!!,
+            moduleName = it.id,
+            folderPath = it.sourcePath,
+            dependencies = deps,
+            mockProject = mockProject
+        )
+    } else {
+        LibraryModule(
+            javaVersion = JvmTarget.fromString(it.javaVersion)!!,
+            isJdk = it.isJdk!!,
+            name = it.id,
+            roots = it.libraryRoots!!.map { Path(it) },
+            dependencies = deps,
+            mockProject = mockProject,
+            appEnvironment = appEnvironment,
+        )
+    }

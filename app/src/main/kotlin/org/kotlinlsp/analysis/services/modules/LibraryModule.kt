@@ -32,7 +32,7 @@ class LibraryModule(
     val appEnvironment: KotlinCoreApplicationEnvironment,
     val roots: List<Path>,
     val javaVersion: JvmTarget,
-    override val dependencies: MutableList<Module> = mutableListOf(),
+    override val dependencies: List<Module> = listOf(),
     val isJdk: Boolean = false,
     val name: String,
     private val mockProject: MockProject,

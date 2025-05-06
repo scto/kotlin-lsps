@@ -18,7 +18,7 @@ import java.io.File
 
 class SourceModule(
     val folderPath: String,
-    override val dependencies: MutableList<Module>,
+    override val dependencies: List<Module>,
     val javaVersion: JvmTarget,
     val kotlinVersion: LanguageVersion,
     val moduleName: String,
