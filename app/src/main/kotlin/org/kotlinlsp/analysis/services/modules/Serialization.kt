@@ -83,7 +83,6 @@ fun deserializeRootModule(
     }
 
     val rootModule = build(rootId)
-    printModule(rootModule)
     return rootModule
 }
 
