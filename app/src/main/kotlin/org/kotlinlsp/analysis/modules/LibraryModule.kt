@@ -8,8 +8,6 @@ import com.intellij.openapi.vfs.StandardFileSystems.JAR_PROTOCOL
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.ProjectScope
-import com.intellij.psi.search.impl.VirtualFileEnumeration
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
@@ -24,22 +22,19 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
-import org.kotlinlsp.common.info
 import org.kotlinlsp.common.read
 import java.nio.file.Path
 
 class LibraryModule(
+    override val id: String,
     val appEnvironment: KotlinCoreApplicationEnvironment,
     val roots: List<Path>,
     val javaVersion: JvmTarget,
     override val dependencies: List<Module> = listOf(),
     val isJdk: Boolean = false,
-    val name: String,
-    private val mockProject: MockProject,
+    private val project: Project,
     private val sourceModule: KaLibrarySourceModule? = null,
 ): Module {
-    override val id: String
-        get() = name
     override val isSourceModule: Boolean
         get() = false
 
@@ -47,7 +42,7 @@ class LibraryModule(
     override fun computeFiles(): Sequence<VirtualFile> {
         val roots = if (isJdk) {
             // This returns urls to the JMOD files in the jdk
-            mockProject.read { LibraryUtils.findClassesFromJdkHome(roots.first(), isJre = false) }
+            project.read { LibraryUtils.findClassesFromJdkHome(roots.first(), isJre = false) }
         } else {
             // These are JAR/class files
             roots
@@ -55,10 +50,10 @@ class LibraryModule(
 
         return roots.asSequence()
             .mapNotNull {
-                getVirtualFileForLibraryRoot(it, appEnvironment, mockProject)
+                getVirtualFileForLibraryRoot(it, appEnvironment, project)
             }
             .map {
-                mockProject.read { LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true) }
+                project.read { LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true) }
             }
             .flatten()
     }
@@ -71,7 +66,7 @@ class LibraryModule(
                 computeFiles()
                     .forEach { virtualFileUrls.add(it.url) }
 
-                return@lazy object : GlobalSearchScope(project) {
+                object : GlobalSearchScope(project) {
                     override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
 
                     override fun isSearchInModuleContent(p0: com.intellij.openapi.module.Module): Boolean = false
@@ -101,11 +96,11 @@ class LibraryModule(
             override val isSdk: Boolean
                 get() = isJdk
             override val libraryName: String
-                get() = name
+                get() = id
             override val librarySources: KaLibrarySourceModule?
                 get() = sourceModule
             override val project: Project
-                get() = mockProject
+                get() = this@LibraryModule.project
             override val targetPlatform: TargetPlatform
                 get() = JvmPlatforms.jvmPlatformByTargetVersion(javaVersion)
         }
@@ -117,7 +112,7 @@ private const val JAR_SEPARATOR = "!/"
 private fun getVirtualFileForLibraryRoot(
     root: Path,
     environment: CoreApplicationEnvironment,
-    project: MockProject
+    project: Project
 ): VirtualFile? {
     val pathString = FileUtil.toSystemIndependentName(root.toAbsolutePath().toString())
 

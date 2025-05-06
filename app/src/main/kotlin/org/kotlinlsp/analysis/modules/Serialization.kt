@@ -3,11 +3,11 @@ package org.kotlinlsp.analysis.modules
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.intellij.mock.MockProject
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.kotlinlsp.common.printModule
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
@@ -60,7 +60,7 @@ fun serializeRootModule(rootModule: Module): String {
 fun deserializeRootModule(
     data: String,
     appEnvironment: KotlinCoreApplicationEnvironment,
-    mockProject: MockProject
+    project: Project
 ): Module {
     val gson = Gson()
     val modules: List<SerializedModule> = gson.fromJson(data, Array<SerializedModule>::class.java).toList()
@@ -77,7 +77,7 @@ fun deserializeRootModule(
         if (built.containsKey(id)) return built[id]!!
         val serialized = moduleMap[id]!!
         val deps = serialized.dependencies.map { build(it) }
-        val module = buildModule(serialized, deps, mockProject, appEnvironment)
+        val module = buildModule(serialized, deps, project, appEnvironment)
         built[id] = module
         return module
     }
@@ -89,26 +89,26 @@ fun deserializeRootModule(
 private fun buildModule(
     it: SerializedModule,
     deps: List<Module>,
-    mockProject: MockProject,
+    project: Project,
     appEnvironment: KotlinCoreApplicationEnvironment
 ): Module =
     if(it.sourcePath != null) {
         SourceModule(
+            id = it.id,
             kotlinVersion = LanguageVersion.fromVersionString(it.kotlinVersion!!)!!,
             javaVersion = JvmTarget.fromString(it.javaVersion)!!,
-            moduleName = it.id,
             folderPath = it.sourcePath,
             dependencies = deps,
-            mockProject = mockProject
+            project = project
         )
     } else {
         LibraryModule(
+            id = it.id,
             javaVersion = JvmTarget.fromString(it.javaVersion)!!,
             isJdk = it.isJdk!!,
-            name = it.id,
             roots = it.libraryRoots!!.map { Path(it) },
             dependencies = deps,
-            mockProject = mockProject,
+            project = project,
             appEnvironment = appEnvironment,
         )
     }

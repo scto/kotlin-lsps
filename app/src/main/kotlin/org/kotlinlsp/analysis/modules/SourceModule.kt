@@ -17,15 +17,13 @@ import org.kotlinlsp.common.read
 import java.io.File
 
 class SourceModule(
+    override val id: String,
     val folderPath: String,
     override val dependencies: List<Module>,
     val javaVersion: JvmTarget,
     val kotlinVersion: LanguageVersion,
-    val moduleName: String,
-    private val mockProject: MockProject,
+    private val project: Project,
 ) : Module {
-    override val id: String
-        get() = moduleName
     override val isSourceModule: Boolean
         get() = true
 
@@ -34,7 +32,7 @@ class SourceModule(
             .walk()
             .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
             .map { "file://${it.absolutePath}" }
-            .mapNotNull { mockProject.read { VirtualFileManager.getInstance().findFileByUrl(it) } }
+            .mapNotNull { project.read { VirtualFileManager.getInstance().findFileByUrl(it) } }
 
     override val kaModule: KaModule by lazy {
         object : KaSourceModule, KaModuleBase() {
@@ -42,7 +40,7 @@ class SourceModule(
                 val files = computeFiles()
                     .toList()
 
-                GlobalSearchScope.filesScope(mockProject, files)
+                GlobalSearchScope.filesScope(this@SourceModule.project, files)
             }
 
             @KaPlatformInterface
@@ -61,9 +59,9 @@ class SourceModule(
             override val moduleDescription: String
                 get() = "Source module: $name"
             override val name: String
-                get() = moduleName
+                get() = id
             override val project: Project
-                get() = mockProject
+                get() = this@SourceModule.project
             override val targetPlatform: TargetPlatform
                 get() = JvmPlatforms.jvmPlatformByTargetVersion(javaVersion)
         }

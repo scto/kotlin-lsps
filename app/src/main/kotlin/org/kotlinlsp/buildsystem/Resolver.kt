@@ -2,6 +2,7 @@ package org.kotlinlsp.buildsystem
 
 import com.google.gson.Gson
 import com.intellij.mock.MockProject
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.kotlinlsp.analysis.ProgressNotifier
@@ -18,7 +19,7 @@ import kotlin.io.path.deleteIfExists
 data class BuildSystemVersion(val version: String, val buildSystemName: String)
 
 class BuildSystemResolver(
-    private val project: MockProject,
+    private val project: Project,
     private val appEnvironment: KotlinCoreApplicationEnvironment,
     progressNotifier: ProgressNotifier,
     rootFolder: String

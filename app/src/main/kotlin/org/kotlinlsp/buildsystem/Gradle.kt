@@ -1,13 +1,12 @@
 package org.kotlinlsp.buildsystem
 
 import com.intellij.mock.MockProject
+import com.intellij.openapi.project.Project
 import org.eclipse.lsp4j.WorkDoneProgressKind
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.events.OperationType
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -15,11 +14,10 @@ import org.kotlinlsp.analysis.ProgressNotifier
 import org.kotlinlsp.analysis.modules.LibraryModule
 import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.analysis.modules.SourceModule
-import org.kotlinlsp.common.debug
 import java.io.File
 
 class GradleBuildSystem(
-    private val project: MockProject,
+    private val project: Project,
     private val appEnvironment: KotlinCoreApplicationEnvironment,
     private val rootFolder: String,
     private val progressNotifier: ProgressNotifier
@@ -51,12 +49,12 @@ class GradleBuildSystem(
         val jvmTarget = checkNotNull(JvmTarget.fromString(ideaProject.jdkName)) { "Unknown jdk target" }
         val jdkModule = ideaProject.javaLanguageSettings?.jdk?.let { jdk ->
             LibraryModule(
+                id = "JDK ${jvmTarget.description}",
                 appEnvironment = appEnvironment,
-                mockProject = project,
+                project = project,
                 roots = listOf(jdk.javaHome.toPath()),
                 javaVersion = jvmTarget,
                 isJdk = true,
-                name = "JDK ${jvmTarget.description}"
             )
         }
 
@@ -66,9 +64,9 @@ class GradleBuildSystem(
                 .filterIsInstance<IdeaSingleEntryLibraryDependency>()
                 .map { dependency ->
                     LibraryModule(
+                        id = dependency.file.name,
                         appEnvironment = appEnvironment,
-                        mockProject = project,
-                        name = dependency.file.name,
+                        project = project,
                         javaVersion = jvmTarget,
                         roots = listOf(dependency.file.toPath()),
                     )
@@ -80,12 +78,12 @@ class GradleBuildSystem(
             }
 
             SourceModule(
-                mockProject = project,
+                id = module.name,
+                project = project,
                 folderPath = module.contentRoots.first().rootDirectory.path,
                 dependencies = allDependencies,
                 javaVersion = jvmTarget,
                 kotlinVersion = LanguageVersion.KOTLIN_2_1,
-                moduleName = module.name
             )
         }
 
