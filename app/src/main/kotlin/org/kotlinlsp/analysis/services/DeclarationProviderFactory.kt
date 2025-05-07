@@ -33,9 +33,9 @@ class DeclarationProvider(
         .build<String, KtFile>()
 
     override val hasSpecificCallablePackageNamesComputation: Boolean
-        get() = false   // TODO 
+        get() = false
     override val hasSpecificClassifierPackageNamesComputation: Boolean
-        get() = false   // TODO 
+        get() = false
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> =
         profile("[X] findFilesForFacade", "$facadeFqName") {
@@ -43,8 +43,11 @@ class DeclarationProvider(
         }
 
     override fun findInternalFilesForFacade(facadeFqName: FqName): Collection<KtFile> =
-        profile("[X] findInternalFilesForFacade", "$facadeFqName") {
-            emptyList()  // TODO
+        profile("findInternalFilesForFacade", "$facadeFqName") {
+            // We don't deserialize libraries from stubs so we can return empty here safely
+            // We don't take the KaBuiltinsModule into account for simplicity,
+            // that means we expect the kotlin stdlib to be included on the project
+            emptyList()
         }
 
     override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> =
