@@ -1,7 +1,9 @@
 package org.kotlinlsp.analysis.services
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.impl.VirtualFileEnumeration
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolver
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProvider
@@ -9,12 +11,11 @@ import org.jetbrains.kotlin.analysis.api.platform.declarations.createDeclaration
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
-import org.jetbrains.kotlin.psi.KtAnnotated
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.KtUserType
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.collectionUtils.filterIsInstanceAnd
+import org.kotlinlsp.common.info
 import org.kotlinlsp.common.profile
+import org.kotlinlsp.common.warn
 
 class AnnotationsResolverFactory : KotlinAnnotationsResolverFactory {
     private lateinit var project: Project
@@ -30,17 +31,49 @@ class AnnotationsResolverFactory : KotlinAnnotationsResolverFactory {
 
 class AnnotationsResolver(
     project: Project,
-    scope: GlobalSearchScope
+    private val scope: GlobalSearchScope
 ) : KotlinAnnotationsResolver {
-    private val declarationProvider: KotlinDeclarationProvider by lazy {
-        project.createDeclarationProvider(scope, contextualModule = null)
+    private val declarationProvider: DeclarationProvider by lazy {
+        project.createDeclarationProvider(scope, contextualModule = null) as DeclarationProvider
     }
 
     override fun declarationsByAnnotation(annotationClassId: ClassId): Set<KtAnnotated> =
-        profile("[X] declarationsByAnnotation", "$annotationClassId") {
-            // TODO
-            emptySet()
+        profile("declarationsByAnnotation", "$annotationClassId") {
+            allDeclarations().asSequence()
+                .filter { annotationClassId in annotationsOnDeclaration(it) }
+                .toSet()
         }
+
+    private fun allDeclarations(): List<KtDeclaration> {
+        val virtualFiles = VirtualFileEnumeration.extract(scope)
+        if(virtualFiles == null) {
+            // It's fine, we are allowed to return false negatives in this service
+            return emptyList()
+        }
+        val filesInScope = virtualFiles.filesIfCollection.orEmpty()
+            .asSequence()
+            .filter { it in scope }
+            .mapNotNull { declarationProvider.getKtFile(it) }
+
+        val result = mutableListOf<KtDeclaration>()
+
+        val visitor = declarationRecursiveVisitor visit@{
+            val isLocal = when (it) {
+                is KtClassOrObject -> it.isLocal
+                is KtFunction -> it.isLocal
+                is KtProperty -> it.isLocal
+                else -> return@visit
+            }
+
+            if (!isLocal) {
+                result += it
+            }
+        }
+
+        filesInScope.forEach { it.accept(visitor) }
+
+        return result
+    }
 
     override fun annotationsOnDeclaration(declaration: KtAnnotated): Set<ClassId> =
         profile("annotationsOnDeclaration", "$declaration") {

@@ -6,6 +6,7 @@ import com.intellij.mock.MockProject
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.roots.PackageIndex
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.PsiDocumentManager
@@ -77,6 +78,12 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     private val buildSystemResolver: BuildSystemResolver
     private val openedFiles: MutableMap<String, KtFile> = ConcurrentHashMap()
     private val index: Index
+
+    private val openedKtFilesProvider = object : OpenedKtFilesProvider {
+        override fun getFile(virtualFile: VirtualFile): KtFile? {
+            return openedFiles.get(virtualFile.url)
+        }
+    }
 
     init {
         System.setProperty("java.awt.headless", "true")
@@ -170,7 +177,11 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
             project
         )
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project, index)
-        (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(project, index)
+        (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(
+            project,
+            index,
+            openedKtFilesProvider
+        )
         (project.getService(KotlinPackagePartProviderFactory::class.java) as PackagePartProviderFactory).setup(
             libraryRoots
         )

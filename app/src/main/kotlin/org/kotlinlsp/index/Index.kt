@@ -1,10 +1,15 @@
 package org.kotlinlsp.index
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.mock.MockProject
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.modules.Module
+import org.kotlinlsp.common.read
 import org.kotlinlsp.index.db.checkDbSchema
 import org.kotlinlsp.index.db.createDbConnection
 import org.kotlinlsp.index.worker.WorkerThread
@@ -18,7 +23,7 @@ interface IndexNotifier {
 
 class Index(
     rootModule: Module,
-    project: MockProject,
+    private val project: Project,
     rootFolder: String,
     notifier: IndexNotifier
 ) {
@@ -35,6 +40,11 @@ class Index(
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
     private val scanFilesThread = Thread(scanFilesThreadRunner)
     private val dbConnection: Connection
+
+    // This cache prevents parsing KtFiles over and over
+    private val ktFileCache = Caffeine.newBuilder()
+        .maximumSize(100)
+        .build<String, KtFile>()
 
     init {
         checkDbSchema(rootFolder)   // This needs to be called before any connection is made
@@ -67,5 +77,14 @@ class Index(
     fun <T> query(block: (connection: Connection) -> T): T {
         sourceFileIndexingFinishedSignal.await()
         return block(dbConnection)
+    }
+
+    fun getKtFile(virtualFile: VirtualFile): KtFile? {
+        val cachedKtFile = ktFileCache.getIfPresent(virtualFile.url)
+        if(cachedKtFile != null) return cachedKtFile
+
+        val ktFile = project.read { PsiManager.getInstance(project).findFile(virtualFile) as? KtFile } ?: return null
+        ktFileCache.put(virtualFile.url, ktFile)
+        return ktFile
     }
 }

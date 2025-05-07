@@ -1,10 +1,8 @@
 package org.kotlinlsp.analysis.services
 
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.platform.declarations.*
@@ -21,17 +19,17 @@ import org.kotlinlsp.common.read
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.queries.filesForPackage
 
+interface OpenedKtFilesProvider {
+    fun getFile(virtualFile: VirtualFile): KtFile?
+}
+
 // TODO Use the scope for correct behaviour
 class DeclarationProvider(
     val scope: GlobalSearchScope,
     private val project: Project,
-    private val index: Index
+    private val index: Index,
+    private val openedKtFilesProvider: OpenedKtFilesProvider
 ): KotlinDeclarationProvider {
-    // This cache prevents parsing KtFiles over and over
-    private val ktFileCache = Caffeine.newBuilder()
-        .maximumSize(100)
-        .build<String, KtFile>()
-
     override val hasSpecificCallablePackageNamesComputation: Boolean
         get() = false
     override val hasSpecificClassifierPackageNamesComputation: Boolean
@@ -52,12 +50,12 @@ class DeclarationProvider(
 
     override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> =
         profile("findFilesForFacadeByPackage", "$packageFqName") {
-            virtualFilesForPackage(packageFqName).map { getKtFile(it) }.toList()
+            virtualFilesForPackage(packageFqName).mapNotNull { getKtFile(it) }.toList()
         }
 
     override fun findFilesForScript(scriptFqName: FqName): Collection<KtScript> =
         profile("findFilesForScript", "$scriptFqName") {
-            virtualFilesForPackage(scriptFqName).map { getKtFile(it) }.mapNotNull { it.script }.toList()
+            virtualFilesForPackage(scriptFqName).mapNotNull { getKtFile(it) }.mapNotNull { it.script }.toList()
         }
 
     override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> =
@@ -166,31 +164,27 @@ class DeclarationProvider(
         return index.filesForPackage(fqName, scope).asSequence().map { VirtualFileManager.getInstance().findFileByUrl(it)!! }
     }
 
-    // TODO Look in opened files first to take in memory modifications into account
-    private fun getKtFile(virtualFile: VirtualFile): KtFile {
-        val cachedKtFile = ktFileCache.getIfPresent(virtualFile.url)
-        if(cachedKtFile != null) return cachedKtFile
-
-        val ktFile = project.read { PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile }
-        ktFileCache.put(virtualFile.url, ktFile)
-        return ktFile
+    fun getKtFile(virtualFile: VirtualFile): KtFile? {
+        return openedKtFilesProvider.getFile(virtualFile) ?: index.getKtFile(virtualFile)
     }
 }
 
 class DeclarationProviderFactory: KotlinDeclarationProviderFactory {
     private lateinit var project: Project
     private lateinit var index: Index
+    private lateinit var openedKtFilesProvider: OpenedKtFilesProvider
 
-    fun setup(project: Project, index: Index) {
+    fun setup(project: Project, index: Index, openedKtFilesProvider: OpenedKtFilesProvider) {
         this.project = project
         this.index = index
+        this.openedKtFilesProvider = openedKtFilesProvider
     }
 
     override fun createDeclarationProvider(
         scope: GlobalSearchScope,
         contextualModule: KaModule?
     ): KotlinDeclarationProvider {
-        return DeclarationProvider(scope, project, index)
+        return DeclarationProvider(scope, project, index, openedKtFilesProvider)
     }
 }
 
