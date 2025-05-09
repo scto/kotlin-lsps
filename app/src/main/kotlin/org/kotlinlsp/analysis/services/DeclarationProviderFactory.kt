@@ -20,15 +20,10 @@ import org.kotlinlsp.common.read
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.queries.filesForPackage
 
-interface OpenedKtFilesProvider {
-    fun getFile(virtualFile: VirtualFile): KtFile?
-}
-
 class DeclarationProvider(
     val scope: GlobalSearchScope,
     private val project: Project,
-    private val index: Index,
-    private val openedKtFilesProvider: OpenedKtFilesProvider
+    private val index: Index
 ): KotlinDeclarationProvider {
     private val KtElement.inScope: Boolean
         get() = containingKtFile.virtualFile in scope
@@ -165,30 +160,24 @@ class DeclarationProvider(
             .asSequence()
             .map { VirtualFileManager.getInstance().findFileByUrl(it)!! }
             .filter { it in scope }
-            .mapNotNull { getKtFile(it) }
-    }
-
-    fun getKtFile(virtualFile: VirtualFile): KtFile? {
-        return openedKtFilesProvider.getFile(virtualFile) ?: index.getKtFile(virtualFile)
+            .mapNotNull { index.getKtFile(it) }
     }
 }
 
 class DeclarationProviderFactory: KotlinDeclarationProviderFactory {
     private lateinit var project: Project
     private lateinit var index: Index
-    private lateinit var openedKtFilesProvider: OpenedKtFilesProvider
 
-    fun setup(project: Project, index: Index, openedKtFilesProvider: OpenedKtFilesProvider) {
+    fun setup(project: Project, index: Index) {
         this.project = project
         this.index = index
-        this.openedKtFilesProvider = openedKtFilesProvider
     }
 
     override fun createDeclarationProvider(
         scope: GlobalSearchScope,
         contextualModule: KaModule?
     ): KotlinDeclarationProvider {
-        return DeclarationProvider(scope, project, index, openedKtFilesProvider)
+        return DeclarationProvider(scope, project, index)
     }
 }
 

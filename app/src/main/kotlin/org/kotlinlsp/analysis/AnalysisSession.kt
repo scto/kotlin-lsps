@@ -76,14 +76,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     private val commandProcessor: CommandProcessor
     private val psiDocumentManager: PsiDocumentManager
     private val buildSystemResolver: BuildSystemResolver
-    private val openedFiles: MutableMap<String, KtFile> = ConcurrentHashMap()
     private val index: Index
-
-    private val openedKtFilesProvider = object : OpenedKtFilesProvider {
-        override fun getFile(virtualFile: VirtualFile): KtFile? {
-            return openedFiles.get(virtualFile.url)
-        }
-    }
 
     init {
         System.setProperty("java.awt.headless", "true")
@@ -179,13 +172,12 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project, index)
         (project.getService(KotlinDeclarationProviderFactory::class.java) as DeclarationProviderFactory).setup(
             project,
-            index,
-            openedKtFilesProvider
+            index
         )
         (project.getService(KotlinPackagePartProviderFactory::class.java) as PackagePartProviderFactory).setup(
             libraryRoots
         )
-        (project.getService(KotlinAnnotationsResolverFactory::class.java) as AnnotationsResolverFactory).setup(project)
+        (project.getService(KotlinAnnotationsResolverFactory::class.java) as AnnotationsResolverFactory).setup(project, index)
 
         commandProcessor = app.getService(CommandProcessor::class.java)
         psiDocumentManager = PsiDocumentManager.getInstance(project)
@@ -246,13 +238,13 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
 
     fun onOpenFile(path: String) {
         val ktFile = loadKtFile(path)
-        openedFiles[path] = ktFile
+        index.openKtFile(path, ktFile)
 
         updateDiagnostics(ktFile)
     }
 
     fun onCloseFile(path: String) {
-        openedFiles.remove(path)
+        index.closeKtFile(path)
     }
 
     private fun loadKtFile(path: String): KtFile {
@@ -294,7 +286,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
 
     // TODO Use version to avoid conflicts
     fun editFile(path: String, version: Int, changes: List<TextDocumentContentChangeEvent>) {
-        val ktFile = openedFiles[path]!!
+        val ktFile = index.getOpenedKtFile(path)!!
         val doc = project.read { psiDocumentManager.getDocument(ktFile)!! }
 
         project.write {
@@ -316,12 +308,12 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     }
 
     fun lintFile(path: String) {
-        val ktFile = openedFiles[path]!!
+        val ktFile = index.getOpenedKtFile(path)!!
         index.queueOnFileChanged(ktFile)
 
         // Update diagnostics on the edited file first so feedback is faster
         updateDiagnostics(ktFile)
-        openedFiles.forEach { (key, file) ->
+        index.openedKtFiles.forEach { (key, file) ->
             if(key != path) updateDiagnostics(file)
         }
     }
@@ -331,12 +323,12 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     }
 
     fun hover(path: String, position: Position): Pair<String, Range>? {
-        val ktFile = openedFiles[path]!!
+        val ktFile = index.getOpenedKtFile(path)!!
         return project.read { hoverAction(ktFile, position) }
     }
 
     fun goToDefinition(path: String, position: Position): Location? {
-        val ktFile = openedFiles[path]!!
+        val ktFile = index.getOpenedKtFile(path)!!
         return project.read { goToDefinitionAction(ktFile, position) }
     }
 }

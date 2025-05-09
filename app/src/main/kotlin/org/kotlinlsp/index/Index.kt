@@ -15,6 +15,7 @@ import org.kotlinlsp.index.db.createDbConnection
 import org.kotlinlsp.index.worker.WorkerThread
 import org.kotlinlsp.index.worker.WorkerThreadNotifier
 import java.sql.Connection
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 
 interface IndexNotifier {
@@ -40,6 +41,7 @@ class Index(
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
     private val scanFilesThread = Thread(scanFilesThreadRunner)
     private val dbConnection: Connection
+    private val openedFiles: MutableMap<String, KtFile> = ConcurrentHashMap()
 
     // This cache prevents parsing KtFiles over and over
     private val ktFileCache = Caffeine.newBuilder()
@@ -79,10 +81,29 @@ class Index(
         return block(dbConnection)
     }
 
+    fun openKtFile(path: String, ktFile: KtFile) {
+        openedFiles[path] = ktFile
+    }
+
+    fun closeKtFile(path: String) {
+        openedFiles.remove(path)
+    }
+
+    fun getOpenedKtFile(path: String): KtFile? = openedFiles[path]
+
+    val openedKtFiles: Sequence<Map.Entry<String, KtFile>>
+        get() = openedFiles.asSequence()
+
     fun getKtFile(virtualFile: VirtualFile): KtFile? {
+        // First check opened files
+        val openedFile = openedFiles.get(virtualFile.url)
+        if(openedFile != null) return openedFile
+
+        // Then check the cache
         val cachedKtFile = ktFileCache.getIfPresent(virtualFile.url)
         if(cachedKtFile != null) return cachedKtFile
 
+        // If not, load from disk and store in cache
         val ktFile = project.read { PsiManager.getInstance(project).findFile(virtualFile) as? KtFile } ?: return null
         ktFileCache.put(virtualFile.url, ktFile)
         return ktFile

@@ -16,22 +16,26 @@ import org.jetbrains.kotlin.util.collectionUtils.filterIsInstanceAnd
 import org.kotlinlsp.common.info
 import org.kotlinlsp.common.profile
 import org.kotlinlsp.common.warn
+import org.kotlinlsp.index.Index
 
 class AnnotationsResolverFactory : KotlinAnnotationsResolverFactory {
     private lateinit var project: Project
+    private lateinit var index: Index
 
-    fun setup(project: Project) {
+    fun setup(project: Project, index: Index) {
         this.project = project
+        this.index = index
     }
 
     override fun createAnnotationResolver(searchScope: GlobalSearchScope): KotlinAnnotationsResolver {
-        return AnnotationsResolver(project, searchScope)
+        return AnnotationsResolver(project, searchScope, index)
     }
 }
 
 class AnnotationsResolver(
     project: Project,
-    private val scope: GlobalSearchScope
+    private val scope: GlobalSearchScope,
+    private val index: Index
 ) : KotlinAnnotationsResolver {
     private val declarationProvider: DeclarationProvider by lazy {
         project.createDeclarationProvider(scope, contextualModule = null) as DeclarationProvider
@@ -53,7 +57,7 @@ class AnnotationsResolver(
         val filesInScope = virtualFiles.filesIfCollection.orEmpty()
             .asSequence()
             .filter { it in scope }
-            .mapNotNull { declarationProvider.getKtFile(it) }
+            .mapNotNull { index.getKtFile(it) }
 
         val result = mutableListOf<KtDeclaration>()
 
