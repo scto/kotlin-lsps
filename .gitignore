@@ -6,5 +6,6 @@ build
 
 # LSP
 lsp-dist
+.kotlin-lsp
 .kotlinlsp-modules.json
 log.txt

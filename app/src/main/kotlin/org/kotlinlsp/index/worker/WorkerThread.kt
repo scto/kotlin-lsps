@@ -7,22 +7,20 @@ import org.kotlinlsp.common.info
 import org.kotlinlsp.common.read
 import org.kotlinlsp.index.Command
 import org.kotlinlsp.index.IndexNotifier
-import org.kotlinlsp.index.db.createDbConnection
+import org.kotlinlsp.index.db.Database
 
 interface WorkerThreadNotifier: IndexNotifier {
     fun onSourceFileIndexingFinished()
 }
 
 class WorkerThread(
-    private val rootFolder: String,
+    private val db: Database,
     private val project: Project,
     private val notifier: WorkerThreadNotifier
 ): Runnable {
     private val workQueue = WorkQueue<Command>()
 
     override fun run() {
-        val connection = createDbConnection(rootFolder)
-
         var count = 0
 
         while(true) {
@@ -31,14 +29,14 @@ class WorkerThread(
                 is Command.IndexFile -> {
                     if(command.virtualFile.url.startsWith("file://")) {
                         val ktFile = project.read { PsiManager.getInstance(project).findFile(command.virtualFile) } as KtFile
-                        indexKtFile(project, ktFile, connection)
+                        indexKtFile(project, ktFile, db)
                     } else {
-                        indexClassFile(project, command.virtualFile, connection)
+                        indexClassFile(project, command.virtualFile, db)
                     }
                     count ++
                 }
                 is Command.IndexModifiedFile -> {
-                    indexKtFile(project, command.ktFile, connection)
+                    indexKtFile(project, command.ktFile, db)
                     count ++
                 }
                 is Command.IndexingFinished -> {
@@ -53,8 +51,6 @@ class WorkerThread(
                 }
             }
         }
-
-        connection.close()
     }
 
     fun submitCommand(command: Command) {

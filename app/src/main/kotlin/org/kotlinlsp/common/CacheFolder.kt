@@ -6,11 +6,7 @@ import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
 
 fun getCachePath(rootPath: String): Path {
-    val home = System.getProperty("user.home")
-    val baseCacheDir = Paths.get(home, ".cache", "kotlin-lsp")
-
-    // This sanitize should work for the vast majority of cases
-    val cachePath = baseCacheDir.resolve(sanitizePath(rootPath))
+    val cachePath = Paths.get(rootPath).resolve(".kotlin-lsp")
 
     if (!Files.exists(cachePath)) Files.createDirectories(cachePath)
 
@@ -25,10 +21,4 @@ fun removeCacheFolder(rootPath: String) {
             .sorted(Comparator.reverseOrder())
             .forEach { path -> Files.delete(path) }
     }
-}
-
-private fun sanitizePath(path: String): String {
-    return path.replace(Regex("[^a-zA-Z0-9._/-]"), "_")
-        .replace("/", "_")
-        .replace("\\", "_")
 }

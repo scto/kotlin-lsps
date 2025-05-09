@@ -39,7 +39,7 @@ dependencies {
     }
 
     implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0")
-    implementation("com.h2database:h2:2.3.232")
+    implementation("org.rocksdb:rocksdbjni:10.0.1")
     implementation("org.gradle:gradle-tooling-api:8.12")
 
     testImplementation(platform("org.junit:junit-bom:5.12.2"))
@@ -55,15 +55,7 @@ java {
 }
 
 application {
-    mainClass = "org.kotlinlsp.MainKt" 
-}
-
-tasks.register("printMainClasspathJars") {
-    doLast {
-        configurations.compileClasspath.get().forEach {
-            println(it.absolutePath)
-        }
-    }
+    mainClass = "org.kotlinlsp.MainKt"
 }
 
 tasks.jar {

@@ -1,20 +1,16 @@
 package org.kotlinlsp.index
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.common.read
-import org.kotlinlsp.index.db.checkDbSchema
-import org.kotlinlsp.index.db.createDbConnection
+import org.kotlinlsp.index.db.Database
 import org.kotlinlsp.index.worker.WorkerThread
 import org.kotlinlsp.index.worker.WorkerThreadNotifier
-import java.sql.Connection
+import org.rocksdb.RocksDB
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 
@@ -36,22 +32,17 @@ class Index(
 
         override fun onBackgroundIndexFinished() = notifier.onBackgroundIndexFinished()
     }
-    private val workerThreadRunner = WorkerThread(rootFolder, project, workerThreadNotifier)
+    private val db = Database(rootFolder)
+    private val workerThreadRunner = WorkerThread(db, project, workerThreadNotifier)
     private val workerThread = Thread(workerThreadRunner)
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
     private val scanFilesThread = Thread(scanFilesThreadRunner)
-    private val dbConnection: Connection
     private val openedFiles: MutableMap<String, KtFile> = ConcurrentHashMap()
 
     // This cache prevents parsing KtFiles over and over
     private val ktFileCache = Caffeine.newBuilder()
         .maximumSize(100)
         .build<String, KtFile>()
-
-    init {
-        checkDbSchema(rootFolder)   // This needs to be called before any connection is made
-        dbConnection = createDbConnection(rootFolder)
-    }
 
     fun syncIndexInBackground() {
         // We have 2 threads here
@@ -73,12 +64,13 @@ class Index(
         workerThreadRunner.submitCommand(Command.Stop)
         scanFilesThread.join()
         workerThread.join()
-        dbConnection.close()
+
+        db.close()
     }
 
-    fun <T> query(block: (connection: Connection) -> T): T {
+    fun <T> query(block: (connection: Database) -> T): T {
         sourceFileIndexingFinishedSignal.await()
-        return block(dbConnection)
+        return block(db)
     }
 
     fun openKtFile(path: String, ktFile: KtFile) {

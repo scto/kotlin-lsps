@@ -2,8 +2,8 @@ package org.kotlinlsp.index.worker
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import java.sql.Connection
+import org.kotlinlsp.index.db.Database
 
-fun indexClassFile(project: Project, virtualFile: VirtualFile, connection: Connection) {
+fun indexClassFile(project: Project, virtualFile: VirtualFile, db: Database) {
     // TODO
 }

@@ -29,7 +29,7 @@ private class PackageProvider(
     private val index: Index
 ): KotlinPackageProviderBase(project, searchScope) {
     override fun doesKotlinOnlyPackageExist(packageFqName: FqName): Boolean = profile("doesKotlinOnlyPackageExist", "$packageFqName") {
-        packageFqName.isRoot || index.packageExistsInSourceFiles(packageFqName, searchScope)
+        packageFqName.isRoot || index.packageExistsInSourceFiles(packageFqName)
     }
 
     override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> = profile("[X] getKotlinOnlySubpackageNames", "$packageFqName") {

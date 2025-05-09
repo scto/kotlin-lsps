@@ -1,16 +1,14 @@
 package org.kotlinlsp.index.queries
 
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.name.FqName
 import org.kotlinlsp.index.Index
+import org.rocksdb.ReadOptions
+import java.nio.charset.Charset
 
-// TODO Use searchScope for correct behaviour
-fun Index.packageExistsInSourceFiles(fqName: FqName, searchScope: GlobalSearchScope): Boolean = query { conn ->
-    val query = "SELECT EXISTS (SELECT 1 FROM Files WHERE packageFqName = ?)"
-    conn.prepareStatement(query).use {
-        it.setString(1, fqName.asString())
-        val resultSet = it.executeQuery()
-        resultSet.next()
-        resultSet.getBoolean(1)
-    }
+fun Index.packageExistsInSourceFiles(fqName: FqName): Boolean = query { db ->
+    val prefix = fqName.asString()
+    val readOptions = ReadOptions().setPrefixSameAsStart(true)
+    val it = db.packages.db.newIterator(readOptions)
+    it.seek(prefix.toByteArray())
+    it.isValid && it.key().toString(Charset.defaultCharset()).startsWith(prefix)
 }

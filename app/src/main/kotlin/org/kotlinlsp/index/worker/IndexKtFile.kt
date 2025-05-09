@@ -11,34 +11,29 @@ import org.kotlinlsp.common.info
 import org.kotlinlsp.common.read
 import org.kotlinlsp.common.warn
 import org.kotlinlsp.index.db.*
+import org.rocksdb.RocksDB
 import java.sql.Connection
 import java.time.Instant
 
-fun indexKtFile(project: Project, ktFile: KtFile, connection: Connection) {
+fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
     val fileRecord = project.read {
         analyze(ktFile) {
             val packageFqName = ktFile.packageFqName.asString()
-            val fileRecord = FileRecord(
-                id = null,
+            val fileRecord = File(
                 packageFqName = packageFqName,
                 path = ktFile.virtualFile.url,
                 lastModified = Instant.ofEpochMilli(ktFile.virtualFile.timeStamp),
-                modificationStamp = ktFile.modificationStamp
             )
             return@read fileRecord
         }
     }
 
     // Check if the file record has been modified since last time
-    // I think the case of overflowing modificationStamp is not worth to be considered as it is 64bit int
-    // (a trillion modifications on the same file in the same coding session)
-    val existingFileRecord = connection.queryFileRecord(fileRecord.path)
+    val existingLastModified = db.fileLastModifiedFromPath(fileRecord.path)
     if (
-        existingFileRecord != null &&
-        !existingFileRecord.lastModified.isBefore(fileRecord.lastModified) &&
-        existingFileRecord.modificationStamp >= fileRecord.modificationStamp &&
-        (fileRecord.modificationStamp != 0L || existingFileRecord.modificationStamp == 0L)
-        ) return
+        existingLastModified != null &&
+        !existingLastModified.isBefore(fileRecord.lastModified)
+    ) return
 
     // TODO Process the KtFile and get symbols and references
     /*ktFile.accept(object : KtTreeVisitorVoid() {
@@ -91,14 +86,6 @@ fun indexKtFile(project: Project, ktFile: KtFile, connection: Connection) {
         }
     })*/
 
-    connection.transaction {
-
-        // Update the file record
-        if (existingFileRecord != null) {
-            val updatedFileRecord = fileRecord.copy(id = existingFileRecord.id)
-            connection.updateFileRecord(updatedFileRecord)
-        } else {
-            connection.insertFileRecord(fileRecord)
-        }
-    }
+    // Update the file timestamp and package
+    db.setFile(fileRecord)
 }
