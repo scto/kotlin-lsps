@@ -23,16 +23,21 @@ fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
                 packageFqName = packageFqName,
                 path = ktFile.virtualFile.url,
                 lastModified = Instant.ofEpochMilli(ktFile.virtualFile.timeStamp),
+                modificationStamp = ktFile.modificationStamp
             )
             return@read fileRecord
         }
     }
 
     // Check if the file record has been modified since last time
-    val existingLastModified = db.fileLastModifiedFromPath(fileRecord.path)
+    // I think the case of overflowing modificationStamp is not worth to be considered as it is 64bit int
+    // (a trillion modifications on the same file in the same coding session)
+    val existingFile = db.fileLastModifiedFromPath(fileRecord.path)
     if (
-        existingLastModified != null &&
-        !existingLastModified.isBefore(fileRecord.lastModified)
+        existingFile != null &&
+        !existingFile.first.isBefore(fileRecord.lastModified) &&
+        existingFile.second >= fileRecord.modificationStamp &&
+        (fileRecord.modificationStamp != 0L || existingFile.second == 0L)
     ) return
 
     // TODO Process the KtFile and get symbols and references
