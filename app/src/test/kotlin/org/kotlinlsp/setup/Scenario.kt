@@ -56,9 +56,9 @@ fun scenario(
         )
     }
     val client = mock(LanguageClient::class.java)
+    server.connect(client)
     server.initialize(initParams).join()
     server.initialized(InitializedParams())
-    server.connect(client)
 
     // Run test case
     try {
