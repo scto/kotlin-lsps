@@ -21,7 +21,7 @@
       "kotlin-compiler-common-for-ide-2.2.0-dev-15683.jar",
       "kotlin-compiler-fir-for-ide-2.2.0-dev-15683.jar",
       "org.eclipse.lsp4j-0.24.0.jar",
-      "h2-2.3.232.jar",
+      "rocksdbjni-10.0.1.jar",
       "gradle-tooling-api-8.12.jar",
       "annotations-24.0.0.jar",
       "util-progress-241.19416.19.jar",
@@ -705,12 +705,12 @@
     ]
   },
   {
-    "id": "h2-2.3.232.jar",
+    "id": "rocksdbjni-10.0.1.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/com.h2database/h2/2.3.232/4fcc05d966ccdb2812ae8b9a718f69226c0cf4e2/h2-2.3.232.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.rocksdb/rocksdbjni/10.0.1/f3a2af16562956e733b8766070ef38df5ffde1f1/rocksdbjni-10.0.1.jar"
     ]
   },
   {
