@@ -10,11 +10,8 @@ import org.kotlinlsp.setup.scenario
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.Mockito.verify
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
 class RealTimeDiagnostics {
     @Test
-    @Order(1)
     fun `analyzes basic codebase with no error diagnostics`() = scenario("basic") { server, client, projectUrl, _ ->
         // Act
         server.didOpen(DidOpenTextDocumentParams().apply {
@@ -28,7 +25,6 @@ class RealTimeDiagnostics {
     }
 
     @Test
-    @Order(2)
     fun `analyzes basic codebase and reports syntax error`() = scenario("basic") { server, client, projectUrl, _ ->
         // Act
         server.didOpen(DidOpenTextDocumentParams().apply {
