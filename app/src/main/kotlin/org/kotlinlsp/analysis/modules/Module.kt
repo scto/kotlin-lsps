@@ -11,3 +11,17 @@ interface Module {
 
     fun computeFiles(): Sequence<VirtualFile>
 }
+
+fun Module.getModuleList() = getModuleListInternal(this)
+
+private fun getModuleListInternal(module: Module, processedModules: MutableSet<String> = mutableSetOf()): Sequence<Module> = sequence {
+    if(processedModules.contains(module.id)) return@sequence
+
+    yield(module)
+
+    module.dependencies.forEach {
+        yieldAll(getModuleListInternal(it, processedModules))
+    }
+
+    processedModules.add(module.id)
+}

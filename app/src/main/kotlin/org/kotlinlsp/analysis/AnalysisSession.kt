@@ -180,7 +180,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
             libraryRoots
         )
         (project.getService(KotlinAnnotationsResolverFactory::class.java) as AnnotationsResolverFactory).setup(project, index)
-        (project.getService(KotlinDirectInheritorsProvider::class.java) as DirectInheritorsProvider).setup(index)
+        (project.getService(KotlinDirectInheritorsProvider::class.java) as DirectInheritorsProvider).setup(project, index, rootModule)
 
         commandProcessor = app.getService(CommandProcessor::class.java)
         psiDocumentManager = PsiDocumentManager.getInstance(project)
