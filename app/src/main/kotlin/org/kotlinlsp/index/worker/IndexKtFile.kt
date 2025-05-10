@@ -40,30 +40,23 @@ fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
         (fileRecord.modificationStamp != 0L || existingFile.second == 0L)
     ) return
 
-    // TODO Process the KtFile and get symbols and references
-    /*ktFile.accept(object : KtTreeVisitorVoid() {
+    // Update the file timestamp and package
+    db.setFile(fileRecord)
+
+    // TODO Remove declarations for this file first
+    ktFile.accept(object : KtTreeVisitorVoid() {
         override fun visitDeclaration(dcl: KtDeclaration) {
             super.visitDeclaration(dcl)
 
-            val parentSymbol = PsiTreeUtil.getParentOfType(dcl, KtDeclaration::class.java, true)
             val name = dcl.name ?: return
-            val symbolRecord = SymbolRecord(
-                id = -1,
-                name = name,
-                startOffset = dcl.textOffset,
-                endOffset = dcl.textOffset + name.length,
-                file = -1,
-                kind = -1,
-                parentSymbol = if (parentSymbol != null) {
-                    1
-                } else {
-                    null
-                }
-            )
-            debug("SYMBOL: $symbolRecord")
+            val startOffset = dcl.textOffset
+            val endOffset = dcl.textOffset + name.length
+
+            db.putDeclarationForFile(fileRecord.path, name, startOffset, endOffset)
         }
 
-        override fun visitReferenceExpression(e: KtReferenceExpression) {
+        // TODO Store references
+        /*override fun visitReferenceExpression(e: KtReferenceExpression) {
             super.visitReferenceExpression(e)
             if (e !is KtNameReferenceExpression) return
 
@@ -88,9 +81,6 @@ fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
             debug("REFERENCE: $referenceRecord")
             debug("-> Name: ${e.text}")
             debug("-> Target: ${target?.containingFile?.virtualFile?.url}")
-        }
-    })*/
-
-    // Update the file timestamp and package
-    db.setFile(fileRecord)
+        }*/
+    })
 }

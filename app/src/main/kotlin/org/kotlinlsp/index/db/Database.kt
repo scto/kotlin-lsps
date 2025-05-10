@@ -17,13 +17,14 @@ import java.sql.Connection
 import java.sql.DriverManager
 import kotlin.io.path.absolutePathString
 
-const val CURRENT_SCHEMA_VERSION = 1    // Increment on schema changes
+const val CURRENT_SCHEMA_VERSION = 2    // Increment on schema changes
 const val VERSION_KEY = "__version"
 
 class Database(rootFolder: String) {
     private val cachePath = getCachePath(rootFolder)
     val filesDb: DatabaseAdapter
     val packagesDb: DatabaseAdapter
+    val declarationsDb: DatabaseAdapter
 
     init {
         var projectDb = RocksDBAdapter(cachePath.resolve("project"))
@@ -42,6 +43,7 @@ class Database(rootFolder: String) {
 
         filesDb = RocksDBAdapter(cachePath.resolve("files"))
         packagesDb = RocksDBAdapter(cachePath.resolve("packages"))
+        declarationsDb = RocksDBAdapter(cachePath.resolve("declarations"))
         projectDb.close()
     }
 
@@ -51,7 +53,9 @@ class Database(rootFolder: String) {
     }
 
     private fun deleteAll() {
+        File(cachePath.resolve("project").absolutePathString()).delete()
         File(cachePath.resolve("files").absolutePathString()).delete()
         File(cachePath.resolve("packages").absolutePathString()).delete()
+        File(cachePath.resolve("declarations").absolutePathString()).delete()
     }
 }
