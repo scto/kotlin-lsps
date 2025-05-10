@@ -58,6 +58,11 @@ application {
     mainClass = "org.kotlinlsp.MainKt"
 }
 
+tasks.withType<Test> {
+    forkEvery = 1
+    maxParallelForks = 2
+}
+
 tasks.jar {
     manifest {
         attributes(
