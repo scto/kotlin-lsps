@@ -1,20 +1,15 @@
 package org.kotlinlsp.common
 
-import com.intellij.psi.PsiElement
 import org.eclipse.lsp4j.MessageParams
 import org.eclipse.lsp4j.MessageType
 import org.eclipse.lsp4j.services.LanguageClient
-import org.jetbrains.kotlin.psi.KtFile
-import org.kotlinlsp.analysis.modules.LibraryModule
-import org.kotlinlsp.analysis.modules.SourceModule
-import org.kotlinlsp.analysis.modules.Module
-import java.io.*
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.lang.management.ManagementFactory
 import java.util.logging.Handler
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.Logger
-import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
@@ -52,32 +47,13 @@ private class LSPLogger(val client: LanguageClient) {
 
         client.logMessage(MessageParams(level.asMessageType(), message))
     }
-
-    fun redirectSystemErr() {
-        val loggerStream = PrintStream(object : OutputStream() {
-            private val buffer = StringBuilder()
-
-            override fun write(b: Int) {
-                if (b == '\n'.code) {
-                    log(LogLevel.Error, buffer.toString())
-                    buffer.setLength(0)
-                } else {
-                    buffer.append(b.toChar())
-                }
-            }
-        })
-
-        System.setErr(loggerStream)
-    }
 }
 
 fun setupLogger(client: LanguageClient) {
     logger = LSPLogger(client)
 
-    // This is to log the exceptions to log.txt file (JUL = java.util.log)
+    // This is to log the exceptions from JUL (java.util.log)
     Logger.getLogger("").addHandler(JULRedirector())
-
-    logger.redirectSystemErr()
 }
 
 fun <T> profile(tag: String, message: String, fn: () -> T): T {
@@ -149,27 +125,6 @@ fun warn(message: String) {
     logger.log(LogLevel.Warning, "[WARN]: $message")
 }
 
-fun printModule(rootModule: Module, level: Int = 0) {
-    val indent = "\t".repeat(level)
-    when (rootModule) {
-        is SourceModule -> {
-            info("$indent- ${rootModule.id}")
-        }
-
-        is LibraryModule -> {
-            info("$indent- ${rootModule.id}")
-            info("$indent* ${rootModule.roots.first().absolutePathString().substringAfterLast("/")}")
-        }
-
-        else -> {
-            throw Exception("Invalid KaModule!")
-        }
-    }
-    rootModule.dependencies.forEach {
-        printModule(it, level + 1)
-    }
-}
-
 private class JULRedirector: Handler() {
     override fun publish(record: LogRecord) {
         when (record.level) {
@@ -187,19 +142,4 @@ private class JULRedirector: Handler() {
 
     override fun flush() {}
     override fun close() {}
-}
-
-fun printPsiTree(ktFile: KtFile) {
-    val rootNode = ktFile.node.psi
-
-    printPsiNode(rootNode, 0)
-}
-
-fun printPsiNode(node: PsiElement, depth: Int = 0) {
-    val indent = "  ".repeat(depth)
-    debug("$indent${node.javaClass.simpleName}: ${node.text}")
-
-    for (child in node.children) {
-        printPsiNode(child, depth + 1)
-    }
 }
