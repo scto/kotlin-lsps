@@ -160,7 +160,7 @@ private class JULRedirector: Handler() {
             else -> trace(record.message)
         }
 
-        val stackTrace = StringWriter().also { PrintWriter(it).use { pw -> record.thrown.printStackTrace(pw) } }.toString()
+        val stackTrace = StringWriter().also { PrintWriter(it).use { pw -> record.thrown?.printStackTrace(pw) } }.toString()
         error(stackTrace)
     }
 

@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.cli.jvm.modules.JavaModuleGraph
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.psi.KtFile
+import org.kotlinlsp.actions.autocompleteAction
 import org.kotlinlsp.actions.goToDefinitionAction
 import org.kotlinlsp.actions.hoverAction
 import org.kotlinlsp.analysis.registration.Registrar
@@ -303,11 +304,11 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
                     ktFile.onContentReload()
                 }, "onChangeFile", null)
             }
-        }
 
-        // TODO Optimize the KaElementModificationType
-        KaSourceModificationService.getInstance(project)
-            .handleElementModification(ktFile, KaElementModificationType.Unknown)
+            // TODO Optimize the KaElementModificationType
+            KaSourceModificationService.getInstance(project)
+                .handleElementModification(ktFile, KaElementModificationType.Unknown)
+        }
     }
 
     fun lintFile(path: String) {
@@ -333,6 +334,13 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     fun goToDefinition(path: String, position: Position): Location? {
         val ktFile = index.getOpenedKtFile(path)!!
         return project.read { goToDefinitionAction(ktFile, position) }
+    }
+
+    fun autocomplete(path: String, position: Position): List<CompletionItem> {
+        val ktFile = index.getOpenedKtFile(path)!!
+        val offset = position.toOffset(ktFile)
+
+        return autocompleteAction(ktFile, offset, index)
     }
 }
 
