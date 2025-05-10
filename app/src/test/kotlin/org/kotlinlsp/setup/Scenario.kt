@@ -2,12 +2,14 @@ package org.kotlinlsp.setup
 
 import org.eclipse.lsp4j.InitializeParams
 import org.eclipse.lsp4j.InitializedParams
+import org.eclipse.lsp4j.MessageParams
 import org.eclipse.lsp4j.WorkspaceFolder
 import org.eclipse.lsp4j.services.LanguageClient
 import org.kotlinlsp.lsp.KotlinLanguageServer
 import org.kotlinlsp.common.removeCacheFolder
 import org.kotlinlsp.lsp.KotlinLanguageServerNotifier
-import org.mockito.Mockito.mock
+import org.mockito.Mockito
+import org.mockito.Mockito.*
 import java.io.File
 import java.nio.file.Paths
 
@@ -42,7 +44,6 @@ fun scenario(
         """.trimIndent()
     val moduleFile = File("$cwd/test-projects/$projectName/.kotlinlsp-modules.json")
     moduleFile.delete()
-    File("$cwd/test-projects/$projectName/log.txt").delete()
     removeCacheFolder("$cwd/test-projects/$projectName")
     moduleFile.writeText(moduleContents)
 
@@ -56,6 +57,10 @@ fun scenario(
         )
     }
     val client = mock(LanguageClient::class.java)
+    `when`(client.logMessage(any())).thenAnswer {
+        val params = it.getArgument<MessageParams>(0)
+        println(params.message)
+    }
     server.connect(client)
     server.initialize(initParams).join()
     server.initialized(InitializedParams())
@@ -67,7 +72,6 @@ fun scenario(
         // Cleanup
         server.shutdown().join()
         moduleFile.delete()
-        File("$cwd/test-projects/$projectName/log.txt").delete()
         removeCacheFolder("$cwd/test-projects/$projectName")
     }
 }

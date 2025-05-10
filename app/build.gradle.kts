@@ -64,12 +64,14 @@ tasks.test {
     forkEvery = 1
     maxParallelForks = 1
     timeout = Duration.ofMinutes(8)
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
 
     testLogging {
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         showExceptions = true
         showCauses = true
         showStackTraces = true
+        showStandardStreams = true
     }
 }
 
