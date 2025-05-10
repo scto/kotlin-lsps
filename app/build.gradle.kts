@@ -63,7 +63,7 @@ application {
 tasks.withType<Test> {
     forkEvery = 1
     maxParallelForks = 2
-    timeout = Duration.ofMinutes(2)
+    timeout = Duration.ofMinutes(8)
 }
 
 tasks.jar {

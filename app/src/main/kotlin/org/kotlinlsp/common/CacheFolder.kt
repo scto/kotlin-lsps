@@ -1,5 +1,6 @@
 package org.kotlinlsp.common
 
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -15,10 +16,5 @@ fun getCachePath(rootPath: String): Path {
 
 fun removeCacheFolder(rootPath: String) {
     val cachePath = getCachePath(rootPath).absolutePathString()
-    val folder = Paths.get(cachePath)
-    if (Files.exists(folder)) {
-        Files.walk(folder)
-            .sorted(Comparator.reverseOrder())
-            .forEach { path -> Files.delete(path) }
-    }
+    File(cachePath).deleteRecursively()
 }

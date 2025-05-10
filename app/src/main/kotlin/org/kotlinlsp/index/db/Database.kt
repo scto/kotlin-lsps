@@ -2,6 +2,10 @@ package org.kotlinlsp.index.db
 
 import org.kotlinlsp.common.getCachePath
 import org.kotlinlsp.common.info
+import org.kotlinlsp.index.db.adapters.DatabaseAdapter
+import org.kotlinlsp.index.db.adapters.RocksDBAdapter
+import org.kotlinlsp.index.db.serializers.deserializeIntForDb
+import org.kotlinlsp.index.db.serializers.serializeIntForDb
 import org.rocksdb.InfoLogLevel
 import org.rocksdb.Options
 import org.rocksdb.RocksDB
@@ -16,50 +20,34 @@ import kotlin.io.path.absolutePathString
 const val CURRENT_SCHEMA_VERSION = 1    // Increment on schema changes
 const val VERSION_KEY = "__version"
 
-class DbHandle(basePath: Path, name: String) {
-    companion object {
-        init {
-            RocksDB.loadLibrary()
-        }
-
-        val options = Options().apply {
-            setCreateIfMissing(true)
-            setKeepLogFileNum(1)
-            setInfoLogLevel(InfoLogLevel.FATAL_LEVEL)
-        }
-    }
-    val path = basePath.resolve(name).absolutePathString()
-    val db = RocksDB.open(options, path)
-}
-
 class Database(rootFolder: String) {
     private val cachePath = getCachePath(rootFolder)
-    val files: DbHandle
-    val packages: DbHandle
+    val filesDb: DatabaseAdapter
+    val packagesDb: DatabaseAdapter
 
     init {
-        var project = DbHandle(cachePath, "project")
-        val schemaVersion = project.db.getInt(VERSION_KEY)
+        var projectDb = RocksDBAdapter(cachePath.resolve("project"))
+        val schemaVersion = projectDb.get(VERSION_KEY, ::deserializeIntForDb)
 
         if(schemaVersion == null || schemaVersion != CURRENT_SCHEMA_VERSION) {
 
             // Schema version mismatch, wipe the db
             info("Index DB schema version mismatch, recreating!")
-            project.db.close()
+            projectDb.close()
             deleteAll()
 
-            project = DbHandle(cachePath, "project")
-            project.db.putInt(VERSION_KEY, CURRENT_SCHEMA_VERSION)
+            projectDb = RocksDBAdapter(cachePath.resolve("project"))
+            projectDb.put(VERSION_KEY, CURRENT_SCHEMA_VERSION, ::serializeIntForDb)
         }
 
-        files = DbHandle(cachePath, "files")
-        packages = DbHandle(cachePath, "packages")
-        project.db.close()
+        filesDb = RocksDBAdapter(cachePath.resolve("files"))
+        packagesDb = RocksDBAdapter(cachePath.resolve("packages"))
+        projectDb.close()
     }
 
     fun close() {
-        files.db.close()
-        packages.db.close()
+        filesDb.close()
+        packagesDb.close()
     }
 
     private fun deleteAll() {
@@ -67,9 +55,3 @@ class Database(rootFolder: String) {
         File(cachePath.resolve("packages").absolutePathString()).delete()
     }
 }
-
-fun RocksDB.getInt(key: String): Int? = get(key.toByteArray())?.let { ByteBuffer.wrap(it).getInt() }
-fun RocksDB.putInt(key: String, value: Int) = put(key.toByteArray(), ByteBuffer.allocate(4).putInt(value).array())
-fun RocksDB.fetch(key: String): ByteArray? = get(key.toByteArray())
-
-fun ByteArray.asStringList() = toString(Charset.defaultCharset()).split(",")

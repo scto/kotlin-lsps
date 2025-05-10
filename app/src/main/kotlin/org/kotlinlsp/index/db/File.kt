@@ -3,6 +3,8 @@ package org.kotlinlsp.index.db
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import org.kotlinlsp.common.info
+import org.kotlinlsp.index.db.serializers.deserializeStringListForDb
+import org.kotlinlsp.index.db.serializers.serializeStringListForDb
 import org.rocksdb.RocksDB
 import java.nio.charset.Charset
 import java.sql.Connection
@@ -20,33 +22,34 @@ data class FileDto(
     val lastModified: Long
 )
 
+fun serializeFileDtoForDb(dto: FileDto): ByteArray = Gson().toJson(dto).toByteArray()
+fun deserializeFileDtoForDb(data: ByteArray): FileDto = Gson().fromJson(data.toString(Charset.defaultCharset()), FileDto::class.java)
+
 fun Database.fileLastModifiedFromPath(path: String): Instant? {
-    val dataJson = files.db.fetch(path) ?: return null
-    val data = Gson().fromJson(dataJson.toString(Charset.defaultCharset()), FileDto::class.java)
-    return Instant.ofEpochMilli(data.lastModified)
+    return filesDb.get(path, ::deserializeFileDtoForDb)?.lastModified?.let { Instant.ofEpochMilli(it) }
 }
 
 fun Database.setFile(file: File) {
     val dto = FileDto(packageFqName = file.packageFqName, lastModified = file.lastModified.toEpochMilli())
-    val previousPackageFqName = files.db.fetch(file.path)?.let { Gson().fromJson(it.toString(Charset.defaultCharset()), FileDto::class.java).packageFqName }
+    val previousPackageFqName = filesDb.get(file.path, ::deserializeFileDtoForDb)?.packageFqName
 
-    files.db.put(file.path.toByteArray(), Gson().toJson(dto).toByteArray())
+    filesDb.put(file.path, dto, ::serializeFileDtoForDb)
 
     if(previousPackageFqName != file.packageFqName) {
         // Remove previous package name
         if(previousPackageFqName != null) {
-            val files = packages.db.fetch(previousPackageFqName)?.asStringList()?.toMutableList() ?: mutableListOf()
+            val files = packagesDb.get(previousPackageFqName, ::deserializeStringListForDb)?.toMutableList() ?: mutableListOf()
             files.remove(file.path)
             if(files.size == 0) {
-                packages.db.delete(previousPackageFqName.toByteArray())
+                packagesDb.remove(previousPackageFqName)
             } else {
-                packages.db.put(previousPackageFqName.toByteArray(), files.joinToString(",").toByteArray())
+                packagesDb.put(previousPackageFqName, files, ::serializeStringListForDb)
             }
         }
 
         // Add new one
-        val files = packages.db.fetch(file.packageFqName)?.asStringList()?.toMutableList() ?: mutableListOf()
+        val files = packagesDb.get(file.packageFqName, ::deserializeStringListForDb)?.toMutableList() ?: mutableListOf()
         files.add(file.path)
-        packages.db.put(file.packageFqName.toByteArray(), files.joinToString(",").toByteArray())
+        packagesDb.put(file.packageFqName, files, ::serializeStringListForDb)
     }
 }
