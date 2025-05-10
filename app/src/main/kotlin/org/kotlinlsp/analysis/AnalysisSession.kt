@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolver
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
+import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDirectInheritorsProvider
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
 import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory
@@ -179,6 +180,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
             libraryRoots
         )
         (project.getService(KotlinAnnotationsResolverFactory::class.java) as AnnotationsResolverFactory).setup(project, index)
+        (project.getService(KotlinDirectInheritorsProvider::class.java) as DirectInheritorsProvider).setup(index)
 
         commandProcessor = app.getService(CommandProcessor::class.java)
         psiDocumentManager = PsiDocumentManager.getInstance(project)

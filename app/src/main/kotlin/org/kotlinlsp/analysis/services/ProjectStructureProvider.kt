@@ -25,17 +25,20 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     }
 
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule = profile("getModule", "$element, useSiteModule: $useSiteModule") {
-        val virtualFile = project.read { element.containingFile.virtualFile }
+        val virtualFile = element.containingFile.virtualFile
         searchVirtualFileInModule(virtualFile, useSiteModule ?: rootModule)!!
     }
 
-    private fun searchVirtualFileInModule(virtualFile: VirtualFile, module: KaModule): KaModule? {
+    private fun searchVirtualFileInModule(virtualFile: VirtualFile, module: KaModule, visited: MutableSet<KaModule> = mutableSetOf()): KaModule? {
+        if(visited.contains(module)) return null
         if(module.contentScope.contains(virtualFile)) return module
 
         for(it in module.directRegularDependencies) {
             val submodule = searchVirtualFileInModule(virtualFile, it)
             if(submodule != null) return submodule
         }
+
+        visited.add(module)
         return null
     }
 
