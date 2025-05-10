@@ -2,6 +2,7 @@ package org.kotlinlsp.index.db
 
 import org.kotlinlsp.common.getCachePath
 import org.kotlinlsp.common.info
+import org.rocksdb.InfoLogLevel
 import org.rocksdb.Options
 import org.rocksdb.RocksDB
 import java.io.File
@@ -23,6 +24,8 @@ class DbHandle(basePath: Path, name: String) {
 
         val options = Options().apply {
             setCreateIfMissing(true)
+            setKeepLogFileNum(1)
+            setInfoLogLevel(InfoLogLevel.FATAL_LEVEL)
         }
     }
     val path = basePath.resolve(name).absolutePathString()
