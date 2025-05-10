@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.packages.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.kotlinlsp.common.info
 import org.kotlinlsp.common.profile
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.queries.packageExistsInSourceFiles
