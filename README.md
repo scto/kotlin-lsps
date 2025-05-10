@@ -13,9 +13,7 @@ Right now, this language server is at its infancy and thus not ready to use for 
     - Gradle: basic support for single module projects is supported
     - File-based: for other build systems, you can write a `.kotlinlsp-modules.json` file at the root of your project with the modules and dependencies it contains. You have an example at `.kotlinlsp-modules.template.json` with the dependencies for this project
 
-- Implement stubbed Analysis API services: To use the analysis API, we need to provide implementations for the services needed to define the so called [Platform Interface](https://github.com/JetBrains/kotlin/blob/master/analysis/analysis-api-platform-interface/README.md). Right now, only a subset of the platform interface is implemented (without caching mechanisms, just a quick implementation to have it working for now, so slowness is expected in this phase of the project). The rest of the services are stubbed and need development.
-
-- Indexing solution: to provide features like autocomplete, go to definition and search references, we need to create an index where we store all the references used in the project. For this we are using an H2 SQL embedded database on disk and perform a background indexing of the whole project, and incrementally update it as the user modifies the source files. One of the goals of this LS is to provide a fast startup time, so diagnostics are reported as quick as possible.
+- Indexing solution: to provide features like autocomplete and search references, as well as caching to improve analysis performance, we need to create an index where we store all the references used in the project. For this we are using multiple key value stores using [RocksDB](https://rocksdb.org) on disk and perform a background indexing of the whole project, and incrementally update it as the user modifies the source files. One of the goals of this LS is to provide a fast startup time, so diagnostics are reported as quick as possible.
 
 ### Implemented features
 - ✅ Real time diagnostics: working for this codebase
