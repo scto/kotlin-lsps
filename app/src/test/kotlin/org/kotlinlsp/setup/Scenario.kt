@@ -42,6 +42,8 @@ fun scenario(
         """.trimIndent()
     val moduleFile = File("$cwd/test-projects/$projectName/.kotlinlsp-modules.json")
     moduleFile.delete()
+    File("$cwd/test-projects/$projectName/log.txt").delete()
+    removeCacheFolder("$cwd/test-projects/$projectName")
     moduleFile.writeText(moduleContents)
 
     val notifier = mock(KotlinLanguageServerNotifier::class.java)

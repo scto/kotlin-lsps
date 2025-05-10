@@ -60,10 +60,17 @@ application {
     mainClass = "org.kotlinlsp.MainKt"
 }
 
-tasks.withType<Test> {
+tasks.test {
     forkEvery = 1
-    maxParallelForks = 2
+    maxParallelForks = 1
     timeout = Duration.ofMinutes(8)
+
+    testLogging {
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+    }
 }
 
 tasks.jar {

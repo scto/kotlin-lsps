@@ -50,6 +50,7 @@ class Database(rootFolder: String) {
     fun close() {
         filesDb.close()
         packagesDb.close()
+        declarationsDb.close()
     }
 
     private fun deleteAll() {
