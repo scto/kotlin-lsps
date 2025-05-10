@@ -7,10 +7,10 @@ import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.packages.*
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.kotlinlsp.common.info
 import org.kotlinlsp.common.profile
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.queries.packageExistsInSourceFiles
+import org.kotlinlsp.index.queries.subpackageNames
 
 class PackageProviderFactory: KotlinPackageProviderFactory {
     private lateinit var project: MockProject
@@ -33,9 +33,8 @@ private class PackageProvider(
         packageFqName.isRoot || index.packageExistsInSourceFiles(packageFqName)
     }
 
-    override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> = profile("[X] getKotlinOnlySubpackageNames", "$packageFqName") {
-        // TODO
-        emptySet()
+    override fun getKotlinOnlySubpackageNames(packageFqName: FqName): Set<Name> = profile("getKotlinOnlySubpackageNames", "$packageFqName") {
+        index.subpackageNames(packageFqName.asString()).map { Name.identifier(it) }.toSet()
     }
 }
 

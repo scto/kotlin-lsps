@@ -57,6 +57,7 @@ import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.common.*
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.IndexNotifier
+import org.kotlinlsp.index.queries.subpackageNames
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
 

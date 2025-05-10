@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.modules.Module
+import org.kotlinlsp.common.info
 import org.kotlinlsp.common.read
 import org.kotlinlsp.index.db.Database
 import org.kotlinlsp.index.worker.WorkerThread
