@@ -1,3 +1,5 @@
+import java.time.Duration
+
 val lspVersion = "0.1"
 val analysisApiKotlinVersion = "2.2.0-dev-15683" // 2-May-2025 (version that KSP uses)
 val intellijVersion = "241.19416.19"
@@ -61,6 +63,7 @@ application {
 tasks.withType<Test> {
     forkEvery = 1
     maxParallelForks = 2
+    timeout = Duration.ofMinutes(2)
 }
 
 tasks.jar {
