@@ -3,7 +3,6 @@ package org.kotlinlsp.lsp
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 import org.kotlinlsp.analysis.AnalysisSession
 import org.kotlinlsp.analysis.AnalysisSessionNotifier
 import org.kotlinlsp.common.getLspVersion
@@ -22,7 +21,7 @@ interface KotlinLanguageServerNotifier {
 
 class KotlinLanguageServer(
     private val notifier: KotlinLanguageServerNotifier
-): LanguageServer, TextDocumentService, WorkspaceService, LanguageClientAware {
+) : LanguageServer, TextDocumentService, WorkspaceService, LanguageClientAware {
     private lateinit var client: LanguageClient
     private lateinit var analysisSession: AnalysisSession
     private lateinit var rootPath: String
@@ -39,7 +38,7 @@ class KotlinLanguageServer(
         }
 
         override fun onReportProgress(phase: WorkDoneProgressKind, progressToken: String, text: String) {
-            val notification = when(phase) {
+            val notification = when (phase) {
                 WorkDoneProgressKind.begin -> WorkDoneProgressBegin().apply { title = text }
                 WorkDoneProgressKind.report -> WorkDoneProgressReport().apply { message = text }
                 WorkDoneProgressKind.end -> WorkDoneProgressEnd().apply { message = text }
@@ -69,7 +68,7 @@ class KotlinLanguageServer(
     }
 
     override fun initialized(params: InitializedParams) {
-        setupLogger(rootPath)
+        setupLogger(client)
         info(rootPath)
 
         analysisSession = AnalysisSession(analysisSessionNotifier, rootPath)
@@ -130,7 +129,9 @@ class KotlinLanguageServer(
 
     override fun hover(params: HoverParams): CompletableFuture<Hover?> {
         // TODO Add javadoc
-        val (text, range) = analysisSession.hover(params.textDocument.uri, params.position) ?: return completedFuture(null)
+        val (text, range) = analysisSession.hover(params.textDocument.uri, params.position) ?: return completedFuture(
+            null
+        )
         val content = MarkupContent().apply {
             kind = "markdown"
             value = "```kotlin\n${text}\n```"
@@ -145,7 +146,8 @@ class KotlinLanguageServer(
     }
 
     override fun definition(params: DefinitionParams): CompletableFuture<Either<MutableList<out Location>, MutableList<out LocationLink>>?> {
-        val location = analysisSession.goToDefinition(params.textDocument.uri, params.position) ?: return completedFuture(null)
+        val location =
+            analysisSession.goToDefinition(params.textDocument.uri, params.position) ?: return completedFuture(null)
         return completedFuture(Either.forLeft(mutableListOf(location)))
     }
 }
