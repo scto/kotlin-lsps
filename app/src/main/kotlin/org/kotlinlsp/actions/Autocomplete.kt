@@ -77,7 +77,11 @@ fun autocompleteAction(ktFile: KtFile, offset: Int, index: Index): List<Completi
     }
 
     val completions = index.getCompletions(searchPrefix)
-        .map {
+        .mapNotNull {
+            if (it is Declaration.Field) {
+                if (it.parentFqName.isNotEmpty()) return@mapNotNull null
+            }
+
             val kind = when (it) {
                 is Declaration.EnumEntry -> CompletionItemKind.EnumMember
                 is Declaration.Class -> when (it.type) {
@@ -100,20 +104,28 @@ fun autocompleteAction(ktFile: KtFile, offset: Int, index: Index): List<Completi
                     detail = ": ${it.enumFqName}"
                 }
                 is Declaration.Function -> CompletionItemLabelDetails().apply {
-                    detail = "(${it.parameters.joinToString(", ")}): ${it.returnType} (${it.fqName})"
+                    detail = "(${it.parameters.joinToString(", ") { param -> "${param.name}: ${param.type}" }}): ${it.returnType} (${it.fqName})"
                 }
                 is Declaration.Field -> CompletionItemLabelDetails().apply {
                     detail = ": ${it.type} (${it.fqName})"
                 }
-                else -> CompletionItemLabelDetails()
+            }
+
+            val (inserted, insertionType) = when (it) {
+                is Declaration.Class -> it.name to InsertTextFormat.PlainText
+                is Declaration.EnumEntry -> "${it.enumFqName.substringAfterLast('.')}.${it.name}" to InsertTextFormat.PlainText
+                is Declaration.Function -> "${it.name}(${
+                    it.parameters.mapIndexed { index, param -> "\${${index+1}:${param.name}}" }.joinToString(", ")
+                })" to InsertTextFormat.Snippet
+                is Declaration.Field -> it.name to InsertTextFormat.PlainText
             }
 
             CompletionItem().apply {
                 label = it.name
                 labelDetails = detail
                 this.kind = kind
-                insertText = it.name
-                insertTextFormat = InsertTextFormat.PlainText
+                insertText = inserted
+                insertTextFormat = insertionType
             }
         }
     return localVariableCompletions + completions

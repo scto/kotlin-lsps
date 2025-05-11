@@ -20,11 +20,17 @@ sealed class Declaration() {
         override val file: String,
         override val startOffset: Int,
         override val endOffset: Int,
-        val parameters: List<String>,
+        val parameters: List<Parameter>,
         val returnType: String,
         val parentFqName: String,
         val receiverFqName: String,
-    ) : Declaration()
+    ) : Declaration() {
+        @Serializable
+        data class Parameter(
+            val name: String,
+            val type: String,
+        )
+    }
 
     @Serializable
     @SerialName("class")
