@@ -7,7 +7,7 @@ import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.db.Declaration
 
 @OptIn(ExperimentalSerializationApi::class)
-fun Index.getCompletions(prefix: String, thisRef: String, receiver: String): List<Declaration> = query {
+fun Index.getCompletions(prefix: String, thisRef: String, receiver: String): Sequence<Declaration> = query {
     it.declarationsDb.prefixSearch(prefix)
         .map { ProtoBuf.decodeFromByteArray<Declaration>(it.second) }
         .filter {
@@ -18,5 +18,4 @@ fun Index.getCompletions(prefix: String, thisRef: String, receiver: String): Lis
                 is Declaration.Field -> it.parentFqName == receiver || it.parentFqName.isEmpty()
             }
         }
-        .toList()
 }

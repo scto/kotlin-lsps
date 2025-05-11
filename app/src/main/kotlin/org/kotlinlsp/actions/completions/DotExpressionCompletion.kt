@@ -79,5 +79,6 @@ fun autoCompletionDotExpression(ktFile: KtFile, offset: Int, index: Index, compl
                 additionalTextEdits = additionalEdits
             }
         }
+        .toList()
     return completions
 }

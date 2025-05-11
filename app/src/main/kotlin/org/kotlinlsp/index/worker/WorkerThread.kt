@@ -26,13 +26,11 @@ class WorkerThread(
         while(true) {
             when(val command = workQueue.take()) {
                 is Command.Stop -> break
-                is Command.ScanFile -> {
-                    if(command.virtualFile.url.startsWith("file://")) {
-                        val ktFile = project.read { PsiManager.getInstance(project).findFile(command.virtualFile) } as KtFile
-                        scanKtFile(project, ktFile, db)
-                    } else {
-                        // TODO
-                    }
+                is Command.ScanSourceFile -> {
+                    if(!command.virtualFile.url.startsWith("file://")) break
+
+                    val ktFile = project.read { PsiManager.getInstance(project).findFile(command.virtualFile) } as KtFile
+                    scanKtFile(project, ktFile, db)
                     count ++
                 }
                 is Command.IndexFile -> {
@@ -47,9 +45,9 @@ class WorkerThread(
                     info("Indexing modified file: ${command.ktFile.virtualFile.name}")
                     indexKtFile(project, command.ktFile, db)
                 }
-                is Command.ScanningFinished -> {
+                is Command.IndexingFinished -> {
                     // TODO Should remove in this point files which do not exist anymore
-                    info("Background scanning finished!, $count files!")
+                    info("Background indexing finished!, $count files!")
                     notifier.onBackgroundIndexFinished()
                 }
                 Command.SourceScanningFinished -> {
@@ -66,7 +64,7 @@ class WorkerThread(
         // indexing is done
         // Indexing edits takes priority over background indexing
         when(command) {
-            is Command.ScanFile, Command.ScanningFinished, Command.SourceScanningFinished -> {
+            is Command.ScanSourceFile, Command.SourceScanningFinished -> {
                 workQueue.putScanQueue(command)
             }
             is Command.IndexModifiedFile -> {

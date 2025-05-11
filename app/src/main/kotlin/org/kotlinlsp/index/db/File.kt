@@ -28,13 +28,15 @@ data class FileDto(
     val indexed: Boolean,
 )
 
-fun Database.fileLastModifiedFromPath(path: String): Pair<Instant, Long>? {
-    return filesDb.get<FileDto>(path)?.let { Pair(Instant.ofEpochMilli(it.lastModified), it.modificationStamp) }
-}
-
-fun Database.fileLastModifiedAndIndexedFromPath(path: String): Triple<Instant, Long, Boolean>? {
+fun Database.file(path: String): File? {
     return filesDb.get<FileDto>(path)?.let {
-        Triple(Instant.ofEpochMilli(it.lastModified), it.modificationStamp, it.indexed)
+        File(
+            path = path,
+            packageFqName = it.packageFqName,
+            lastModified = Instant.ofEpochMilli(it.lastModified),
+            modificationStamp = it.modificationStamp,
+            indexed = it.indexed,
+        )
     }
 }
 
