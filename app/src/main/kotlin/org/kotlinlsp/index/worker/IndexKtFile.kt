@@ -52,7 +52,6 @@ fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
 
             val decl = project.read {
                 analyze(dcl) {
-                    info("Declaration: $name")
                     when (dcl) {
                         is KtNamedFunction -> {
                             val parentFqName = if (dcl.parent is KtClassBody) {

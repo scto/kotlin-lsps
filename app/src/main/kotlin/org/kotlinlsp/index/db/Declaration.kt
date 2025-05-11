@@ -77,7 +77,6 @@ sealed class Declaration() {
 }
 
 fun Database.putDeclaration(decl: Declaration) {
-    info("putDeclaration: $decl")
     val key = "${decl.name}:${decl.file}:${decl.startOffset}:${decl.endOffset}"
     declarationsDb.put(key, decl)
 }
