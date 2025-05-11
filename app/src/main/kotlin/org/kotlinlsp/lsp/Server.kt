@@ -25,7 +25,9 @@ class KotlinLanguageServer(
     private lateinit var client: LanguageClient
     private lateinit var analysisSession: AnalysisSession
     private lateinit var rootPath: String
-    private val lintExecutor = Executors.newSingleThreadScheduledExecutor()
+    private val lintExecutor = Executors.newSingleThreadScheduledExecutor {
+        Thread(it, "KotlinLSP-Lint")
+    }
     private var lintFuture: ScheduledFuture<*>? = null
 
     private val analysisSessionNotifier = object : AnalysisSessionNotifier {

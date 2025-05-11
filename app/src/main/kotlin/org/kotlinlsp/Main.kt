@@ -21,7 +21,7 @@ fun main(args: Array<String>) {
         }
     }
     val executor = Executors.newSingleThreadExecutor {
-        Thread(it, "client")
+        Thread(it, "KotlinLSP-LSP")
     }
     val server = KotlinLanguageServer(notifier)
     val launcher = LSPLauncher.createServerLauncher(server, System.`in`, System.out, executor) { it }

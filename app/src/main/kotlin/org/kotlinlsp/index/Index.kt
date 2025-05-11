@@ -33,9 +33,9 @@ class Index(
     }
     private val db = Database(rootFolder)
     private val workerThreadRunner = WorkerThread(db, project, workerThreadNotifier)
-    private val workerThread = Thread(workerThreadRunner)
+    private val workerThread = Thread(workerThreadRunner, "KotlinLSP-Worker")
     private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
-    private val scanFilesThread = Thread(scanFilesThreadRunner)
+    private val scanFilesThread = Thread(scanFilesThreadRunner, "KotlinLSP-ScanFiles")
     private val openedFiles: MutableMap<String, KtFile> = ConcurrentHashMap()
 
     // This cache prevents parsing KtFiles over and over
