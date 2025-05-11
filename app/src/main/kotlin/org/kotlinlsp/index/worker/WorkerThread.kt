@@ -21,7 +21,8 @@ class WorkerThread(
     private val workQueue = WorkQueue<Command>()
 
     override fun run() {
-        var count = 0
+        var scanCount = 0
+        var indexCount = 0
 
         while(true) {
             when(val command = workQueue.take()) {
@@ -31,7 +32,7 @@ class WorkerThread(
 
                     val ktFile = project.read { PsiManager.getInstance(project).findFile(command.virtualFile) } as KtFile
                     scanKtFile(project, ktFile, db)
-                    count ++
+                    scanCount ++
                 }
                 is Command.IndexFile -> {
                     if(command.virtualFile.url.startsWith("file://")) {
@@ -40,6 +41,7 @@ class WorkerThread(
                     } else {
                         indexClassFile(project, command.virtualFile, db)
                     }
+                    indexCount ++
                 }
                 is Command.IndexModifiedFile -> {
                     info("Indexing modified file: ${command.ktFile.virtualFile.name}")
@@ -47,12 +49,12 @@ class WorkerThread(
                 }
                 is Command.IndexingFinished -> {
                     // TODO Should remove in this point files which do not exist anymore
-                    info("Background indexing finished!, $count files!")
+                    info("Background indexing finished!, $indexCount files!")
                     notifier.onBackgroundIndexFinished()
                 }
                 Command.SourceScanningFinished -> {
                     // TODO Should remove in this point files which do not exist anymore
-                    info("Source file scanning finished!, $count files!")
+                    info("Source file scanning finished!, $scanCount files!")
                     notifier.onSourceFileScanningFinished()
                 }
             }
@@ -60,9 +62,6 @@ class WorkerThread(
     }
 
     fun submitCommand(command: Command) {
-        // Scanning must be finished first so the analysis API is available, after that
-        // indexing is done
-        // Indexing edits takes priority over background indexing
         when(command) {
             is Command.ScanSourceFile, Command.SourceScanningFinished -> {
                 workQueue.putScanQueue(command)

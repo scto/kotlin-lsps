@@ -12,41 +12,23 @@ import org.kotlinlsp.index.db.*
 import java.time.Instant
 
 fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
-    val fileRecord = project.read {
-        analyze(ktFile) {
-            val packageFqName = ktFile.packageFqName.asString()
-            val fileRecord = File(
-                packageFqName = packageFqName,
-                path = ktFile.virtualFile.url,
-                lastModified = Instant.ofEpochMilli(ktFile.virtualFile.timeStamp),
-                modificationStamp = ktFile.modificationStamp,
-                indexed = true,
-            )
-            return@read fileRecord
-        }
-    }
+    val newFile = File.fromKtFile(ktFile, project, indexed = true)
 
-    // Check if the file record has been modified since last time
-    // I think the case of overflowing modificationStamp is not worth to be considered as it is 64bit int
-    // (a trillion modifications on the same file in the same coding session)
-    val existingFile = db.file(fileRecord.path)
+    val existingFile = db.file(newFile.path)
     if (
-        existingFile != null &&
-        !existingFile.lastModified.isBefore(fileRecord.lastModified) &&
-        existingFile.modificationStamp >= fileRecord.modificationStamp &&
-        (fileRecord.modificationStamp != 0L || existingFile.modificationStamp == 0L) &&
-        existingFile.indexed  // Already indexed
+        File.shouldBeSkipped(existingFile = existingFile, newFile = newFile) &&
+        existingFile?.indexed == true  // Already indexed
     ) return
 
     // Update the file timestamp and package
-    db.setFile(fileRecord)
+    db.setFile(newFile)
 
     // TODO Remove declarations for this file first
     project.read {
         ktFile.accept(object : KtTreeVisitorVoid() {
             override fun visitDeclaration(dcl: KtDeclaration) {
                 val decl = analyze(dcl) {
-                    analyzeDeclaration(fileRecord.path, dcl)
+                    analyzeDeclaration(newFile.path, dcl)
                 } ?: return
 
                 db.putDeclaration(decl) // TODO Put all declarations in bulk to improve performance
