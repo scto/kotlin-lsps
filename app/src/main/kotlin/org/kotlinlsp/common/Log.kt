@@ -106,23 +106,23 @@ private fun formatDuration(duration: Duration): String {
 }
 
 fun debug(message: String) {
-    logger.log(LogLevel.Debug, "[DEBUG]: $message")
+    logger.log(LogLevel.Debug, message)
 }
 
 fun info(message: String) {
-    logger.log(LogLevel.Info, "[INFO]: $message")
+    logger.log(LogLevel.Info, message)
 }
 
 fun error(message: String) {
-    logger.log(LogLevel.Error, "[ERROR]: $message")
+    logger.log(LogLevel.Error, message)
 }
 
 fun trace(message: String) {
-    logger.log(LogLevel.Trace, "[TRACE]: $message")
+    logger.log(LogLevel.Trace, message)
 }
 
 fun warn(message: String) {
-    logger.log(LogLevel.Warning, "[WARN]: $message")
+    logger.log(LogLevel.Warning, message)
 }
 
 private class JULRedirector: Handler() {
