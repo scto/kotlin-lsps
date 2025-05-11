@@ -81,6 +81,9 @@ fun autocompleteAction(ktFile: KtFile, offset: Int, index: Index): List<Completi
             if (it is Declaration.Field) {
                 if (it.parentFqName.isNotEmpty()) return@mapNotNull null
             }
+            if (it is Declaration.Function) {
+                if (it.parentFqName.isNotEmpty()) return@mapNotNull null
+            }
 
             val kind = when (it) {
                 is Declaration.EnumEntry -> CompletionItemKind.EnumMember

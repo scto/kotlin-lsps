@@ -65,7 +65,12 @@ fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
                                 fileRecord.path,
                                 startOffset,
                                 endOffset,
-                                dcl.valueParameters.map { Declaration.Function.Parameter(it.nameAsSafeName.asString(), it.returnType.toString()) },
+                                dcl.valueParameters.map {
+                                    Declaration.Function.Parameter(
+                                        it.nameAsSafeName.asString(),
+                                        it.returnType.toString()
+                                    )
+                                },
                                 dcl.returnType.toString(),
                                 parentFqName,
                                 dcl.receiverTypeReference?.type?.toString() ?: ""
