@@ -9,24 +9,33 @@ data class File(
     val path: String,
     val packageFqName: String,
     val lastModified: Instant,
-    val modificationStamp: Long
+    val modificationStamp: Long,
+    val indexed: Boolean,
 )
 
 fun File.toDto(): FileDto = FileDto(
     packageFqName = packageFqName,
     lastModified = lastModified.toEpochMilli(),
-    modificationStamp = modificationStamp
+    modificationStamp = modificationStamp,
+    indexed = indexed,
 )
 
 @Serializable
 data class FileDto(
     val packageFqName: String,
     val lastModified: Long,
-    val modificationStamp: Long
+    val modificationStamp: Long,
+    val indexed: Boolean,
 )
 
 fun Database.fileLastModifiedFromPath(path: String): Pair<Instant, Long>? {
     return filesDb.get<FileDto>(path)?.let { Pair(Instant.ofEpochMilli(it.lastModified), it.modificationStamp) }
+}
+
+fun Database.fileLastModifiedAndIndexedFromPath(path: String): Triple<Instant, Long, Boolean>? {
+    return filesDb.get<FileDto>(path)?.let {
+        Triple(Instant.ofEpochMilli(it.lastModified), it.modificationStamp, it.indexed)
+    }
 }
 
 fun Database.setFile(file: File) {

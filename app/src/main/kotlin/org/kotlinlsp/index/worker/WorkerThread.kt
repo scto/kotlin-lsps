@@ -26,6 +26,15 @@ class WorkerThread(
         while(true) {
             when(val command = workQueue.take()) {
                 is Command.Stop -> break
+                is Command.ScanFile -> {
+                    if(command.virtualFile.url.startsWith("file://")) {
+                        val ktFile = project.read { PsiManager.getInstance(project).findFile(command.virtualFile) } as KtFile
+                        scanKtFile(project, ktFile, db)
+                    } else {
+                        // TODO
+                    }
+                    count ++
+                }
                 is Command.IndexFile -> {
                     if(command.virtualFile.url.startsWith("file://")) {
                         val ktFile = project.read { PsiManager.getInstance(project).findFile(command.virtualFile) } as KtFile
@@ -33,20 +42,19 @@ class WorkerThread(
                     } else {
                         indexClassFile(project, command.virtualFile, db)
                     }
-                    count ++
                 }
                 is Command.IndexModifiedFile -> {
+                    info("Indexing modified file: ${command.ktFile.virtualFile.name}")
                     indexKtFile(project, command.ktFile, db)
-                    count ++
                 }
-                is Command.IndexingFinished -> {
+                is Command.ScanningFinished -> {
                     // TODO Should remove in this point files which do not exist anymore
-                    info("Background indexing finished!, $count files!")
+                    info("Background scanning finished!, $count files!")
                     notifier.onBackgroundIndexFinished()
                 }
-                Command.SourceIndexingFinished -> {
+                Command.SourceScanningFinished -> {
                     // TODO Should remove in this point files which do not exist anymore
-                    info("Source file indexing finished!, $count files!")
+                    info("Source file scanning finished!, $count files!")
                     notifier.onSourceFileIndexingFinished()
                 }
             }
@@ -54,8 +62,13 @@ class WorkerThread(
     }
 
     fun submitCommand(command: Command) {
-        // Edits queue has more priority than index queue
+        // Scanning must be finished first so the analysis API is available, after that
+        // indexing is done
+        // Indexing edits takes priority over background indexing
         when(command) {
+            is Command.ScanFile, Command.ScanningFinished, Command.SourceScanningFinished -> {
+                workQueue.putScanQueue(command)
+            }
             is Command.IndexModifiedFile -> {
                 workQueue.putEditQueue(command)
             }

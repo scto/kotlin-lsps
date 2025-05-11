@@ -9,7 +9,7 @@ import org.kotlinlsp.index.db.adapters.put
 import java.io.File
 import kotlin.io.path.absolutePathString
 
-const val CURRENT_SCHEMA_VERSION = 3    // Increment on schema changes
+const val CURRENT_SCHEMA_VERSION = 4    // Increment on schema changes
 const val VERSION_KEY = "__version"
 
 class Database(rootFolder: String) {
@@ -46,9 +46,9 @@ class Database(rootFolder: String) {
     }
 
     private fun deleteAll() {
-        File(cachePath.resolve("project").absolutePathString()).delete()
-        File(cachePath.resolve("files").absolutePathString()).delete()
-        File(cachePath.resolve("packages").absolutePathString()).delete()
-        File(cachePath.resolve("declarations").absolutePathString()).delete()
+        File(cachePath.resolve("project").absolutePathString()).deleteRecursively()
+        File(cachePath.resolve("files").absolutePathString()).deleteRecursively()
+        File(cachePath.resolve("packages").absolutePathString()).deleteRecursively()
+        File(cachePath.resolve("declarations").absolutePathString()).deleteRecursively()
     }
 }

@@ -1,9 +1,14 @@
 package org.kotlinlsp.index.queries
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.kotlinlsp.index.Index
+import org.kotlinlsp.index.db.Declaration
 
-fun Index.getCompletions(prefix: String): List<String> = query {
+@OptIn(ExperimentalSerializationApi::class)
+fun Index.getCompletions(prefix: String): List<Declaration> = query {
     it.declarationsDb.prefixSearch(prefix)
-        .map { (key, _) -> key.split(":").first() }
+        .map { ProtoBuf.decodeFromByteArray<Declaration>(it.second) }
         .toList()
 }

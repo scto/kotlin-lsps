@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.types.Variance
 import org.kotlinlsp.index.Index
+import org.kotlinlsp.index.db.Declaration
 import org.kotlinlsp.index.queries.getCompletions
 
 @OptIn(KaExperimentalApi::class)
@@ -77,10 +78,41 @@ fun autocompleteAction(ktFile: KtFile, offset: Int, index: Index): List<Completi
 
     val completions = index.getCompletions(searchPrefix)
         .map {
+            val kind = when (it) {
+                is Declaration.EnumEntry -> CompletionItemKind.EnumMember
+                is Declaration.Class -> when (it.type) {
+                    Declaration.Class.Type.CLASS -> CompletionItemKind.Class
+                    Declaration.Class.Type.ABSTRACT_CLASS -> CompletionItemKind.Class
+                    Declaration.Class.Type.INTERFACE -> CompletionItemKind.Interface
+                    Declaration.Class.Type.ENUM_CLASS -> CompletionItemKind.Enum
+                    Declaration.Class.Type.OBJECT -> CompletionItemKind.Module
+                    Declaration.Class.Type.ANNOTATION_CLASS -> CompletionItemKind.Interface
+                }
+                is Declaration.Function -> CompletionItemKind.Function
+                is Declaration.Field -> CompletionItemKind.Field
+            }
+
+            val detail = when (it) {
+                is Declaration.Class -> CompletionItemLabelDetails().apply {
+                    detail = " (${it.fqName})"
+                }
+                is Declaration.EnumEntry -> CompletionItemLabelDetails().apply {
+                    detail = ": ${it.enumFqName}"
+                }
+                is Declaration.Function -> CompletionItemLabelDetails().apply {
+                    detail = "(${it.parameters.joinToString(", ")}): ${it.returnType} (${it.fqName})"
+                }
+                is Declaration.Field -> CompletionItemLabelDetails().apply {
+                    detail = ": ${it.type} (${it.fqName})"
+                }
+                else -> CompletionItemLabelDetails()
+            }
+
             CompletionItem().apply {
-                label = it
-                kind = CompletionItemKind.Function
-                insertText = it
+                label = it.name
+                labelDetails = detail
+                this.kind = kind
+                insertText = it.name
                 insertTextFormat = InsertTextFormat.PlainText
             }
         }
