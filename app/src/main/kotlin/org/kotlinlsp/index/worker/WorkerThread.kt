@@ -10,7 +10,7 @@ import org.kotlinlsp.index.IndexNotifier
 import org.kotlinlsp.index.db.Database
 
 interface WorkerThreadNotifier: IndexNotifier {
-    fun onSourceFileIndexingFinished()
+    fun onSourceFileScanningFinished()
 }
 
 class WorkerThread(
@@ -27,7 +27,7 @@ class WorkerThread(
             when(val command = workQueue.take()) {
                 is Command.Stop -> break
                 is Command.ScanSourceFile -> {
-                    if(!command.virtualFile.url.startsWith("file://")) break
+                    if(!command.virtualFile.url.startsWith("file://")) return
 
                     val ktFile = project.read { PsiManager.getInstance(project).findFile(command.virtualFile) } as KtFile
                     scanKtFile(project, ktFile, db)
@@ -53,7 +53,7 @@ class WorkerThread(
                 Command.SourceScanningFinished -> {
                     // TODO Should remove in this point files which do not exist anymore
                     info("Source file scanning finished!, $count files!")
-                    notifier.onSourceFileIndexingFinished()
+                    notifier.onSourceFileScanningFinished()
                 }
             }
         }

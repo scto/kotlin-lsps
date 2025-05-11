@@ -42,50 +42,50 @@ fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
     db.setFile(fileRecord)
 
     // TODO Remove declarations for this file first
-    ktFile.accept(object : KtTreeVisitorVoid() {
-        override fun visitDeclaration(dcl: KtDeclaration) {
-            super.visitDeclaration(dcl)
-
-            val decl = project.read {
-                analyze(dcl) {
+    project.read {
+        ktFile.accept(object : KtTreeVisitorVoid() {
+            override fun visitDeclaration(dcl: KtDeclaration) {
+                val decl = analyze(dcl) {
                     analyzeDeclaration(fileRecord.path, dcl)
+                } ?: return
+
+                db.putDeclaration(decl) // TODO Put all declarations in bulk to improve performance
+
+                super.visitDeclaration(dcl)
+            }
+
+            // TODO Store references
+            /*override fun visitReferenceExpression(e: KtReferenceExpression) {
+                super.visitReferenceExpression(e)
+                if (e !is KtNameReferenceExpression) return
+
+                val target = try {
+                    e.mainReference.resolve()
+                } catch (_: Exception) {
+                    null
                 }
-            } ?: return
 
-            db.putDeclaration(decl)
-        }
+                if (target == null) {
+                    warn("Unresolved reference: ${e.text}")
+                    return
+                }
 
-        // TODO Store references
-        /*override fun visitReferenceExpression(e: KtReferenceExpression) {
-            super.visitReferenceExpression(e)
-            if (e !is KtNameReferenceExpression) return
+                val referenceRecord = ReferenceRecord(
+                    id = -1,
+                    symbolId = 1,
+                    startOffset = e.textOffset,
+                    endOffset = e.endOffset
+                )
 
-            val target = try {
-                e.mainReference.resolve()
-            } catch (_: Exception) {
-                null
-            }
-
-            if (target == null) {
-                warn("Unresolved reference: ${e.text}")
-                return
-            }
-
-            val referenceRecord = ReferenceRecord(
-                id = -1,
-                symbolId = 1,
-                startOffset = e.textOffset,
-                endOffset = e.endOffset
-            )
-
-            debug("REFERENCE: $referenceRecord")
-            debug("-> Name: ${e.text}")
-            debug("-> Target: ${target?.containingFile?.virtualFile?.url}")
-        }*/
-    })
+                debug("REFERENCE: $referenceRecord")
+                debug("-> Name: ${e.text}")
+                debug("-> Target: ${target?.containingFile?.virtualFile?.url}")
+            }*/
+        })
+    }
 }
 
-fun KaSession.analyzeDeclaration(path: String, dcl: KtDeclaration): Declaration? {
+private fun KaSession.analyzeDeclaration(path: String, dcl: KtDeclaration): Declaration? {
     val name = dcl.name ?: return null
     val startOffset = dcl.textOffset
     val endOffset = dcl.textOffset + name.length

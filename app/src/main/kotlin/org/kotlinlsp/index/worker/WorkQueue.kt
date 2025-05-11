@@ -12,6 +12,7 @@ class WorkQueue<T> {
     private val notEmpty = mutex.newCondition()
     private val notFullEdit = mutex.newCondition()
     private val notFullIndex = mutex.newCondition()
+    private val notFullScan = mutex.newCondition()
 
     companion object {
         const val MAX_EDIT_SIZE = 20
@@ -42,7 +43,7 @@ class WorkQueue<T> {
     fun putScanQueue(item: T) {
         mutex.withLock {
             while (scanQueue.size >= MAX_SCAN_SIZE) {
-                notFullIndex.await()
+                notFullScan.await()
             }
             scanQueue.offer(item)
             notEmpty.signal()
@@ -55,10 +56,11 @@ class WorkQueue<T> {
                 notEmpty.await()
             }
 
+            // Priority is ScanQueue > EditQueue > IndexQueue
             val item = if (scanQueue.isNotEmpty()) {
                 val item = scanQueue.poll()
                 if (scanQueue.size == MAX_SCAN_SIZE - 1) {
-                    notFullIndex.signal()
+                    notFullScan.signal()
                 }
                 item
             } else if (editQueue.isNotEmpty()) {

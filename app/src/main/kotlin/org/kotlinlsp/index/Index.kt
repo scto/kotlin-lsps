@@ -6,12 +6,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.analysis.modules.Module
-import org.kotlinlsp.common.info
 import org.kotlinlsp.common.read
 import org.kotlinlsp.index.db.Database
 import org.kotlinlsp.index.worker.WorkerThread
 import org.kotlinlsp.index.worker.WorkerThreadNotifier
-import org.rocksdb.RocksDB
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 
@@ -25,10 +23,10 @@ class Index(
     rootFolder: String,
     notifier: IndexNotifier
 ) {
-    private val sourceFileIndexingFinishedSignal = CountDownLatch(1)
+    private val sourceFileScanningFinishedSignal = CountDownLatch(1)
     private val workerThreadNotifier = object : WorkerThreadNotifier {
-        override fun onSourceFileIndexingFinished() {
-            sourceFileIndexingFinishedSignal.countDown()
+        override fun onSourceFileScanningFinished() {
+            sourceFileScanningFinishedSignal.countDown()
         }
 
         override fun onBackgroundIndexFinished() = notifier.onBackgroundIndexFinished()
@@ -70,7 +68,7 @@ class Index(
     }
 
     fun <T> query(block: (connection: Database) -> T): T {
-        sourceFileIndexingFinishedSignal.await()
+        sourceFileScanningFinishedSignal.await()
         return block(db)
     }
 

@@ -1,6 +1,5 @@
 package org.kotlinlsp.index
 
-import com.intellij.openapi.vfs.VirtualFile
 import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.analysis.modules.getModuleList
 import org.kotlinlsp.index.worker.WorkerThread
@@ -13,28 +12,24 @@ class ScanFilesThread(
     private val shouldStop = AtomicBoolean(false)
 
     override fun run() {
-        var gotFirstLibraryFile = false
 
+        // Scan phase
         rootModule.getModuleList()
-            .filter { it.isSourceModule }   // Scan source files first so initial analysis takes less time
+            .filter { it.isSourceModule }
             .map { it.computeFiles() }
             .flatten()
             .takeWhile { !shouldStop.get() }
             .forEach {
-                if (!it.url.endsWith(".kt") && !gotFirstLibraryFile) {
-                    worker.submitCommand(Command.SourceScanningFinished)
-                    gotFirstLibraryFile = true
-                } else {
-                    val command = Command.ScanSourceFile(it)
-                    worker.submitCommand(command)
-                }
+                val command = Command.ScanSourceFile(it)
+                worker.submitCommand(command)
             }
 
-        if (!gotFirstLibraryFile) worker.submitCommand(Command.SourceScanningFinished)
+        worker.submitCommand(Command.SourceScanningFinished)
 
-        // Once scanning is done and the analysis API is available, index all files
+        // Once scanning is done and the analysis API is available, index all files (Index phase)
         rootModule.getModuleList()
-            .sortedByDescending { it.isSourceModule }   // Scan source files first so initial analysis takes less time
+            // Scan source files first as they will be more frequently accessed by the user
+            .sortedByDescending { it.isSourceModule }
             .map { it.computeFiles() }
             .flatten()
             .takeWhile { !shouldStop.get() }
