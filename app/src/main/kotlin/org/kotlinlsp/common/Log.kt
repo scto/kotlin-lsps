@@ -128,16 +128,17 @@ fun warn(message: String) {
 private class JULRedirector: Handler() {
     override fun publish(record: LogRecord) {
         when (record.level) {
-            Level.SEVERE -> error(record.message)
+            Level.SEVERE -> {
+                error(record.message)
+                val stackTrace = StringWriter().also { PrintWriter(it).use { pw -> record.thrown?.printStackTrace(pw) } }.toString()
+                if(stackTrace.isNotEmpty()) error(stackTrace)
+            }
             Level.WARNING -> warn(record.message)
             Level.INFO -> info(record.message)
             Level.CONFIG -> debug(record.message)
             Level.FINE -> trace(record.message)
             else -> trace(record.message)
         }
-
-        val stackTrace = StringWriter().also { PrintWriter(it).use { pw -> record.thrown?.printStackTrace(pw) } }.toString()
-        error(stackTrace)
     }
 
     override fun flush() {}
