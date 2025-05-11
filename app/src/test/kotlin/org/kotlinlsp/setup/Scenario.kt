@@ -59,7 +59,7 @@ fun scenario(
     val client = mock(LanguageClient::class.java)
     `when`(client.logMessage(any())).thenAnswer {
         val params = it.getArgument<MessageParams>(0)
-        println("[${params.type.toString().uppercase()}]: ${params.message})")
+        println("[${params.type.toString().uppercase()}]: ${params.message}")
     }
     server.connect(client)
     server.initialize(initParams).join()

@@ -60,9 +60,8 @@ class Index(
 
     fun close() {
         scanFilesThreadRunner.signalToStop()
-        scanFilesThread.join()
-
         workerThreadRunner.submitCommand(Command.Stop)
+        scanFilesThread.join()
         workerThread.join()
 
         db.close()

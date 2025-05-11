@@ -50,34 +50,26 @@ class WorkQueue<T> {
         }
     }
 
-    fun take(): T {
-        mutex.withLock {
-            while (editQueue.isEmpty() && indexQueue.isEmpty() && scanQueue.isEmpty()) {
-                notEmpty.await()
-            }
-
-            // Priority is ScanQueue > EditQueue > IndexQueue
-            val item = if (scanQueue.isNotEmpty()) {
-                val item = scanQueue.poll()
-                if (scanQueue.size == MAX_SCAN_SIZE - 1) {
-                    notFullScan.signal()
-                }
-                item
-            } else if (editQueue.isNotEmpty()) {
-                val item = editQueue.pop()
-                if (editQueue.size == MAX_EDIT_SIZE - 1) {
-                    notFullEdit.signal()
-                }
-                item
-            } else {
-                val item = indexQueue.poll()
-                if (indexQueue.size == MAX_INDEX_SIZE - 1) {
-                    notFullIndex.signal()
-                }
-                item
-            }
-
-            return item
+    fun take(): T = mutex.withLock {
+        while (editQueue.isEmpty() && indexQueue.isEmpty() && scanQueue.isEmpty()) {
+            notEmpty.await()
         }
+
+        // Priority is ScanQueue > EditQueue > IndexQueue
+        if (scanQueue.isNotEmpty()) {
+            val item = scanQueue.poll()
+            notFullScan.signal()
+            return@withLock item
+        }
+
+        if (editQueue.isNotEmpty()) {
+            val item = editQueue.pop()
+            notFullEdit.signal()
+            return@withLock item
+        }
+
+        val item = indexQueue.poll()
+        notFullIndex.signal()
+        return@withLock item
     }
 }
