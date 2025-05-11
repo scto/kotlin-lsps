@@ -1,13 +1,17 @@
 package org.kotlinlsp.index.db.adapters
 
+import kotlinx.serialization.*
+import kotlinx.serialization.protobuf.ProtoBuf
 import org.rocksdb.InfoLogLevel
 import org.rocksdb.Options
 import org.rocksdb.ReadOptions
 import org.rocksdb.RocksDB
 import java.io.File
+import java.io.Serial
 import java.nio.charset.Charset
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
+import kotlin.reflect.KClass
 
 class RocksDBAdapter(private val path: Path): DatabaseAdapter {
     companion object {
@@ -24,14 +28,13 @@ class RocksDBAdapter(private val path: Path): DatabaseAdapter {
 
     private val db = RocksDB.open(options, path.absolutePathString())
 
-    override fun <T> put(key: String, value: T, serializer: (T) -> ByteArray) {
-        db.put(key.toByteArray(), serializer(value))
+    override fun putByteArray(key: String, value: ByteArray) {
+        db.put(key.toByteArray(), value)
     }
 
-    override fun <T> get(key: String, deserializer: (ByteArray) -> T): T? {
-        val data: ByteArray? = db.get(key.toByteArray())
-        if(data == null) return null
-        return deserializer(data)
+    override fun getByteArray(key: String): ByteArray? {
+        val data = db.get(key.toByteArray()) ?: return null
+        return data
     }
 
     override fun prefixSearch(prefix: String): Sequence<Pair<String, ByteArray>> = sequence {

@@ -1,14 +1,8 @@
 package org.kotlinlsp.index.db
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import org.kotlinlsp.common.info
-import org.kotlinlsp.index.db.serializers.deserializeStringListForDb
-import org.kotlinlsp.index.db.serializers.serializeStringListForDb
-import org.rocksdb.RocksDB
-import java.nio.charset.Charset
-import java.sql.Connection
-import java.sql.Statement
+import kotlinx.serialization.Serializable
+import org.kotlinlsp.index.db.adapters.get
+import org.kotlinlsp.index.db.adapters.put
 import java.time.Instant
 
 data class File(
@@ -24,40 +18,38 @@ fun File.toDto(): FileDto = FileDto(
     modificationStamp = modificationStamp
 )
 
+@Serializable
 data class FileDto(
     val packageFqName: String,
     val lastModified: Long,
     val modificationStamp: Long
 )
 
-fun serializeFileDtoForDb(dto: FileDto): ByteArray = Gson().toJson(dto).toByteArray()
-fun deserializeFileDtoForDb(data: ByteArray): FileDto = Gson().fromJson(data.toString(Charset.defaultCharset()), FileDto::class.java)
-
 fun Database.fileLastModifiedFromPath(path: String): Pair<Instant, Long>? {
-    return filesDb.get(path, ::deserializeFileDtoForDb)?.let { Pair(Instant.ofEpochMilli(it.lastModified), it.modificationStamp) }
+    return filesDb.get<FileDto>(path)?.let { Pair(Instant.ofEpochMilli(it.lastModified), it.modificationStamp) }
 }
 
 fun Database.setFile(file: File) {
     val dto = file.toDto()
-    val previousPackageFqName = filesDb.get(file.path, ::deserializeFileDtoForDb)?.packageFqName
+    val previousPackageFqName = filesDb.get<FileDto>(file.path)?.packageFqName
 
-    filesDb.put(file.path, dto, ::serializeFileDtoForDb)
+    filesDb.put(file.path, dto)
 
     if(previousPackageFqName != file.packageFqName) {
         // Remove previous package name
         if(previousPackageFqName != null) {
-            val files = packagesDb.get(previousPackageFqName, ::deserializeStringListForDb)?.toMutableList() ?: mutableListOf()
+            val files = packagesDb.get<List<String>>(previousPackageFqName)?.toMutableList() ?: mutableListOf()
             files.remove(file.path)
             if(files.size == 0) {
                 packagesDb.remove(previousPackageFqName)
             } else {
-                packagesDb.put(previousPackageFqName, files, ::serializeStringListForDb)
+                packagesDb.put(previousPackageFqName, files)
             }
         }
 
         // Add new one
-        val files = packagesDb.get(file.packageFqName, ::deserializeStringListForDb)?.toMutableList() ?: mutableListOf()
+        val files = packagesDb.get<List<String>>(file.packageFqName)?.toMutableList() ?: mutableListOf()
         files.add(file.path)
-        packagesDb.put(file.packageFqName, files, ::serializeStringListForDb)
+        packagesDb.put(file.packageFqName, files)
     }
 }

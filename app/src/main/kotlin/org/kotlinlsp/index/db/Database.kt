@@ -4,20 +4,12 @@ import org.kotlinlsp.common.getCachePath
 import org.kotlinlsp.common.info
 import org.kotlinlsp.index.db.adapters.DatabaseAdapter
 import org.kotlinlsp.index.db.adapters.RocksDBAdapter
-import org.kotlinlsp.index.db.serializers.deserializeIntForDb
-import org.kotlinlsp.index.db.serializers.serializeIntForDb
-import org.rocksdb.InfoLogLevel
-import org.rocksdb.Options
-import org.rocksdb.RocksDB
+import org.kotlinlsp.index.db.adapters.get
+import org.kotlinlsp.index.db.adapters.put
 import java.io.File
-import java.nio.ByteBuffer
-import java.nio.charset.Charset
-import java.nio.file.Path
-import java.sql.Connection
-import java.sql.DriverManager
 import kotlin.io.path.absolutePathString
 
-const val CURRENT_SCHEMA_VERSION = 2    // Increment on schema changes
+const val CURRENT_SCHEMA_VERSION = 3    // Increment on schema changes
 const val VERSION_KEY = "__version"
 
 class Database(rootFolder: String) {
@@ -28,7 +20,7 @@ class Database(rootFolder: String) {
 
     init {
         var projectDb = RocksDBAdapter(cachePath.resolve("project"))
-        val schemaVersion = projectDb.get(VERSION_KEY, ::deserializeIntForDb)
+        val schemaVersion = projectDb.get<Int>(VERSION_KEY)
 
         if(schemaVersion == null || schemaVersion != CURRENT_SCHEMA_VERSION) {
 
@@ -38,7 +30,7 @@ class Database(rootFolder: String) {
             deleteAll()
 
             projectDb = RocksDBAdapter(cachePath.resolve("project"))
-            projectDb.put(VERSION_KEY, CURRENT_SCHEMA_VERSION, ::serializeIntForDb)
+            projectDb.put(VERSION_KEY, CURRENT_SCHEMA_VERSION)
         }
 
         filesDb = RocksDBAdapter(cachePath.resolve("files"))

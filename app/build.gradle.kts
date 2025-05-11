@@ -6,6 +6,7 @@ val intellijVersion = "241.19416.19"
 
 plugins {
     kotlin("jvm") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.0"
     application
 }
 
@@ -43,6 +44,8 @@ dependencies {
     implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0")
     implementation("org.rocksdb:rocksdbjni:10.0.1")
     implementation("org.gradle:gradle-tooling-api:8.12")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.0")
 
     testImplementation(platform("org.junit:junit-bom:5.12.2"))
     testImplementation("org.junit.jupiter:junit-jupiter")
