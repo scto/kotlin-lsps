@@ -43,7 +43,7 @@ fun Registrar.lowLevelApiFir() {
         "org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirGlobalResolveComponents"
     )
     projectServiceClass(
-        "org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService",
+        "org.jetbrains.kotlin.analysis.low.level.api.fir.LLResolutionFacadeService",
     )
     projectServiceClass(
         "org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService"

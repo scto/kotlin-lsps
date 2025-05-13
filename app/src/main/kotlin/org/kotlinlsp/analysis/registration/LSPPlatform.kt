@@ -28,10 +28,8 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProv
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderMerger
 import org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinSimpleGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
@@ -95,8 +93,6 @@ fun Registrar.lspPlatform() {
         registerService(SmartPointerManager::class.java, SmartPointerManagerImpl::class.java)
         registerService(KotlinProjectStructureProvider::class.java, ProjectStructureProvider::class.java)
         registerService(KotlinModuleDependentsProvider::class.java, ModuleDependentsProvider::class.java)
-        // TODO We can optimize this one providing our own
-        registerService(KotlinGlobalSearchScopeMerger::class.java, KotlinSimpleGlobalSearchScopeMerger::class.java)
         registerService(KotlinModificationTrackerFactory::class.java, ModificationTrackerFactory::class.java)
         registerService(KotlinAnnotationsResolverFactory::class.java, AnnotationsResolverFactory::class.java)
         registerService(

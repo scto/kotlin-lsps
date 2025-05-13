@@ -51,6 +51,10 @@ fun Registrar.analysisApiImplBase() {
         "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaContentScopeProvider",
         "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseContentScopeProvider"
     )
+    projectService(
+        "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaGlobalSearchScopeMerger",
+        "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KotlinOptimizingGlobalSearchScopeMerger"
+    )
     appServiceClass(
         "org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
     )
@@ -65,5 +69,9 @@ fun Registrar.analysisApiImplBase() {
     projectExtensionPoint(
         "org.jetbrains.kotlin.kotlinContentScopeRefiner",
         "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaResolveExtensionToContentScopeRefinerBridge"
+    )
+    projectExtensionPoint(
+        "org.jetbrains.kotlin.kotlinGlobalSearchScopeMergeStrategy",
+        "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KotlinResolveExtensionGeneratedFileScopeMergeStrategy"
     )
 }

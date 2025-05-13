@@ -1,8 +1,10 @@
 package org.kotlinlsp.analysis.registration
 
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSessionInvalidationTopics
 
+@OptIn(KaImplementationDetail::class)
 fun Registrar.analysisApiFir() {
     analysisApiImplBase()
     lowLevelApiFir()

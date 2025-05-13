@@ -1,7 +1,7 @@
 import java.time.Duration
 
-val lspVersion = "0.1"
-val analysisApiKotlinVersion = "2.2.0-dev-15683" // 2-May-2025 (version that KSP uses)
+val lspVersion = "0.1a"
+val analysisApiKotlinVersion = "2.2.20-dev-2432" // 13-May-2025 (version that KSP uses)
 val intellijVersion = "241.19416.19"
 
 plugins {
