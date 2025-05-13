@@ -64,6 +64,8 @@ application {
 }
 
 tasks.test {
+    useJUnitPlatform()
+
     forkEvery = 1
     maxParallelForks = 1
     timeout = Duration.ofMinutes(8)
@@ -75,6 +77,8 @@ tasks.test {
         showCauses = true
         showStackTraces = true
         showStandardStreams = true
+
+        events("passed", "skipped", "failed")
     }
 }
 
@@ -83,12 +87,5 @@ tasks.jar {
         attributes(
             "Implementation-Version" to project.version
         )
-    }
-}
-
-tasks.test {
-    useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
     }
 }
