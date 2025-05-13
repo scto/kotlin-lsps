@@ -89,3 +89,17 @@ tasks.jar {
         )
     }
 }
+
+distributions {
+    main {
+        contents {
+            into("license") {
+                from("../LICENSE")
+                from("../NOTICE")
+            }
+            into("license/thirdparty") {
+                from("../licenses")
+            }
+        }
+    }
+}
