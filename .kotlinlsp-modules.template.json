@@ -3,23 +3,25 @@
     "id": "app",
     "dependencies": [
       "core-impl-241.19416.19.jar",
-      "kotlin-compiler-2.2.0-dev-15683.jar",
+      "kotlin-compiler-2.2.20-dev-2432.jar",
       "core-241.19416.19.jar",
       "extensions-241.19416.19.jar",
       "kotlinx-coroutines-core-jvm-1.8.0.jar",
-      "kotlin-stdlib-jdk8-2.2.0-dev-15683.jar",
-      "kotlin-stdlib-jdk7-2.2.0-dev-15683.jar",
-      "kotlin-stdlib-2.2.0-dev-15683.jar",
+      "kotlinx-serialization-protobuf-jvm-1.8.0.jar",
+      "kotlinx-serialization-core-jvm-1.8.0.jar",
+      "kotlin-stdlib-jdk8-2.2.20-dev-2432.jar",
+      "kotlin-stdlib-jdk7-2.2.20-dev-2432.jar",
+      "kotlin-stdlib-2.2.20-dev-2432.jar",
       "util-241.19416.19.jar",
       "caffeine-2.9.3.jar",
-      "analysis-api-k2-for-ide-2.2.0-dev-15683.jar",
-      "analysis-api-for-ide-2.2.0-dev-15683.jar",
-      "low-level-api-fir-for-ide-2.2.0-dev-15683.jar",
-      "analysis-api-platform-interface-for-ide-2.2.0-dev-15683.jar",
-      "symbol-light-classes-for-ide-2.2.0-dev-15683.jar",
-      "analysis-api-impl-base-for-ide-2.2.0-dev-15683.jar",
-      "kotlin-compiler-common-for-ide-2.2.0-dev-15683.jar",
-      "kotlin-compiler-fir-for-ide-2.2.0-dev-15683.jar",
+      "analysis-api-k2-for-ide-2.2.20-dev-2432.jar",
+      "analysis-api-for-ide-2.2.20-dev-2432.jar",
+      "low-level-api-fir-for-ide-2.2.20-dev-2432.jar",
+      "analysis-api-platform-interface-for-ide-2.2.20-dev-2432.jar",
+      "symbol-light-classes-for-ide-2.2.20-dev-2432.jar",
+      "analysis-api-impl-base-for-ide-2.2.20-dev-2432.jar",
+      "kotlin-compiler-common-for-ide-2.2.20-dev-2432.jar",
+      "kotlin-compiler-fir-for-ide-2.2.20-dev-2432.jar",
       "org.eclipse.lsp4j-0.24.0.jar",
       "rocksdbjni-10.0.1.jar",
       "gradle-tooling-api-8.12.jar",
@@ -28,7 +30,7 @@
       "kotlinx-collections-immutable-jvm-0.3.7.jar",
       "util-rt-241.19416.19.jar",
       "util-base-241.19416.19.jar",
-      "kotlin-script-runtime-2.2.0-dev-15683.jar",
+      "kotlin-script-runtime-2.2.20-dev-2432.jar",
       "kotlin-reflect-1.6.10.jar",
       "checker-qual-3.19.0.jar",
       "org.eclipse.lsp4j.jsonrpc-0.24.0.jar",
@@ -54,8 +56,7 @@
       "oro-2.0.8.jar",
       "lz4-java-1.8.0.jar",
       "commons-compress-1.26.1.jar",
-      "kotlinx-serialization-core-jvm-1.6.3.jar",
-      "kotlinx-serialization-json-jvm-1.6.3.jar",
+      "kotlinx-serialization-json-jvm-1.8.0.jar",
       "jaxen-1.2.0.jar",
       "stax2-api-4.2.jar",
       "failureaccess-1.0.2.jar",
@@ -103,8 +104,7 @@
       "oro-2.0.8.jar",
       "lz4-java-1.8.0.jar",
       "commons-compress-1.26.1.jar",
-      "kotlinx-serialization-core-jvm-1.6.3.jar",
-      "kotlinx-serialization-json-jvm-1.6.3.jar",
+      "kotlinx-serialization-json-jvm-1.8.0.jar",
       "objenesis-3.3.jar",
       "jaxen-1.2.0.jar",
       "stax2-api-4.2.jar",
@@ -291,21 +291,12 @@
     ]
   },
   {
-    "id": "kotlinx-serialization-json-jvm-1.6.3.jar",
+    "id": "kotlinx-serialization-json-jvm-1.8.0.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-json-jvm/1.6.3/2241746853abf04073e3ab0dcd9e6729d363b313/kotlinx-serialization-json-jvm-1.6.3.jar"
-    ]
-  },
-  {
-    "id": "kotlinx-serialization-core-jvm-1.6.3.jar",
-    "dependencies": [],
-    "javaVersion": "21",
-    "isJdk": false,
-    "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-core-jvm/1.6.3/6b6c17d0312ba7192893adea9d52959941d0119b/kotlinx-serialization-core-jvm-1.6.3.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-json-jvm/1.8.0/8253bf6e8c713a3dace54493a838e0f8fd3e08fa/kotlinx-serialization-json-jvm-1.8.0.jar"
     ]
   },
   {
@@ -642,12 +633,12 @@
     ]
   },
   {
-    "id": "kotlin-script-runtime-2.2.0-dev-15683.jar",
+    "id": "kotlin-script-runtime-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.2.0-dev-15683/56f9c38a9ab17479829815aec599227fe4e1a187/kotlin-script-runtime-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-script-runtime/2.2.20-dev-2432/401f40667d82566fa010d0de92001b3fcbca2cdd/kotlin-script-runtime-2.2.20-dev-2432.jar"
     ]
   },
   {
@@ -723,75 +714,75 @@
     ]
   },
   {
-    "id": "kotlin-compiler-fir-for-ide-2.2.0-dev-15683.jar",
+    "id": "kotlin-compiler-fir-for-ide-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-fir-for-ide/2.2.0-dev-15683/e70bdcfdd75044fd7a6647416e3b6bd16e644e3e/kotlin-compiler-fir-for-ide-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-fir-for-ide/2.2.20-dev-2432/3a7a12a25bacdc75ad9e21ffcd60be2fdad9731a/kotlin-compiler-fir-for-ide-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "kotlin-compiler-common-for-ide-2.2.0-dev-15683.jar",
+    "id": "kotlin-compiler-common-for-ide-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-common-for-ide/2.2.0-dev-15683/37d9b97ca605e324bdb71b931131c1535f614557/kotlin-compiler-common-for-ide-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-common-for-ide/2.2.20-dev-2432/cd834a5eb22c14234e5f0f17e427bb4063063fb3/kotlin-compiler-common-for-ide-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "analysis-api-impl-base-for-ide-2.2.0-dev-15683.jar",
+    "id": "analysis-api-impl-base-for-ide-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-impl-base-for-ide/2.2.0-dev-15683/9ec0046d2a540c147ade82a114efd6a3ce99b055/analysis-api-impl-base-for-ide-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-impl-base-for-ide/2.2.20-dev-2432/8e29d3a8f64e201f56c08d69405e19e54bf69a97/analysis-api-impl-base-for-ide-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "symbol-light-classes-for-ide-2.2.0-dev-15683.jar",
+    "id": "symbol-light-classes-for-ide-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/symbol-light-classes-for-ide/2.2.0-dev-15683/6ed5fc291a80def1e2a843b4013568af32c60af7/symbol-light-classes-for-ide-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/symbol-light-classes-for-ide/2.2.20-dev-2432/91e57b9c762bd807ad6170e0104acc5a3af64d73/symbol-light-classes-for-ide-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "analysis-api-platform-interface-for-ide-2.2.0-dev-15683.jar",
+    "id": "analysis-api-platform-interface-for-ide-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-platform-interface-for-ide/2.2.0-dev-15683/9d3afa9431c72781594f45d943db8ffd48c767d7/analysis-api-platform-interface-for-ide-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-platform-interface-for-ide/2.2.20-dev-2432/ea2e77633eb99f8e77348a1b56b2c66c9bfda57a/analysis-api-platform-interface-for-ide-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "low-level-api-fir-for-ide-2.2.0-dev-15683.jar",
+    "id": "low-level-api-fir-for-ide-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/low-level-api-fir-for-ide/2.2.0-dev-15683/891ca0320c30cb3331fe9953d0b4625597f79d03/low-level-api-fir-for-ide-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/low-level-api-fir-for-ide/2.2.20-dev-2432/a9896cac4dc7a30c3d328af9ae6ad3075d089f6/low-level-api-fir-for-ide-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "analysis-api-for-ide-2.2.0-dev-15683.jar",
+    "id": "analysis-api-for-ide-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-for-ide/2.2.0-dev-15683/fddb8a407b1d84e7e08cd394aac5c62a0d127b59/analysis-api-for-ide-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-for-ide/2.2.20-dev-2432/a23ee2f8f3fe24cd426d4dd24108e627d4d62313/analysis-api-for-ide-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "analysis-api-k2-for-ide-2.2.0-dev-15683.jar",
+    "id": "analysis-api-k2-for-ide-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-k2-for-ide/2.2.0-dev-15683/4d80b832e7f240866486c1db32125ce53bd1bd65/analysis-api-k2-for-ide-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/analysis-api-k2-for-ide/2.2.20-dev-2432/f141a908cdcd8d44e8e48081ee0cd28d176f5fd3/analysis-api-k2-for-ide-2.2.20-dev-2432.jar"
     ]
   },
   {
@@ -813,30 +804,48 @@
     ]
   },
   {
-    "id": "kotlin-stdlib-2.2.0-dev-15683.jar",
+    "id": "kotlin-stdlib-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.2.0-dev-15683/89cdb84d2949dc5a7356e10357b09dca54a63b6c/kotlin-stdlib-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.2.20-dev-2432/148fcf80bdfb97507c5a28412971de47535a0c5a/kotlin-stdlib-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "kotlin-stdlib-jdk7-2.2.0-dev-15683.jar",
+    "id": "kotlin-stdlib-jdk7-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/2.2.0-dev-15683/fcfc8637e2a008625803c558b0acd7263d95436b/kotlin-stdlib-jdk7-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/2.2.20-dev-2432/2e35cb2427d97393e5822cba891a9adc2cbafacd/kotlin-stdlib-jdk7-2.2.20-dev-2432.jar"
     ]
   },
   {
-    "id": "kotlin-stdlib-jdk8-2.2.0-dev-15683.jar",
+    "id": "kotlin-stdlib-jdk8-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/2.2.0-dev-15683/950708cc2a072671a43f3d61d4b3eab5fe70b82d/kotlin-stdlib-jdk8-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/2.2.20-dev-2432/e461a42f47cce38bb074cea33e0e7932d9a473f1/kotlin-stdlib-jdk8-2.2.20-dev-2432.jar"
+    ]
+  },
+  {
+    "id": "kotlinx-serialization-core-jvm-1.8.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-core-jvm/1.8.0/fe5bb37ab4a3771f14c63e0c333c98bdfeb1d7cc/kotlinx-serialization-core-jvm-1.8.0.jar"
+    ]
+  },
+  {
+    "id": "kotlinx-serialization-protobuf-jvm-1.8.0.jar",
+    "dependencies": [],
+    "javaVersion": "21",
+    "isJdk": false,
+    "libraryRoots": [
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlinx/kotlinx-serialization-protobuf-jvm/1.8.0/cfc3bc5a3c066d3aa21b92e1f5f5c52d48994f02/kotlinx-serialization-protobuf-jvm-1.8.0.jar"
     ]
   },
   {
@@ -867,12 +876,12 @@
     ]
   },
   {
-    "id": "kotlin-compiler-2.2.0-dev-15683.jar",
+    "id": "kotlin-compiler-2.2.20-dev-2432.jar",
     "dependencies": [],
     "javaVersion": "21",
     "isJdk": false,
     "libraryRoots": [
-      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler/2.2.0-dev-15683/9f32677e4deab63c85990de5f6cca5229a6cb7f5/kotlin-compiler-2.2.0-dev-15683.jar"
+      "<your-home-folder>/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler/2.2.20-dev-2432/548daedc7d9472cd5d8a0ca601638a8302ba85ca/kotlin-compiler-2.2.20-dev-2432.jar"
     ]
   },
   {

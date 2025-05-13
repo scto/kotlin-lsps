@@ -90,6 +90,6 @@ class GradleBuildSystem(
         // TODO Support multiple modules, for now take the last one
         val rootModule = modules.last()
         progressNotifier.onReportProgress(WorkDoneProgressKind.end, PROGRESS_TOKEN, "[GRADLE] Done")
-        return Pair(rootModule, null)
+        return Pair(rootModule, "1")
     }
 }
