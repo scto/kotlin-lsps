@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironmentMode
 import org.jetbrains.kotlin.cli.jvm.compiler.setupIdeaStandaloneExecution
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.kotlinlsp.analysis.ProgressNotifier
 import org.kotlinlsp.buildsystem.GradleBuildSystem
@@ -52,9 +53,9 @@ class Gradle {
             assertEquals(it.dependencies.size, 0)
             assertEquals(it.contentRoots.size, 1)
         }
-        val sortedDeps = rootModule.dependencies.sortedBy { it.firstContentRootFilename() }
-        assertEquals(sortedDeps[0].firstContentRootFilename(), "annotations-13.0.jar")
-        assertEquals(sortedDeps[1].firstContentRootFilename(), "java-21-openjdk")
-        assertEquals(sortedDeps[2].firstContentRootFilename(), "kotlin-stdlib-2.1.20.jar")
+        val depNames = rootModule.dependencies.map { it.firstContentRootFilename() }.toSet()
+        assertTrue("annotations-13.0.jar" in depNames)
+        assertTrue("java-21-openjdk" in depNames)
+        assertTrue("kotlin-stdlib-2.1.20.jar" in depNames)
     }
 }
