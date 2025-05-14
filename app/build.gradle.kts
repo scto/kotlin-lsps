@@ -1,16 +1,16 @@
 import java.time.Duration
 
-val lspVersion = "0.1a"
-val analysisApiKotlinVersion = "2.2.20-dev-2432" // 13-May-2025 (version that KSP uses)
-val intellijVersion = "241.19416.19"
-
 plugins {
     kotlin("jvm") version "2.1.0"
     kotlin("plugin.serialization") version "2.1.0"
     application
 }
 
-version = lspVersion
+application {
+    applicationName = "kotlin-lsp"
+    mainClass = "org.kotlinlsp.MainKt"
+    version = "0.1a"
+}
 
 repositories {
     mavenCentral()
@@ -23,9 +23,12 @@ repositories {
 }
 
 dependencies {
+    val intellijVersion = "241.19416.19"
     implementation("com.jetbrains.intellij.platform:core:$intellijVersion")
     implementation("com.jetbrains.intellij.platform:core-impl:$intellijVersion")
     implementation("com.jetbrains.intellij.platform:util:$intellijVersion")
+
+    val analysisApiKotlinVersion = "2.2.20-dev-2432" // 13-May-2025 (version that KSP uses)
     implementation("org.jetbrains.kotlin:kotlin-compiler:$analysisApiKotlinVersion")
     implementation("com.github.ben-manes.caffeine:caffeine:2.9.3")  // Needed by kotlin analysis api
     listOf(
@@ -57,10 +60,6 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
     }
-}
-
-application {
-    mainClass = "org.kotlinlsp.MainKt"
 }
 
 tasks.test {

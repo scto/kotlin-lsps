@@ -23,7 +23,7 @@ Right now, this language server is at its infancy and thus not ready to use for 
 
 ## Building and running
 
-To build the language server, just run the `./build.sh` script at the root directory, which compiles the project using gradle, packs it as a distribution zip and decompresses it in the `./lsp-dist` folder. Once built, you need to integrate it in a code editor to test its functionality. For example, in neovim the following config can be used:
+To build the language server, just run the `./scripts/build.sh` script at the root directory, which compiles the project using gradle, packs it as a distribution zip and decompresses it in the `./lsp-dist` folder. Once built, you need to integrate it in a code editor to test its functionality. For example, in neovim the following config can be used:
 
 ```lua
 local root_dir = vim.fs.root(0, {"settings.gradle.kts", "settings.gradle"})
@@ -32,7 +32,7 @@ if not root_dir then
 end
 local lsp_folder = "... path to lsp-dist folder ..."
 vim.lsp.config['kotlinlsp'] = {
-    cmd = { '' .. lsp_folder .. '/app-0.1/bin/app' },
+    cmd = { '' .. lsp_folder .. '/kotlin-lsp-0.1a/bin/kotlin-lsp' },
     filetypes = { 'kotlin' },
     root_dir = root_dir
 }
@@ -47,7 +47,7 @@ cp .kotlinlsp-modules.template.json .kotlinlsp-modules.json
 sed -i "s|<your-home-folder>|$HOME|g" .kotlinlsp-modules.json
 ```
 
-After that, run the code editor in a kotlin file from this project and you should see diagnostics being reported. Also a `./log.txt` file will be created logging the calls to the services in the platform interface, to help troubleshoot bugs and track missing functionality. In the `Log.kt` file you can configure the verbosity of the logs.
+After that, run the code editor in a kotlin file from this project and you should see diagnostics being reported. In the `Log.kt` file you can configure the verbosity of the logs.
 
 ## Running tests
 
