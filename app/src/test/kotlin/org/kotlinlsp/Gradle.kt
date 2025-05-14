@@ -54,6 +54,7 @@ class Gradle {
             assertEquals(it.contentRoots.size, 1)
         }
         val depNames = rootModule.dependencies.map { it.firstContentRootFilename() }.toSet()
+        println(depNames)
         assertTrue("annotations-13.0.jar" in depNames)
         assertTrue("java-21-openjdk" in depNames)
         assertTrue("kotlin-stdlib-2.1.20.jar" in depNames)
