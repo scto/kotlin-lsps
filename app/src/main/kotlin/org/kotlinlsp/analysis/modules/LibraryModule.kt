@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.kotlinlsp.common.read
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 class LibraryModule(
     override val id: String,
@@ -37,6 +38,9 @@ class LibraryModule(
 ): Module {
     override val isSourceModule: Boolean
         get() = false
+
+    override val contentRoots: List<String>
+        get() = roots.map { it.absolutePathString() }
 
     @OptIn(KaImplementationDetail::class)
     override fun computeFiles(): Sequence<VirtualFile> {

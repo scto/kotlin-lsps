@@ -47,7 +47,7 @@ dependencies {
 
     implementation("org.eclipse.lsp4j:org.eclipse.lsp4j:0.24.0")
     implementation("org.rocksdb:rocksdbjni:10.0.1")
-    implementation("org.gradle:gradle-tooling-api:8.12")
+    implementation("org.gradle:gradle-tooling-api:8.14")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-protobuf:1.8.0")
 

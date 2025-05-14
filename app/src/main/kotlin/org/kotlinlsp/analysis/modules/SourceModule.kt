@@ -27,6 +27,9 @@ class SourceModule(
     override val isSourceModule: Boolean
         get() = true
 
+    override val contentRoots: List<String>
+        get() = listOf(folderPath)
+
     override fun computeFiles(): Sequence<VirtualFile> =
         File(folderPath)
             .walk()

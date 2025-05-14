@@ -1,6 +1,5 @@
 package org.kotlinlsp.buildsystem
 
-import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
 import org.eclipse.lsp4j.WorkDoneProgressKind
 import org.gradle.tooling.GradleConnector

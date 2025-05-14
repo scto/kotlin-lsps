@@ -1,11 +1,9 @@
 package org.kotlinlsp
 
-import org.eclipse.lsp4j.*
-import org.junit.jupiter.api.MethodOrderer
-import org.junit.jupiter.api.Order
+import org.eclipse.lsp4j.DiagnosticSeverity
+import org.eclipse.lsp4j.DidOpenTextDocumentParams
+import org.eclipse.lsp4j.TextDocumentItem
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.TestMethodOrder
 import org.kotlinlsp.setup.scenario
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.Mockito.verify

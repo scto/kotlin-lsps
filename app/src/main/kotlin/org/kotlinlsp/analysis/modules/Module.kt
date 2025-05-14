@@ -7,6 +7,7 @@ interface Module {
     val id: String
     val dependencies: List<Module>
     val isSourceModule: Boolean
+    val contentRoots: List<String>
     val kaModule: KaModule
 
     fun computeFiles(): Sequence<VirtualFile>
