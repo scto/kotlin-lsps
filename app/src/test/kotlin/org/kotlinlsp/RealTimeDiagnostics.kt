@@ -12,7 +12,7 @@ import org.mockito.Mockito.verify
 
 class RealTimeDiagnostics {
     @Test
-    fun `analyzes basic codebase with no error diagnostics`() = scenario("basic") { server, client, projectUrl, _ ->
+    fun `analyzes basic codebase with no error diagnostics`() = scenario("playground") { server, client, projectUrl, _ ->
         // Act
         server.didOpen(DidOpenTextDocumentParams().apply {
             textDocument = TextDocumentItem().apply {
@@ -25,7 +25,7 @@ class RealTimeDiagnostics {
     }
 
     @Test
-    fun `analyzes basic codebase and reports syntax error`() = scenario("basic") { server, client, projectUrl, _ ->
+    fun `analyzes basic codebase and reports syntax error`() = scenario("playground") { server, client, projectUrl, _ ->
         // Act
         server.didOpen(DidOpenTextDocumentParams().apply {
             textDocument = TextDocumentItem().apply {

@@ -1,8 +1,9 @@
 import java.time.Duration
 
 plugins {
-    kotlin("jvm") version "2.1.0"
-    kotlin("plugin.serialization") version "2.1.0"
+    val kotlinVersion = "2.1.20"
+    kotlin("jvm") version kotlinVersion
+    kotlin("plugin.serialization") version kotlinVersion
     application
 }
 
