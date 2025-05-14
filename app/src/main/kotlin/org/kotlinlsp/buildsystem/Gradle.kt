@@ -1,5 +1,7 @@
 package org.kotlinlsp.buildsystem
 
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.project.Project
 import org.eclipse.lsp4j.WorkDoneProgressKind
 import org.gradle.tooling.GradleConnector
@@ -30,8 +32,9 @@ class GradleBuildSystem(
         "$rootFolder/settings.gradle", "$rootFolder/settings.gradle.kts",
     )
 
-    override fun resolveRootModuleIfNeeded(cachedVersion: String?): Pair<Module, String?> {
-        // TODO Implement caching checks
+    override fun resolveRootModuleIfNeeded(cachedMetadata: String?): Pair<Module, String?>? {
+        if(!shouldReloadGradleProject(cachedMetadata)) return null
+
         progressNotifier.onReportProgress(WorkDoneProgressKind.begin, PROGRESS_TOKEN, "[GRADLE] Resolving project...")
         val connection = GradleConnector.newConnector()
             .forProjectDirectory(File(rootFolder))
@@ -86,9 +89,56 @@ class GradleBuildSystem(
             )
         }
 
+        ideaProject.modules.forEach {
+            println(it.contentRoots.first().rootDirectory.absolutePath)
+        }
+
         // TODO Support multiple modules, for now take the last one
         val rootModule = modules.last()
         progressNotifier.onReportProgress(WorkDoneProgressKind.end, PROGRESS_TOKEN, "[GRADLE] Done")
-        return Pair(rootModule, "1")
+
+        val metadata = Gson().toJson(computeGradleMetadata(ideaProject))
+        return Pair(rootModule, metadata)
     }
+}
+
+private fun computeGradleMetadata(project: IdeaProject): Map<String, Map<String, Long>> {
+    val result = mutableMapOf<String, Map<String, Long>>()
+    project.modules.forEach {
+        val folder = it.contentRoots.first().rootDirectory
+        result[folder.absolutePath] = getGradleFileTimestamps(folder)
+    }
+    return result
+}
+
+private fun getGradleFileTimestamps(dir: File): Map<String, Long> {
+    if (!dir.isDirectory) return emptyMap()
+
+    val fileNames = listOf(
+        "settings.gradle",
+        "settings.gradle.kts",
+        "build.gradle",
+        "build.gradle.kts",
+        "gradle.properties"
+    )
+
+    val result = mutableMapOf<String, Long>()
+
+    for (name in fileNames) {
+        val file = File(dir, name)
+        if (file.exists()) {
+            result[name] = file.lastModified()
+        }
+    }
+
+    return result
+}
+
+private fun shouldReloadGradleProject(metadataString: String?): Boolean {
+    if(metadataString == null) return true
+    val type = object : TypeToken<Map<String, Map<String, Long>>>() {}.type
+    val metadata: Map<String, Map<String, Long>> = Gson().fromJson(metadataString, type)
+
+    // TODO Implement caching check
+    return true
 }

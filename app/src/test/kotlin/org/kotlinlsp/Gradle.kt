@@ -43,7 +43,7 @@ class Gradle {
     @Test
     fun `loads single module project successfully`() = scenario("single-module") { buildSystem ->
         // Act
-        val (rootModule, _) = buildSystem.resolveRootModuleIfNeeded(cachedVersion = null)
+        val (rootModule, _) = buildSystem.resolveRootModuleIfNeeded(cachedMetadata = null)!!
 
         // Assert
         assertEquals(rootModule.isSourceModule, true)
