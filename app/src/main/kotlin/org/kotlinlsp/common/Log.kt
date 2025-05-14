@@ -86,19 +86,22 @@ fun profileJvmStartup() {
 fun logProfileInfo() {
     if (!profileEnabled) return
 
-    logger.log(LogLevel.Debug,  "------------")
-    logger.log(LogLevel.Debug,  "PROFILE INFO")
+    val sb = StringBuilder()
+    sb.appendLine("------------")
+    sb.appendLine("PROFILE INFO")
     var totalDuration = Duration.ZERO
     profileInfo.entries.sortedByDescending { it.value.second }.forEach {
         val header = "${it.key} (x${it.value.first}):".padEnd(65)
         val formattedDuration = formatDuration(it.value.second)
         totalDuration += it.value.second
-        logger.log(LogLevel.Debug,  "$header $formattedDuration")
+        sb.appendLine("$header $formattedDuration")
     }
-    logger.log(LogLevel.Debug,  "------------")
-    logger.log(LogLevel.Debug,  "TOTAL: ${formatDuration(totalDuration)}")
-    logger.log(LogLevel.Debug,  "------------")
+    sb.appendLine("------------")
+    sb.appendLine("TOTAL: ${formatDuration(totalDuration)}")
+    sb.appendLine("------------")
     profileInfo.clear()
+
+    debug(sb.toString())
 }
 
 private fun formatDuration(duration: Duration): String {

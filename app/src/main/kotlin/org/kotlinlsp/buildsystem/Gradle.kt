@@ -15,6 +15,7 @@ import org.kotlinlsp.analysis.ProgressNotifier
 import org.kotlinlsp.analysis.modules.LibraryModule
 import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.analysis.modules.SourceModule
+import org.kotlinlsp.common.info
 import java.io.File
 
 class GradleBuildSystem(
@@ -33,7 +34,9 @@ class GradleBuildSystem(
     )
 
     override fun resolveRootModuleIfNeeded(cachedMetadata: String?): Pair<Module, String?>? {
-        if(!shouldReloadGradleProject(cachedMetadata)) return null
+        if(!shouldReloadGradleProject(cachedMetadata)) {
+            return null
+        }
 
         progressNotifier.onReportProgress(WorkDoneProgressKind.begin, PROGRESS_TOKEN, "[GRADLE] Resolving project...")
         val connection = GradleConnector.newConnector()
@@ -98,6 +101,7 @@ class GradleBuildSystem(
         progressNotifier.onReportProgress(WorkDoneProgressKind.end, PROGRESS_TOKEN, "[GRADLE] Done")
 
         val metadata = Gson().toJson(computeGradleMetadata(ideaProject))
+        connection.close()
         return Pair(rootModule, metadata)
     }
 }
@@ -137,8 +141,18 @@ private fun getGradleFileTimestamps(dir: File): Map<String, Long> {
 private fun shouldReloadGradleProject(metadataString: String?): Boolean {
     if(metadataString == null) return true
     val type = object : TypeToken<Map<String, Map<String, Long>>>() {}.type
-    val metadata: Map<String, Map<String, Long>> = Gson().fromJson(metadataString, type)
+    val metadata: Map<String, Map<String, Long>> = try {
+        Gson().fromJson(metadataString, type)
+    } catch(_: Throwable) {
+        return true
+    }
 
-    // TODO Implement caching check
-    return true
+    metadata.forEach { (folder, timestamps) ->
+        timestamps.forEach { (file, cachedTimestamp) ->
+            val currentTimestamp = File(folder).resolve(file).lastModified()
+            if(currentTimestamp > cachedTimestamp) return true
+        }
+    }
+
+    return false
 }
