@@ -23,7 +23,6 @@ private data class SerializedModule(
     val libraryRoots: List<String>? = null
 )
 
-@OptIn(KaPlatformInterface::class)
 fun serializeRootModule(rootModule: Module): String {
     val visited = LinkedHashMap<String, SerializedModule>()
     val stack = ArrayDeque<Module>()
