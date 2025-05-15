@@ -2,6 +2,8 @@ import groovy.json.JsonOutput
 
 allprojects {
     afterEvaluate {
+        // Example of how to pass input data (null if absent)
+        println(System.getProperty("myProp"))
         // A Project is a SourceModule with no source folders, just dependencies to other Projects or SourceSets
         // A SourceSet is a SourceModule, srcDirs are the source folders, and compileClasspath entries are LibraryModules
         println("Project: $path")
@@ -28,6 +30,25 @@ allprojects {
                 it.compileClasspath.forEach {
                     println("* ${it.path}")
                 }
+            }
+        }
+        if(project.hasProperty("android")) {
+            println("Android")
+            def android = project.android
+
+            android.applicationVariants.all {
+                if(it.name != "debug") { return }
+
+                it.sourceSets.forEach {
+                    println("- SourceSet: ${it.name}")
+                    it.kotlinDirectories.forEach {
+                        println("* $it")
+                    }
+                }
+                println("- Classpath:")
+                    it.getCompileClasspath().files.each {
+                        println("* ${it.path}")
+                    }
             }
         }
     }
