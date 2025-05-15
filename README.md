@@ -21,6 +21,10 @@ Right now, this language server is at its infancy and thus not ready to use for 
 - 🚧 Go to definition: working except for kotlin binary dependencies (considering using the background index for this if we cannot make it work), it would also be nice to use a decompiler to jump into .class files (the analysis api provides `KotlinClassFileDecompiler` for kotlin .class files, fernflower may be used for java .class files)
 - 🚧 Build system integration: there is basic support for single module gradle projects available, but needs work to support multimodule projects and Android projects.
 
+## Installing
+We provide a distribution zip file, which you can download from [GitHub Releases](https://github.com/amgdev9/kotlin-lsp/releases/latest). Alternatively, there are unofficial methods to install it, provided by the community:
+- Nix: https://tangled.sh/@weethet.bsky.social/nix-packages, accessible via `packages.${system}.kotlin-lsp` or in an overlay
+
 ## Building and running
 
 To build the language server, just run the `./scripts/build.sh` script at the root directory, which compiles the project using gradle, packs it as a distribution zip and decompresses it in the `./lsp-dist` folder. Once built, you need to integrate it in a code editor to test its functionality. For example, in neovim the following config can be used:
