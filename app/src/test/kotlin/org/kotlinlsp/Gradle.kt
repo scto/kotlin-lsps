@@ -57,4 +57,11 @@ class Gradle {
         assertTrue("annotations-13.0.jar" in depNames)
         assertTrue("kotlin-stdlib-2.1.20.jar" in depNames)
     }
+
+    @Test
+    fun `loads android project successfully`() = scenario("android") { buildSystem ->
+        // Act
+        val (rootModule, _) = buildSystem.resolveRootModuleIfNeeded(cachedMetadata = null)!!
+        // TODO
+    }
 }

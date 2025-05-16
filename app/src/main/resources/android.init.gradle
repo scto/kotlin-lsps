@@ -1,0 +1,45 @@
+import org.gradle.plugins.ide.idea.model.IdeaModel
+import org.gradle.plugins.ide.idea.model.IdeaModule
+
+class AndroidPlugin implements Plugin<Project> {
+
+    @Override
+    void apply(Project project) {
+        if (!project.hasProperty("android")) return
+
+        def variant = System.getProperty("androidVariant")
+
+        project.afterEvaluate {
+            def android = project.android
+
+            IdeaModel ideaModel = (IdeaModel)project.extensions.findByName("idea")
+            IdeaModule module = ideaModel.module
+            println(ideaModel.module.sourceDirs)
+
+            android.applicationVariants.all {
+                if (it.name != variant) {
+                    return
+                }
+
+                it.sourceSets.forEach {
+                    println("- SourceSet: ${it.name} ${it.class.name}")
+                    it.kotlinDirectories.forEach {
+                        println("* $it")
+                        module.sourceDirs.add(new File(it.toString()))  // TODO
+                    }
+                }
+                println("- Classpath:")
+                it.getCompileClasspath().files.each {
+                    println("* ${it.path}")
+                }
+            }
+        }
+    }
+}
+
+allprojects {
+    afterEvaluate {
+        it.getPlugins().apply("idea")
+        it.getPlugins().apply(AndroidPlugin)
+    }
+}

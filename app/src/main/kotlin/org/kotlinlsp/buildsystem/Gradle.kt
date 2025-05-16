@@ -15,7 +15,8 @@ import org.kotlinlsp.analysis.ProgressNotifier
 import org.kotlinlsp.analysis.modules.LibraryModule
 import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.analysis.modules.SourceModule
-import org.kotlinlsp.common.info
+import org.kotlinlsp.common.getCachePath
+import java.io.ByteArrayOutputStream
 import java.io.File
 
 class GradleBuildSystem(
@@ -34,6 +35,7 @@ class GradleBuildSystem(
     )
 
     override fun resolveRootModuleIfNeeded(cachedMetadata: String?): Pair<Module, String?>? {
+        val androidVariant = "debug"    // TODO Make it a config parameter
         if(!shouldReloadGradleProject(cachedMetadata)) {
             return null
         }
@@ -43,13 +45,18 @@ class GradleBuildSystem(
             .forProjectDirectory(File(rootFolder))
             .connect()
 
-        val model = connection.model(IdeaProject::class.java)
-
-        model.addProgressListener({
+        val output = ByteArrayOutputStream()
+        val androidInitScript = getAndroidInitScriptFile(rootFolder)
+        val ideaProject = connection
+            .model(IdeaProject::class.java)
+            .withArguments("--init-script", androidInitScript.absolutePath, "-DandroidVariant=${androidVariant}")
+            .setStandardOutput(output)
+            .addProgressListener({
             progressNotifier.onReportProgress(WorkDoneProgressKind.report, PROGRESS_TOKEN, "[GRADLE] ${it.displayName}")
         }, OperationType.PROJECT_CONFIGURATION)
+            .get()
 
-        val ideaProject = model.get()
+        println(output)
 
         val jvmTarget = checkNotNull(JvmTarget.fromString(ideaProject.jdkName)) { "Unknown jdk target" }
         val jdkModule = ideaProject.javaLanguageSettings?.jdk?.let { jdk ->
@@ -81,7 +88,7 @@ class GradleBuildSystem(
             if (jdkModule != null) {
                 allDependencies.add(jdkModule)
             }
-
+            
             SourceModule(
                 id = module.name,
                 project = project,
@@ -92,16 +99,13 @@ class GradleBuildSystem(
             )
         }
 
-        ideaProject.modules.forEach {
-            println(it.contentRoots.first().rootDirectory.absolutePath)
-        }
-
         // TODO Support multiple modules, for now take the last one
         val rootModule = modules.last()
         progressNotifier.onReportProgress(WorkDoneProgressKind.end, PROGRESS_TOKEN, "[GRADLE] Done")
 
         val metadata = Gson().toJson(computeGradleMetadata(ideaProject))
         connection.close()
+        androidInitScript.delete()
         return Pair(rootModule, metadata)
     }
 }
@@ -155,4 +159,16 @@ private fun shouldReloadGradleProject(metadataString: String?): Boolean {
     }
 
     return false
+}
+
+private fun getAndroidInitScriptFile(rootFolder: String): File {
+    val inputStream = object {}.javaClass.getResourceAsStream("/android.init.gradle")
+    val scriptFile = getCachePath(rootFolder).resolve(".android.init.gradle").toFile()
+    scriptFile.delete()
+
+    scriptFile.outputStream().use { out ->
+        inputStream.copyTo(out)
+    }
+
+    return scriptFile
 }
