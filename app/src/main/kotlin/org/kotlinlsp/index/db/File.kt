@@ -18,17 +18,15 @@ data class File(
 ) {
     companion object {
         fun fromKtFile(ktFile: KtFile, project: Project, indexed: Boolean): File = project.read {
-            analyze(ktFile) {
-                val packageFqName = ktFile.packageFqName.asString()
-                val file = File(
-                    packageFqName = packageFqName,
-                    path = ktFile.virtualFile.url,
-                    lastModified = Instant.ofEpochMilli(ktFile.virtualFile.timeStamp),
-                    modificationStamp = ktFile.modificationStamp,
-                    indexed = indexed,
-                )
-                file
-            }
+            val packageFqName = ktFile.packageFqName.asString()
+            val file = File(
+                packageFqName = packageFqName,
+                path = ktFile.virtualFile.url,
+                lastModified = Instant.ofEpochMilli(ktFile.virtualFile.timeStamp),
+                modificationStamp = ktFile.modificationStamp,
+                indexed = indexed,
+            )
+            file
         }
 
         // Check if the file record has been modified since last time
