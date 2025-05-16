@@ -37,6 +37,13 @@ class Registrar(val project: MockProject, val app: MockApplication, val disposab
         project.registerService(interfaceClass, implClass)
     }
 
+    fun <T : Any> projectServiceSingleton(interfaceName: String, className: String) {
+        val interfaceClass = project.loadClass<T>(interfaceName, pluginDescriptor)
+        val implClass = project.loadClass<T>(className, pluginDescriptor)
+        val implClassInstance = implClass.getDeclaredConstructor().newInstance()
+        project.registerService(interfaceClass, implClassInstance)
+    }
+
     fun appService(interfaceName: String, className: String) {
         val interfaceClass = app.loadClass<JvmType.Object>(interfaceName, pluginDescriptor)
         val implClass = app.loadClass<JvmType.Object>(className, pluginDescriptor)

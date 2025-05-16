@@ -3,6 +3,7 @@ package org.kotlinlsp.lsp
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.services.*
+import org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeToken
 import org.kotlinlsp.analysis.AnalysisSession
 import org.kotlinlsp.analysis.AnalysisSessionNotifier
 import org.kotlinlsp.common.getLspVersion

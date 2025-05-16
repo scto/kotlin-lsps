@@ -1,6 +1,7 @@
 package org.kotlinlsp.analysis.registration
 
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.analysis.api.platform.lifetime.KaLifetimeTracker
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
 
 fun Registrar.analysisApiImplBase() {
@@ -43,7 +44,7 @@ fun Registrar.analysisApiImplBase() {
         "org.jetbrains.kotlin.analysis.api.platform.projectStructure.KaResolutionScopeProvider",
         "org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBaseResolutionScopeProvider"
     )
-    projectService(
+    projectServiceSingleton<KaLifetimeTracker>(
         "org.jetbrains.kotlin.analysis.api.platform.lifetime.KaLifetimeTracker",
         "org.jetbrains.kotlin.analysis.api.impl.base.lifetime.KaBaseLifetimeTracker"
     )

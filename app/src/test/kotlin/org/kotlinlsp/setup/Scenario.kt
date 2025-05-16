@@ -56,6 +56,7 @@ fun scenario(
             }
         )
     }
+
     val client = mock(LanguageClient::class.java)
     `when`(client.logMessage(any())).thenAnswer {
         val params = it.getArgument<MessageParams>(0)
