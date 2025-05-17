@@ -2,13 +2,10 @@ package org.kotlinlsp.analysis.modules
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
-import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
@@ -24,10 +21,10 @@ private data class SerializedModule(
     val isJdk: Boolean? = null,
 )
 
-fun serializeRootModule(rootModule: Module): String {
+fun serializeModules(modules: List<Module>): String {
     val visited = LinkedHashMap<String, SerializedModule>()
     val stack = ArrayDeque<Module>()
-    stack.add(rootModule)
+    stack.addAll(modules)
 
     while (stack.isNotEmpty()) {
         val current = stack.removeLast()
@@ -59,33 +56,30 @@ fun serializeRootModule(rootModule: Module): String {
     return GsonBuilder().setPrettyPrinting().create().toJson(visited.values)
 }
 
-fun deserializeRootModule(
+fun deserializeModules(
     data: String,
     appEnvironment: KotlinCoreApplicationEnvironment,
     project: Project
-): Module {
+): List<Module> {
     val gson = Gson()
     val modules: List<SerializedModule> = gson.fromJson(data, Array<SerializedModule>::class.java).toList()
-
-    val allIds = modules.map { it.id }.toSet()
-    val dependencyIds = modules.flatMap { it.dependencies }.toSet()
-    val rootIds = allIds - dependencyIds
-    val rootId = rootIds.first()
-
     val moduleMap = modules.associateBy { it.id }
-    val built = mutableMapOf<String, Module>()
+    val builtModules = mutableMapOf<String, Module>()
 
     fun build(id: String): Module {
-        if (built.containsKey(id)) return built[id]!!
+        if (builtModules.containsKey(id)) return builtModules[id]!!
         val serialized = moduleMap[id]!!
         val deps = serialized.dependencies.map { build(it) }
         val module = buildModule(serialized, deps, project, appEnvironment)
-        built[id] = module
+        builtModules[id] = module
         return module
     }
 
-    val rootModule = build(rootId)
-    return rootModule
+    return modules
+        .asSequence()
+        .filter { it.isSource }
+        .map { build(it.id) }
+        .toList()
 }
 
 private fun buildModule(

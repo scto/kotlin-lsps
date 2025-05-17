@@ -6,7 +6,6 @@ import com.intellij.mock.MockProject
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.roots.PackageIndex
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.jar.CoreJarFileSystem
 import com.intellij.psi.PsiDocumentManager
@@ -17,12 +16,10 @@ import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.eclipse.lsp4j.*
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
-import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
-import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolver
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDirectInheritorsProvider
@@ -32,7 +29,6 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProv
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.*
 import org.jetbrains.kotlin.cli.jvm.index.JavaRoot
@@ -59,8 +55,6 @@ import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.common.*
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.IndexNotifier
-import org.kotlinlsp.index.queries.subpackageNames
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.absolutePathString
 
 interface DiagnosticsNotifier {
@@ -104,16 +98,18 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
 
         // Get the modules to analyze calling the appropriate build system
         buildSystemResolver = BuildSystemResolver(project, appEnvironment, notifier, rootPath)
-        val rootModule = buildSystemResolver.resolveModuleDAG()
+        val modules = buildSystemResolver.resolveModules()
 
         // Create the index
-        index = Index(rootModule, project, rootPath, notifier)
+        index = Index(modules, project, rootPath, notifier)
 
         // Prepare the dependencies index for the Analysis API
         project.setupHighestLanguageLevel()
         val librariesScope = ProjectScope.getLibrariesScope(project)
         val libraryRoots = mutableListOf<JavaRoot>()
-        fetchLibraryRoots(rootModule, libraryRoots)
+        modules.forEach {
+            fetchLibraryRoots(it, libraryRoots)
+        }
 
         val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
         val javaModuleFinder = CliJavaModuleFinder(null, null, javaFileManager, project, null)
@@ -166,10 +162,10 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
 
         // Setup platform services
         (project.getService(KotlinModuleDependentsProvider::class.java) as ModuleDependentsProvider).setup(
-            rootModule.kaModule
+            modules
         )
         (project.getService(KotlinProjectStructureProvider::class.java) as ProjectStructureProvider).setup(
-            rootModule.kaModule,
+            modules,
             project
         )
         (project.getService(KotlinPackageProviderFactory::class.java) as PackageProviderFactory).setup(project, index)
@@ -181,7 +177,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
             libraryRoots
         )
         (project.getService(KotlinAnnotationsResolverFactory::class.java) as AnnotationsResolverFactory).setup(project, index)
-        (project.getService(KotlinDirectInheritorsProvider::class.java) as DirectInheritorsProvider).setup(project, index, rootModule)
+        (project.getService(KotlinDirectInheritorsProvider::class.java) as DirectInheritorsProvider).setup(project, index, modules)
 
         commandProcessor = app.getService(CommandProcessor::class.java)
         psiDocumentManager = PsiDocumentManager.getInstance(project)

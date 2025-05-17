@@ -1,14 +1,12 @@
 package org.kotlinlsp.buildsystem
 
 import com.google.gson.Gson
-import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.kotlinlsp.analysis.ProgressNotifier
 import org.kotlinlsp.analysis.modules.Module
-import org.kotlinlsp.analysis.modules.deserializeRootModule
-import org.kotlinlsp.analysis.modules.serializeRootModule
+import org.kotlinlsp.analysis.modules.deserializeModules
+import org.kotlinlsp.analysis.modules.serializeModules
 import org.kotlinlsp.common.getCachePath
 import org.kotlinlsp.common.info
 import org.kotlinlsp.common.profile
@@ -33,34 +31,34 @@ class BuildSystemResolver(
         GradleBuildSystem(project, appEnvironment, rootFolder, progressNotifier)
     )
 
-    fun resolveModuleDAG(): Module = profile("BuildSystemResolver", "") {
+    fun resolveModules(): List<Module> = profile("BuildSystemResolver", "") {
         val version = readVersionFile(versionFile)
 
         BUILD_SYSTEMS.forEach {
             if(it.markerFiles.any { File(it).exists() }) {
                 val cachedVersion = getCachedVersionForBuildSystem(it::class.java.simpleName, version)
                 val cachedModules = getCachedModules()
-                val resolvedModules = it.resolveRootModuleIfNeeded(if(cachedModules != null) { cachedVersion } else { null })
+                val result = it.resolveModulesIfNeeded(if(cachedModules != null) { cachedVersion } else { null })
 
-                if(resolvedModules == null ) {
+                if(result == null) {
                     if(cachedModules != null) {
                         info("Retrieved cached modules for ${it::class.java.simpleName} buildsystem")
                         return@profile cachedModules
                     }
                 } else {
-                    val newVersion = resolvedModules.second
-                    if(newVersion != null) {
+                    val newMetadata = result.metadata
+                    if(newMetadata != null) {
                         cachedModulesFile.deleteIfExists()
                         versionFile.deleteIfExists()
-                        val serializedCachedModules = serializeRootModule(resolvedModules.first)
+                        val serializedCachedModules = serializeModules(result.modules)
                         val serializedVersionData = Gson().toJson(BuildSystemVersion(
-                            version = newVersion,
+                            version = newMetadata,
                             buildSystemName = it::class.java.simpleName
                         ))
                         File(cachedModulesFile.toUri()).writeText(serializedCachedModules)
                         File(versionFile.toUri()).writeText(serializedVersionData)
                     }
-                    return@profile resolvedModules.first
+                    return@profile result.modules
                 }
             }
         }
@@ -85,12 +83,11 @@ class BuildSystemResolver(
         return version.version
     }
 
-    private fun getCachedModules(): Module? {
+    private fun getCachedModules(): List<Module>? {
         val file = File(cachedModulesFile.toUri())
         if(!file.exists()) return null
         try {
-            val rootModule = deserializeRootModule(file.readText(), appEnvironment, project)
-            return rootModule
+            return deserializeModules(file.readText(), appEnvironment, project)
         } catch(_: Exception) {
             return null
         }

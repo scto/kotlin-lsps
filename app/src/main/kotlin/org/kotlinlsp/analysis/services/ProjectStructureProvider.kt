@@ -7,16 +7,25 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.kotlinlsp.analysis.modules.Module
+import org.kotlinlsp.analysis.modules.NotUnderContentRootModule
 import org.kotlinlsp.common.profile
-import org.kotlinlsp.common.read
 import org.kotlinlsp.common.trace
 
 class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
-    private lateinit var rootModule: KaModule
+    private lateinit var modules: List<Module>
     private lateinit var project: Project
 
-    fun setup(rootModule: KaModule, project: Project) {
-        this.rootModule = rootModule
+    private val notUnderContentRootModuleWithoutPsiFile by lazy {
+        NotUnderContentRootModule(
+            name = "unnamed-outside-content-root",
+            moduleDescription = "not-under-content-root module without a PSI file.",
+            project = project,
+        )
+    }
+
+    fun setup(modules: List<Module>, project: Project) {
+        this.modules = modules
         this.project = project
     }
 
@@ -26,15 +35,27 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
 
     override fun getModule(element: PsiElement, useSiteModule: KaModule?): KaModule = profile("getModule", "$element, useSiteModule: $useSiteModule") {
         val virtualFile = element.containingFile.virtualFile
-        searchVirtualFileInModule(virtualFile, useSiteModule ?: rootModule)!!
+        val visited = mutableSetOf<KaModule>()
+
+        modules.forEach {
+            val moduleFound = searchVirtualFileInModule(virtualFile, useSiteModule ?: it.kaModule, visited)
+            if(moduleFound != null) return@profile moduleFound
+        }
+
+        return@profile NotUnderContentRootModule(
+            file = element.containingFile,
+            name = "unnamed-outside-content-root",
+            moduleDescription = "Standalone not-under-content-root module with a PSI file.",
+            project = project,
+        )
     }
 
-    private fun searchVirtualFileInModule(virtualFile: VirtualFile, module: KaModule, visited: MutableSet<KaModule> = mutableSetOf()): KaModule? {
+    private fun searchVirtualFileInModule(virtualFile: VirtualFile, module: KaModule, visited: MutableSet<KaModule>): KaModule? {
         if(visited.contains(module)) return null
         if(module.contentScope.contains(virtualFile)) return module
 
         for(it in module.directRegularDependencies) {
-            val submodule = searchVirtualFileInModule(virtualFile, it)
+            val submodule = searchVirtualFileInModule(virtualFile, it, visited)
             if(submodule != null) return submodule
         }
 
@@ -45,6 +66,6 @@ class ProjectStructureProvider: KotlinProjectStructureProviderBase() {
     @OptIn(KaPlatformInterface::class)
     override fun getNotUnderContentRootModule(project: Project): KaNotUnderContentRootModule {
         trace("getNotUnderContentRootModule")
-        throw Exception("unsupported")
+        return notUnderContentRootModuleWithoutPsiFile
     }
 }

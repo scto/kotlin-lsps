@@ -4,23 +4,34 @@ import com.intellij.util.containers.ContainerUtil.createConcurrentSoftMap
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinModuleDependentsProviderBase
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
+import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.common.profile
 
 class ModuleDependentsProvider: KotlinModuleDependentsProviderBase() {
-    private lateinit var rootModule: KaModule
+    private lateinit var modules: List<Module>
 
-    fun setup(rootModule: KaModule) {
-        this.rootModule = rootModule
+    fun setup(modules: List<Module>) {
+        this.modules = modules
     }
 
     private val directDependentsByKtModule: Map<KaModule, Set<KaModule>> by lazy {
-        buildDependentsMap(rootModule) { it.allDirectDependencies() }
+        modules
+            .asSequence()
+            .map {
+                buildDependentsMap(it.kaModule) { it.allDirectDependencies() }
+            }
+            .reduce { ac, it -> ac + it }
     }
 
     private val transitiveDependentsByKtModule = createConcurrentSoftMap<KaModule, Set<KaModule>>()
 
     private val refinementDependentsByKtModule: Map<KaModule, Set<KaModule>> by lazy {
-        buildDependentsMap(rootModule) { it.transitiveDependsOnDependencies.asSequence() }
+        modules
+            .asSequence()
+            .map {
+                buildDependentsMap(it.kaModule) { it.transitiveDependsOnDependencies.asSequence() }
+            }
+            .reduce { ac, it -> ac + it }
     }
 
     override fun getDirectDependents(module: KaModule): Set<KaModule> = profile("getDirectDependents", "$module") {

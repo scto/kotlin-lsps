@@ -21,22 +21,22 @@ import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.getImportedSimpleNameByImportAlias
 import org.jetbrains.kotlin.psi.psiUtil.getSuperNames
 import org.kotlinlsp.analysis.modules.Module
-import org.kotlinlsp.analysis.modules.getModuleList
+import org.kotlinlsp.analysis.modules.asFlatSequence
 import org.kotlinlsp.common.profile
 import org.kotlinlsp.index.Index
 
 class DirectInheritorsProvider: KotlinDirectInheritorsProvider {
     private lateinit var index: Index
-    private lateinit var rootModule: Module
+    private lateinit var modules: List<Module>
     private lateinit var project: Project
 
     private val classesBySupertypeName = mutableMapOf<Name, MutableSet<KtClassOrObject>>()
     private val inheritableTypeAliasesByAliasedName = mutableMapOf<Name, MutableSet<KtTypeAlias>>()
 
-    fun setup(project: Project, index: Index, rootModule: Module) {
+    fun setup(project: Project, index: Index, modules: List<Module>) {
         this.project = project
         this.index = index
-        this.rootModule = rootModule
+        this.modules = modules
     }
 
     @OptIn(SymbolInternals::class)
@@ -66,7 +66,7 @@ class DirectInheritorsProvider: KotlinDirectInheritorsProvider {
         classesBySupertypeName.clear()
         inheritableTypeAliasesByAliasedName.clear()
 
-        rootModule.getModuleList()
+        modules.asFlatSequence()
             .filter { it.isSourceModule }
             .map { it.computeFiles() }
             .flatten()

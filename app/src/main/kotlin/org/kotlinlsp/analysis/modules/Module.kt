@@ -14,15 +14,24 @@ interface Module {
     fun computeFiles(): Sequence<VirtualFile>
 }
 
-fun Module.getModuleList() = getModuleListInternal(this)
+fun List<Module>.asFlatSequence(): Sequence<Module> {
+    val processedModules = mutableSetOf<String>()
 
-private fun getModuleListInternal(module: Module, processedModules: MutableSet<String> = mutableSetOf()): Sequence<Module> = sequence {
+    return this
+        .asSequence()
+        .map {
+            getModuleFlatSequence(it, processedModules)
+        }
+        .flatten()
+}
+
+private fun getModuleFlatSequence(module: Module, processedModules: MutableSet<String>): Sequence<Module> = sequence {
     if(processedModules.contains(module.id)) return@sequence
 
     yield(module)
 
     module.dependencies.forEach {
-        yieldAll(getModuleListInternal(it, processedModules))
+        yieldAll(getModuleFlatSequence(it, processedModules))
     }
 
     processedModules.add(module.id)

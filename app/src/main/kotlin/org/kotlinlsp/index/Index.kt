@@ -18,7 +18,7 @@ interface IndexNotifier {
 }
 
 class Index(
-    rootModule: Module,
+    modules: List<Module>,
     private val project: Project,
     rootFolder: String,
     notifier: IndexNotifier
@@ -34,7 +34,7 @@ class Index(
     private val db = Database(rootFolder)
     private val workerThreadRunner = WorkerThread(db, project, workerThreadNotifier)
     private val workerThread = Thread(workerThreadRunner, "KotlinLSP-Worker")
-    private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, rootModule)
+    private val scanFilesThreadRunner = ScanFilesThread(workerThreadRunner, modules)
     private val scanFilesThread = Thread(scanFilesThreadRunner, "KotlinLSP-ScanFiles")
     private val openedFiles: MutableMap<String, KtFile> = ConcurrentHashMap()
 

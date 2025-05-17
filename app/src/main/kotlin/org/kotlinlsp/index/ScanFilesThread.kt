@@ -1,20 +1,20 @@
 package org.kotlinlsp.index
 
 import org.kotlinlsp.analysis.modules.Module
-import org.kotlinlsp.analysis.modules.getModuleList
+import org.kotlinlsp.analysis.modules.asFlatSequence
 import org.kotlinlsp.index.worker.WorkerThread
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ScanFilesThread(
     private val worker: WorkerThread,
-    private val rootModule: Module
+    private val modules: List<Module>
 ) : Runnable {
     private val shouldStop = AtomicBoolean(false)
 
     override fun run() {
 
         // Scan phase
-        rootModule.getModuleList()
+        modules.asFlatSequence()
             .filter { it.isSourceModule }
             .map { it.computeFiles() }
             .flatten()
@@ -27,7 +27,7 @@ class ScanFilesThread(
         worker.submitCommand(Command.SourceScanningFinished)
 
         // Once scanning is done and the analysis API is available, index all files (Index phase)
-        rootModule.getModuleList()
+        modules.asFlatSequence()
             // Scan source files first as they will be more frequently accessed by the user
             .sortedByDescending { it.isSourceModule }
             .map { it.computeFiles() }

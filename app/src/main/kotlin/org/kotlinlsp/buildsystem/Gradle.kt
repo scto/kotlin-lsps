@@ -34,7 +34,7 @@ class GradleBuildSystem(
         "$rootFolder/settings.gradle", "$rootFolder/settings.gradle.kts",
     )
 
-    override fun resolveRootModuleIfNeeded(cachedMetadata: String?): Pair<Module, String?>? {
+    override fun resolveModulesIfNeeded(cachedMetadata: String?): BuildSystem.Result? {
         val androidVariant = "debug"    // TODO Make it a config parameter
         if(!shouldReloadGradleProject(cachedMetadata)) {
             return null
@@ -106,7 +106,7 @@ class GradleBuildSystem(
         val metadata = Gson().toJson(computeGradleMetadata(ideaProject))
         connection.close()
         androidInitScript.delete()
-        return Pair(rootModule, metadata)
+        return BuildSystem.Result(listOf(rootModule), metadata)
     }
 }
 
