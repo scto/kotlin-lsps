@@ -19,7 +19,7 @@ Right now, this language server is at its infancy and thus not ready to use for 
 - ✅ Real time diagnostics: working for this codebase
 - ✅ Hover: fully working
 - 🚧 Go to definition: working except for kotlin binary dependencies (considering using the background index for this if we cannot make it work), it would also be nice to use a decompiler to jump into .class files (the analysis api provides `KotlinClassFileDecompiler` for kotlin .class files, fernflower may be used for java .class files)
-- 🚧 Build system integration: there is basic support for single module gradle projects available, but needs work to support multimodule projects and Android projects.
+- 🚧 Build system integration: there is support for single module gradle projects available, but needs work to support multimodule projects, Android projects and KMP projects
 
 ## Installing
 We provide a distribution zip file, which you can download from [GitHub Releases](https://github.com/amgdev9/kotlin-lsp/releases/latest). Alternatively, there are unofficial methods to install it, provided by the community:
@@ -41,14 +41,6 @@ vim.lsp.config['kotlinlsp'] = {
     root_dir = root_dir
 }
 vim.lsp.enable('kotlinlsp')
-```
-
-We need to do an extra step to configure the modules which will be used by the LSP. As of today the language server does not have integrations with build systems like gradle, so for the time being the modules used are read from a `.kotlinlsp-modules.json` file. To set it up, run these commands:
-
-```bash
-cp .kotlinlsp-modules.template.json .kotlinlsp-modules.json
-# Changes the template with your home folder so jar dependencies are picked up correctly
-sed -i "s|<your-home-folder>|$HOME|g" .kotlinlsp-modules.json
 ```
 
 After that, run the code editor in a kotlin file from this project and you should see diagnostics being reported. In the `Log.kt` file you can configure the verbosity of the logs.
