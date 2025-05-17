@@ -36,6 +36,7 @@ class GradleBuildSystem(
 
     override fun resolveModulesIfNeeded(cachedMetadata: String?): BuildSystem.Result? {
         val androidVariant = "debug"    // TODO Make it a config parameter
+
         if(!shouldReloadGradleProject(cachedMetadata)) {
             return null
         }
@@ -59,7 +60,7 @@ class GradleBuildSystem(
         println(output)
 
         val jvmTarget = checkNotNull(JvmTarget.fromString(ideaProject.jdkName)) { "Unknown jdk target" }
-        val jdkModule = ideaProject.javaLanguageSettings?.jdk?.let { jdk ->
+        val jdkModule = ideaProject.javaLanguageSettings.jdk?.let { jdk ->
             LibraryModule(
                 id = "JDK ${jvmTarget.description}",
                 appEnvironment = appEnvironment,
@@ -70,43 +71,73 @@ class GradleBuildSystem(
             )
         }
 
-        val modules = ideaProject.modules.map { module ->
-            val dependencies = module
-                .dependencies
-                .filterIsInstance<IdeaSingleEntryLibraryDependency>()
-                .map { dependency ->
-                    LibraryModule(
-                        id = dependency.file.name,
-                        appEnvironment = appEnvironment,
-                        project = project,
-                        javaVersion = jvmTarget,
-                        contentRoots = listOf(dependency.file.toPath()),
-                    )
+        val modules = ideaProject
+            .modules
+            .asSequence()
+            .mapNotNull { module ->
+                val contentRoot =
+                    module.contentRoots.first()   // Don't know in which cases we would have multiple contentRoots
+                val sourceDirs = contentRoot.sourceDirectories.map { it.directory.toPath() }
+                val testDirs = contentRoot.testDirectories.map { it.directory.toPath() }
+
+                // Ignore empty modules
+                if(sourceDirs.isEmpty()) return@mapNotNull null
+
+                // Seems that dependencies are the same for source and test source-sets?
+                val dependencies: MutableList<Module> = module
+                    .dependencies
+                    .filterIsInstance<IdeaSingleEntryLibraryDependency>()
+                    .map { dependency ->
+                        LibraryModule(
+                            id = dependency.file.name,
+                            appEnvironment = appEnvironment,
+                            project = project,
+                            javaVersion = jvmTarget,
+                            contentRoots = listOf(dependency.file.toPath()),
+                        )
+                    }
+                    .toMutableList()
+
+                if (jdkModule != null) {
+                    dependencies.add(jdkModule)
                 }
 
-            val allDependencies: MutableList<Module> = dependencies.toMutableList()
-            if (jdkModule != null) {
-                allDependencies.add(jdkModule)
-            }
-            
-            SourceModule(
-                id = module.name,
-                project = project,
-                contentRoots = listOf(module.contentRoots.first().rootDirectory.toPath()),
-                dependencies = allDependencies,
-                javaVersion = jvmTarget,
-                kotlinVersion = LanguageVersion.KOTLIN_2_1,
-            )
-        }
+                val sourceModule = SourceModule(
+                    id = module.name,
+                    project = project,
+                    contentRoots = sourceDirs,
+                    dependencies = dependencies,
+                    javaVersion = jvmTarget,
+                    kotlinVersion = LanguageVersion.KOTLIN_2_1,
+                )
 
-        // TODO Support multiple modules, for now take the last one
-        val rootModule = modules.last()
+                if (testDirs.isEmpty()) return@mapNotNull listOf(sourceModule)
+
+                val testDependencies = dependencies.toMutableList()
+                testDependencies.add(sourceModule)
+
+                val testModule = SourceModule(
+                    id = module.name,
+                    project = project,
+                    contentRoots = testDirs,
+                    dependencies = testDependencies,
+                    javaVersion = jvmTarget,
+                    kotlinVersion = LanguageVersion.KOTLIN_2_1,
+                )
+
+                return@mapNotNull listOf(sourceModule, testModule)
+            }
+            .flatten()
+            .toList()
+
         progressNotifier.onReportProgress(WorkDoneProgressKind.end, PROGRESS_TOKEN, "[GRADLE] Done")
 
         val metadata = Gson().toJson(computeGradleMetadata(ideaProject))
+
         connection.close()
         androidInitScript.delete()
-        return BuildSystem.Result(listOf(rootModule), metadata)
+
+        return BuildSystem.Result(modules, metadata)
     }
 }
 

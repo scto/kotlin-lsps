@@ -13,6 +13,7 @@ import org.kotlinlsp.buildsystem.GradleBuildSystem
 import org.mockito.Mockito.mock
 import java.nio.file.Paths
 import org.kotlinlsp.analysis.modules.Module
+import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
 class Gradle {
@@ -45,19 +46,36 @@ class Gradle {
     fun `loads single module project successfully`() = scenario("single-module") { buildSystem ->
         // Act
         val (modules, _) = buildSystem.resolveModulesIfNeeded(cachedMetadata = null)!!
-        val rootModule = modules.first()
 
         // Assert
-        assertEquals(rootModule.isSourceModule, true)
-        assertEquals(rootModule.contentRoots.first().absolutePathString(), "$cwd/test-projects/single-module/app")
-        assertEquals(rootModule.dependencies.size, 3)
-        rootModule.dependencies.forEach {
+        assertEquals(modules.size, 2)
+        assertEquals(modules[0].isSourceModule, true)
+        assertEquals(
+            modules[0].contentRoots,
+            listOf(
+                Path("$cwd/test-projects/single-module/app/src/main/java"),
+                Path("$cwd/test-projects/single-module/app/src/main/kotlin"),
+            )
+        )
+        assertEquals(modules[0].dependencies.size, 3)
+        modules[0].dependencies.forEach {
             assertEquals(it.dependencies.size, 0)
             assertEquals(it.contentRoots.size, 1)
         }
-        val depNames = rootModule.dependencies.map { it.firstContentRootFilename() }.toSet()
+        val depNames = modules[0].dependencies.map { it.firstContentRootFilename() }.toSet()
         assertTrue("annotations-13.0.jar" in depNames)
         assertTrue("kotlin-stdlib-2.1.20.jar" in depNames)
+
+        assertEquals(modules[1].isSourceModule, true)
+        assertEquals(
+            modules[1].contentRoots,
+            listOf(
+                Path("$cwd/test-projects/single-module/app/src/test/java"),
+                Path("$cwd/test-projects/single-module/app/src/test/kotlin"),
+            )
+        )
+        assertEquals(modules[1].dependencies.size, 4)
+        assertEquals(modules[1].dependencies.filter { it.isSourceModule }.size, 1)
     }
 
     @Test
