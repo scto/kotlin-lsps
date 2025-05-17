@@ -16,6 +16,7 @@ import org.kotlinlsp.analysis.modules.LibraryModule
 import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.analysis.modules.SourceModule
 import org.kotlinlsp.common.getCachePath
+import org.kotlinlsp.common.info
 import java.io.ByteArrayOutputStream
 import java.io.File
 
@@ -37,7 +38,7 @@ class GradleBuildSystem(
     override fun resolveModulesIfNeeded(cachedMetadata: String?): BuildSystem.Result? {
         val androidVariant = "debug"    // TODO Make it a config parameter
 
-        if(!shouldReloadGradleProject(cachedMetadata)) {
+        if (!shouldReloadGradleProject(cachedMetadata)) {
             return null
         }
 
@@ -53,8 +54,12 @@ class GradleBuildSystem(
             .withArguments("--init-script", androidInitScript.absolutePath, "-DandroidVariant=${androidVariant}")
             .setStandardOutput(output)
             .addProgressListener({
-            progressNotifier.onReportProgress(WorkDoneProgressKind.report, PROGRESS_TOKEN, "[GRADLE] ${it.displayName}")
-        }, OperationType.PROJECT_CONFIGURATION)
+                progressNotifier.onReportProgress(
+                    WorkDoneProgressKind.report,
+                    PROGRESS_TOKEN,
+                    "[GRADLE] ${it.displayName}"
+                )
+            }, OperationType.PROJECT_CONFIGURATION)
             .get()
 
         println(output)
@@ -81,46 +86,62 @@ class GradleBuildSystem(
                 val testDirs = contentRoot.testDirectories.map { it.directory.toPath() }
 
                 // Ignore empty modules
-                if(sourceDirs.isEmpty()) return@mapNotNull null
+                if (sourceDirs.isEmpty()) return@mapNotNull null
 
                 // Seems that dependencies are the same for source and test source-sets?
-                val dependencies: MutableList<Module> = module
+                val (testIdeaDeps, sourceIdeaDeps) = module
                     .dependencies
                     .filterIsInstance<IdeaSingleEntryLibraryDependency>()
-                    .map { dependency ->
+                    .filter { it.scope.scope != "RUNTIME" } // We don't need runtime deps for an LSP
+                    .partition { it.scope.scope == "TEST" }
+
+                val sourceDeps: MutableList<Module> = sourceIdeaDeps
+                    .map {
                         LibraryModule(
-                            id = dependency.file.name,
+                            id = it.file.name,
                             appEnvironment = appEnvironment,
                             project = project,
                             javaVersion = jvmTarget,
-                            contentRoots = listOf(dependency.file.toPath()),
+                            contentRoots = listOf(it.file.toPath()),
+                        )
+                    }
+                    .toMutableList()
+
+                val testDeps: MutableList<Module> = testIdeaDeps
+                    .map {
+                        LibraryModule(
+                            id = it.file.name,
+                            appEnvironment = appEnvironment,
+                            project = project,
+                            javaVersion = jvmTarget,
+                            contentRoots = listOf(it.file.toPath()),
                         )
                     }
                     .toMutableList()
 
                 if (jdkModule != null) {
-                    dependencies.add(jdkModule)
+                    sourceDeps.add(jdkModule)
                 }
 
                 val sourceModule = SourceModule(
                     id = module.name,
                     project = project,
                     contentRoots = sourceDirs,
-                    dependencies = dependencies,
+                    dependencies = sourceDeps,
                     javaVersion = jvmTarget,
                     kotlinVersion = LanguageVersion.KOTLIN_2_1,
                 )
 
                 if (testDirs.isEmpty()) return@mapNotNull listOf(sourceModule)
 
-                val testDependencies = dependencies.toMutableList()
-                testDependencies.add(sourceModule)
+                testDeps.add(sourceModule)
+                testDeps.addAll(sourceDeps)
 
                 val testModule = SourceModule(
                     id = "${module.name}-test",
                     project = project,
                     contentRoots = testDirs,
-                    dependencies = testDependencies,
+                    dependencies = testDeps,
                     javaVersion = jvmTarget,
                     kotlinVersion = LanguageVersion.KOTLIN_2_1,
                 )
