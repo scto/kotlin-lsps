@@ -117,7 +117,7 @@ class GradleBuildSystem(
                 testDependencies.add(sourceModule)
 
                 val testModule = SourceModule(
-                    id = module.name,
+                    id = "${module.name}-test",
                     project = project,
                     contentRoots = testDirs,
                     dependencies = testDependencies,
