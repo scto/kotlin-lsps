@@ -202,14 +202,14 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
                 if (cache.contains(module.id)) return
 
                 if (module.isJdk) {
-                    val jdkRoots = LibraryUtils.findClassesFromJdkHome(module.roots.first(), isJre = false).map {
+                    val jdkRoots = LibraryUtils.findClassesFromJdkHome(module.contentRoots.first(), isJre = false).map {
                         val adjustedPath = adjustModulePath(it.absolutePathString())
                         val virtualFile = CoreJrtFileSystem().findFileByPath(adjustedPath)!!
                         return@map JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
                     }
                     roots.addAll(jdkRoots)
                 } else {
-                    module.roots.forEach {
+                    module.contentRoots.forEach {
                         val virtualFile = CoreJarFileSystem().findFileByPath("${it.absolutePathString()}!/")!!
                         val root = JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
                         roots.add(root)

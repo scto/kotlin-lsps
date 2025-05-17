@@ -8,19 +8,20 @@ import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
 private data class SerializedModule(
     val id: String,
     val dependencies: List<String>,
+    val contentRoots: List<String>,
     val javaVersion: String,
+    val isSource: Boolean,
     // SourceModule
-    val sourcePath: String? = null,
     val kotlinVersion: String? = null,
     // LibraryModule
     val isJdk: Boolean? = null,
-    val libraryRoots: List<String>? = null
 )
 
 fun serializeRootModule(rootModule: Module): String {
@@ -36,17 +37,19 @@ fun serializeRootModule(rootModule: Module): String {
         visited[id] = when(current) {
             is SourceModule -> SerializedModule(
                 id = id,
-                sourcePath = current.folderPath,
+                contentRoots = current.contentRoots.map { it.absolutePathString() },
                 kotlinVersion = current.kotlinVersion.versionString,
                 javaVersion = current.javaVersion.toString(),
-                dependencies = current.dependencies.map { it.id }
+                dependencies = current.dependencies.map { it.id },
+                isSource = current.isSourceModule
             )
             is LibraryModule -> SerializedModule(
                 id = id,
-                libraryRoots = current.roots.map { it.absolutePathString() },
+                contentRoots = current.contentRoots.map { it.absolutePathString() },
                 isJdk = current.isJdk,
                 javaVersion = current.javaVersion.toString(),
-                dependencies = current.dependencies.map { it.id }
+                dependencies = current.dependencies.map { it.id },
+                isSource = current.isSourceModule
             )
             else -> throw Exception("Unsupported KaModule!")
         }
@@ -91,12 +94,12 @@ private fun buildModule(
     project: Project,
     appEnvironment: KotlinCoreApplicationEnvironment
 ): Module =
-    if(it.sourcePath != null) {
+    if(it.isSource) {
         SourceModule(
             id = it.id,
             kotlinVersion = LanguageVersion.fromVersionString(it.kotlinVersion!!)!!,
             javaVersion = JvmTarget.fromString(it.javaVersion)!!,
-            folderPath = it.sourcePath,
+            contentRoots = it.contentRoots.map { Path(it) },
             dependencies = deps,
             project = project
         )
@@ -105,7 +108,7 @@ private fun buildModule(
             id = it.id,
             javaVersion = JvmTarget.fromString(it.javaVersion)!!,
             isJdk = it.isJdk!!,
-            roots = it.libraryRoots!!.map { Path(it) },
+            contentRoots = it.contentRoots.map { Path(it) },
             dependencies = deps,
             project = project,
             appEnvironment = appEnvironment,

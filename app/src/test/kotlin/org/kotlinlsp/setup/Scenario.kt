@@ -28,7 +28,8 @@ fun scenario(
                     "JDK 21"
                 ],
                 "javaVersion": "21",
-                "sourcePath": "$cwd/test-projects/$projectName",
+                "contentRoots": ["$cwd/test-projects/$projectName"],
+                "isSource": true,
                 "kotlinVersion": "2.1"
               },
               {
@@ -36,9 +37,8 @@ fun scenario(
                 "dependencies": [],
                 "javaVersion": "21",
                 "isJdk": true,
-                "libraryRoots": [
-                  "$jdkHome"
-                ]
+                "isSource": false,
+                "contentRoots": ["$jdkHome"]
               }
             ]
         """.trimIndent()

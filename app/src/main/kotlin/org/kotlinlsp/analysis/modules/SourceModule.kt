@@ -1,6 +1,5 @@
 package org.kotlinlsp.analysis.modules
 
-import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -15,10 +14,12 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.kotlinlsp.common.read
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 class SourceModule(
     override val id: String,
-    val folderPath: String,
+    override val contentRoots: List<Path>,
     override val dependencies: List<Module>,
     val javaVersion: JvmTarget,
     val kotlinVersion: LanguageVersion,
@@ -27,12 +28,11 @@ class SourceModule(
     override val isSourceModule: Boolean
         get() = true
 
-    override val contentRoots: List<String>
-        get() = listOf(folderPath)
-
     override fun computeFiles(): Sequence<VirtualFile> =
-        File(folderPath)
-            .walk()
+        contentRoots
+            .asSequence()
+            .map { File(it.absolutePathString()).walk() }
+            .flatten()
             .filter { it.isFile && (it.extension == "kt" || it.extension == "java") }
             .map { "file://${it.absolutePath}" }
             .mapNotNull { project.read { VirtualFileManager.getInstance().findFileByUrl(it) } }

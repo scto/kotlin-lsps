@@ -64,7 +64,7 @@ class GradleBuildSystem(
                 id = "JDK ${jvmTarget.description}",
                 appEnvironment = appEnvironment,
                 project = project,
-                roots = listOf(jdk.javaHome.toPath()),
+                contentRoots = listOf(jdk.javaHome.toPath()),
                 javaVersion = jvmTarget,
                 isJdk = true,
             )
@@ -80,7 +80,7 @@ class GradleBuildSystem(
                         appEnvironment = appEnvironment,
                         project = project,
                         javaVersion = jvmTarget,
-                        roots = listOf(dependency.file.toPath()),
+                        contentRoots = listOf(dependency.file.toPath()),
                     )
                 }
 
@@ -92,7 +92,7 @@ class GradleBuildSystem(
             SourceModule(
                 id = module.name,
                 project = project,
-                folderPath = module.contentRoots.first().rootDirectory.path,
+                contentRoots = listOf(module.contentRoots.first().rootDirectory.toPath()),
                 dependencies = allDependencies,
                 javaVersion = jvmTarget,
                 kotlinVersion = LanguageVersion.KOTLIN_2_1,

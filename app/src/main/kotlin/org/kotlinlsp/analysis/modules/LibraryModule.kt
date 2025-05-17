@@ -29,7 +29,7 @@ import kotlin.io.path.absolutePathString
 class LibraryModule(
     override val id: String,
     val appEnvironment: KotlinCoreApplicationEnvironment,
-    val roots: List<Path>,
+    override val contentRoots: List<Path>,
     val javaVersion: JvmTarget,
     override val dependencies: List<Module> = listOf(),
     val isJdk: Boolean = false,
@@ -39,17 +39,14 @@ class LibraryModule(
     override val isSourceModule: Boolean
         get() = false
 
-    override val contentRoots: List<String>
-        get() = roots.map { it.absolutePathString() }
-
     @OptIn(KaImplementationDetail::class)
     override fun computeFiles(): Sequence<VirtualFile> {
         val roots = if (isJdk) {
             // This returns urls to the JMOD files in the jdk
-            project.read { LibraryUtils.findClassesFromJdkHome(roots.first(), isJre = false) }
+            project.read { LibraryUtils.findClassesFromJdkHome(contentRoots.first(), isJre = false) }
         } else {
             // These are JAR/class files
-            roots
+            contentRoots
         }
 
         return roots.asSequence()
@@ -84,7 +81,7 @@ class LibraryModule(
             }
 
             override val binaryRoots: Collection<Path>
-                get() = roots
+                get() = contentRoots
 
             @KaExperimentalApi
             override val binaryVirtualFiles: Collection<VirtualFile>

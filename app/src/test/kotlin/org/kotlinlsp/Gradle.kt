@@ -13,6 +13,7 @@ import org.kotlinlsp.buildsystem.GradleBuildSystem
 import org.mockito.Mockito.mock
 import java.nio.file.Paths
 import org.kotlinlsp.analysis.modules.Module
+import kotlin.io.path.absolutePathString
 
 class Gradle {
     private val cwd = Paths.get("").toAbsolutePath().toString()
@@ -38,7 +39,7 @@ class Gradle {
         }
     }
 
-    private fun Module.firstContentRootFilename() = Paths.get(contentRoots.first()).fileName.toString()
+    private fun Module.firstContentRootFilename() = contentRoots.first().fileName.toString()
 
     @Test
     fun `loads single module project successfully`() = scenario("single-module") { buildSystem ->
@@ -47,7 +48,7 @@ class Gradle {
 
         // Assert
         assertEquals(rootModule.isSourceModule, true)
-        assertEquals(rootModule.contentRoots.first(), "$cwd/test-projects/single-module/app")
+        assertEquals(rootModule.contentRoots.first().absolutePathString(), "$cwd/test-projects/single-module/app")
         assertEquals(rootModule.dependencies.size, 3)
         rootModule.dependencies.forEach {
             assertEquals(it.dependencies.size, 0)

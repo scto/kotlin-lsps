@@ -39,10 +39,10 @@ class BuildSystemResolver(
         BUILD_SYSTEMS.forEach {
             if(it.markerFiles.any { File(it).exists() }) {
                 val cachedVersion = getCachedVersionForBuildSystem(it::class.java.simpleName, version)
-                val resolvedModules = it.resolveRootModuleIfNeeded(cachedVersion)
+                val cachedModules = getCachedModules()
+                val resolvedModules = it.resolveRootModuleIfNeeded(if(cachedModules != null) { cachedVersion } else { null })
 
-                if(resolvedModules == null) {
-                    val cachedModules = getCachedModules()
+                if(resolvedModules == null ) {
                     if(cachedModules != null) {
                         info("Retrieved cached modules for ${it::class.java.simpleName} buildsystem")
                         return@profile cachedModules
