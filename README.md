@@ -19,7 +19,12 @@ Right now, this language server is at its infancy and thus not ready to use for 
 - ✅ Real time diagnostics: working for this codebase
 - ✅ Hover: fully working
 - 🚧 Go to definition: working except for kotlin binary dependencies (considering using the background index for this if we cannot make it work), it would also be nice to use a decompiler to jump into .class files (the analysis api provides `KotlinClassFileDecompiler` for kotlin .class files, fernflower may be used for java .class files)
-- 🚧 Build system integration: there is support for single module gradle projects available, but needs work to support multimodule projects, Android projects and KMP projects
+- 🚧 Build system integration: there is support for
+    * Single module Gradle projects
+    * Single module Android projects (uses debug variant and does not handle source set merging yet)
+    and needs work on:
+    * Multi module Gradle projects
+    * KMP projects (targeting JVM, native target needs investigation on how to do it)
 
 ## Installing
 We provide a distribution zip file, which you can download from [GitHub Releases](https://github.com/amgdev9/kotlin-lsp/releases/latest). Alternatively, there are unofficial methods to install it, provided by the community:

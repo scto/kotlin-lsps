@@ -19,6 +19,10 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+
+      - name: Accept licenses
+        run: yes | sdkmanager --licenses
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
