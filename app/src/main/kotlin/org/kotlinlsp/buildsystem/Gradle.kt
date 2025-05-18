@@ -16,9 +16,10 @@ import org.kotlinlsp.analysis.modules.LibraryModule
 import org.kotlinlsp.analysis.modules.Module
 import org.kotlinlsp.analysis.modules.SourceModule
 import org.kotlinlsp.common.getCachePath
-import org.kotlinlsp.common.info
 import java.io.ByteArrayOutputStream
 import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
 
 class GradleBuildSystem(
     private val project: Project,
@@ -82,7 +83,17 @@ class GradleBuildSystem(
             .mapNotNull { module ->
                 val contentRoot =
                     module.contentRoots.first()   // Don't know in which cases we would have multiple contentRoots
-                val sourceDirs = contentRoot.sourceDirectories.map { it.directory.toPath() }
+                val sourceDirs = contentRoot
+                    .sourceDirectories
+                    // We send android dependencies here as a workaround
+                    .filter { !it.directory.toString().startsWith("jar:") }
+                    .map { it.directory.toPath() }
+                val androidDeps = contentRoot
+                    .sourceDirectories
+                    // We send android dependencies here as a workaround
+                    .filter { it.directory.toString().startsWith("jar:") }
+                    .map { Path(it.directory.toString().removePrefix("jar:")) }
+
                 val testDirs = contentRoot.testDirectories.map { it.directory.toPath() }
 
                 // Ignore empty modules
@@ -107,6 +118,16 @@ class GradleBuildSystem(
                     }
                     .toMutableList()
 
+                sourceDeps.addAll(androidDeps.map {
+                    LibraryModule(
+                        id = it.absolutePathString(),
+                        appEnvironment = appEnvironment,
+                        project = project,
+                        javaVersion = jvmTarget,
+                        contentRoots = listOf(it),
+                    )
+                })
+
                 val testDeps: MutableList<Module> = testIdeaDeps
                     .map {
                         LibraryModule(
@@ -119,7 +140,8 @@ class GradleBuildSystem(
                     }
                     .toMutableList()
 
-                if (jdkModule != null) {
+                // Android projects use embedded JDK in android.jar
+                if (jdkModule != null && androidDeps.isEmpty()) {
                     sourceDeps.add(jdkModule)
                 }
 

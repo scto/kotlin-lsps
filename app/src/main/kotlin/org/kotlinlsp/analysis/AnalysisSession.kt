@@ -55,6 +55,7 @@ import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.common.*
 import org.kotlinlsp.index.Index
 import org.kotlinlsp.index.IndexNotifier
+import java.io.File
 import kotlin.io.path.absolutePathString
 
 interface DiagnosticsNotifier {
@@ -206,6 +207,8 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
                     roots.addAll(jdkRoots)
                 } else {
                     module.contentRoots.forEach {
+                        if(!File(it.absolutePathString()).exists()) return@forEach
+
                         val virtualFile = CoreJarFileSystem().findFileByPath("${it.absolutePathString()}!/")!!
                         val root = JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
                         roots.add(root)

@@ -81,7 +81,20 @@ class Gradle {
     @Test
     fun `loads android project successfully`() = scenario("android") { buildSystem ->
         // Act
-        val (rootModule, _) = buildSystem.resolveModulesIfNeeded(cachedMetadata = null)!!
-        // TODO
+        val (modules, _) = buildSystem.resolveModulesIfNeeded(cachedMetadata = null)!!
+
+        // Assert
+        assertEquals(modules.size, 1)
+        assertEquals(modules[0].isSourceModule, true)
+        assertTrue(modules[0].dependencies.size > 0)
+        assertEquals(
+            modules[0].contentRoots,
+            listOf(
+                Path("$cwd/test-projects/android/app/src/main/kotlin"),
+                Path("$cwd/test-projects/android/app/src/main/java"),
+                Path("$cwd/test-projects/android/app/src/debug/kotlin"),
+                Path("$cwd/test-projects/android/app/src/debug/java"),
+            )
+        )
     }
 }

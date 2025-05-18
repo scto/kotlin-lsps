@@ -14,23 +14,31 @@ class AndroidPlugin implements Plugin<Project> {
 
             IdeaModel ideaModel = (IdeaModel)project.extensions.findByName("idea")
             IdeaModule module = ideaModel.module
-            println(ideaModel.module.sourceDirs)
 
-            android.applicationVariants.all {
-                if (it.name != variant) {
-                    return
-                }
+            android.applicationVariants.all { appVariant ->
+                if (appVariant.name != variant) return
 
-                it.sourceSets.forEach {
-                    println("- SourceSet: ${it.name} ${it.class.name}")
-                    it.kotlinDirectories.forEach {
-                        println("* $it")
-                        module.sourceDirs.add(new File(it.toString()))  // TODO
+                // TODO Handle merge conflicts (e.g. debug sourceset overrides main sourceset)
+                appVariant.sourceSets.forEach {
+                    if(it.name == "test" || it.name == "androidTest") {
+                        it.kotlinDirectories.forEach {
+                            module.testSourceDirs.add(new File(it.toString()))
+                        }
+                    } else {
+                        it.kotlinDirectories.forEach {
+                            module.sourceDirs.add(new File(it.toString()))
+                        }
                     }
                 }
-                println("- Classpath:")
-                it.getCompileClasspath().files.each {
-                    println("* ${it.path}")
+
+                // TODO Handle multiple module dependencies
+                android.bootClasspath.each {
+                    module.sourceDirs.add(new File("jar:${it.path}"))
+                }
+                appVariant.getCompileClasspath().files.each {
+                    // This is a workaround as we cannot add new dependencies to IdeaModel because of project.afterEvaluate
+                    // But we need project.afterEvaluate so appVariant.getCompileClasspath() works
+                    module.sourceDirs.add(new File("jar:${it.path}"))
                 }
             }
         }
