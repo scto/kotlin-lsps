@@ -86,7 +86,7 @@ class Gradle {
         // Assert
         assertEquals(modules.size, 1)
         assertEquals(modules[0].isSourceModule, true)
-        assertTrue(modules[0].dependencies.size > 0)
+        assertTrue(modules[0].dependencies.isNotEmpty())
         assertEquals(
             modules[0].contentRoots,
             listOf(

@@ -6,20 +6,16 @@ import com.intellij.openapi.project.Project
 import org.eclipse.lsp4j.WorkDoneProgressKind
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.events.OperationType
+import org.gradle.tooling.model.GradleModuleVersion
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
-import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.kotlinlsp.analysis.ProgressNotifier
-import org.kotlinlsp.analysis.modules.LibraryModule
-import org.kotlinlsp.analysis.modules.Module
-import org.kotlinlsp.analysis.modules.SourceModule
+import org.kotlinlsp.analysis.modules.*
 import org.kotlinlsp.common.getCachePath
 import java.io.ByteArrayOutputStream
 import java.io.File
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
 
 class GradleBuildSystem(
     private val project: Project,
@@ -31,14 +27,14 @@ class GradleBuildSystem(
         const val PROGRESS_TOKEN = "GradleBuildSystem"
     }
 
+    private val androidVariant = "debug"    // TODO Make it a config parameter
+
     override val markerFiles: List<String> = listOf(
         "$rootFolder/build.gradle", "$rootFolder/build.gradle.kts",
         "$rootFolder/settings.gradle", "$rootFolder/settings.gradle.kts",
     )
 
     override fun resolveModulesIfNeeded(cachedMetadata: String?): BuildSystem.Result? {
-        val androidVariant = "debug"    // TODO Make it a config parameter
-
         if (!shouldReloadGradleProject(cachedMetadata)) {
             return null
         }
@@ -48,12 +44,12 @@ class GradleBuildSystem(
             .forProjectDirectory(File(rootFolder))
             .connect()
 
-        val output = ByteArrayOutputStream()
-        val androidInitScript = getAndroidInitScriptFile(rootFolder)
+        val stdout = ByteArrayOutputStream()
+        val initScript = getInitScriptFile(rootFolder)
         val ideaProject = connection
             .model(IdeaProject::class.java)
-            .withArguments("--init-script", androidInitScript.absolutePath, "-DandroidVariant=${androidVariant}")
-            .setStandardOutput(output)
+            .withArguments("--init-script", initScript.absolutePath, "-DandroidVariant=${androidVariant}")
+            .setStandardOutput(stdout)
             .addProgressListener({
                 progressNotifier.onReportProgress(
                     WorkDoneProgressKind.report,
@@ -63,126 +59,119 @@ class GradleBuildSystem(
             }, OperationType.PROJECT_CONFIGURATION)
             .get()
 
-        println(output)
+        println(stdout)
 
-        val jvmTarget = checkNotNull(JvmTarget.fromString(ideaProject.jdkName)) { "Unknown jdk target" }
-        val jdkModule = ideaProject.javaLanguageSettings.jdk?.let { jdk ->
-            LibraryModule(
-                id = "JDK ${jvmTarget.description}",
-                appEnvironment = appEnvironment,
-                project = project,
-                contentRoots = listOf(jdk.javaHome.toPath()),
-                javaVersion = jvmTarget,
+        val modules = mutableMapOf<String, SerializedModule>()
+
+        // Register the JDK module
+        val jdk = ideaProject.javaLanguageSettings.jdk
+        if(jdk != null) {
+            val jdkModule = SerializedModule(
+                id = "JDK",
+                contentRoots = listOf(jdk.javaHome.absolutePath),
+                javaVersion = ideaProject.jdkName,
+                dependencies = listOf(),
+                isSource = false,
                 isJdk = true,
             )
+            modules[jdkModule.id] = jdkModule
         }
 
-        val modules = ideaProject
-            .modules
-            .asSequence()
-            .mapNotNull { module ->
-                val contentRoot =
-                    module.contentRoots.first()   // Don't know in which cases we would have multiple contentRoots
-                val sourceDirs = contentRoot
-                    .sourceDirectories
-                    // We send android dependencies here as a workaround
-                    .filter { !it.directory.toString().startsWith("jar:") }
-                    .map { it.directory.toPath() }
-                val androidDeps = contentRoot
-                    .sourceDirectories
-                    // We send android dependencies here as a workaround
-                    .filter { it.directory.toString().startsWith("jar:") }
-                    .map { Path(it.directory.toString().removePrefix("jar:")) }
+        // Process each module from the idea project
+        ideaProject.modules.forEach { module ->
+            val contentRoot =
+                module.contentRoots.first()   // Don't know in which cases we would have multiple contentRoots
 
-                val testDirs = contentRoot.testDirectories.map { it.directory.toPath() }
+            // Extra source dependencies can be specified in the source directories with the jar: prefix, it is a workaround
+            // as the init script cannot add new dependencies the normal way
+            val (ideaSourceDirs, ideaExtraSourceDeps) = contentRoot
+                .sourceDirectories
+                .partition { !it.directory.toString().startsWith("jar:") }
 
-                // Ignore empty modules
-                if (sourceDirs.isEmpty()) return@mapNotNull null
+            // Don't process empty modules
+            if (ideaSourceDirs.isEmpty()) return@forEach
 
-                // Seems that dependencies are the same for source and test source-sets?
-                val (testIdeaDeps, sourceIdeaDeps) = module
-                    .dependencies
-                    .filterIsInstance<IdeaSingleEntryLibraryDependency>()
-                    .filter { it.scope.scope != "RUNTIME" } // We don't need runtime deps for an LSP
-                    .partition { it.scope.scope == "TEST" }
+            val (ideaTestDeps, ideaSourceDeps) = module
+                .dependencies
+                .filterIsInstance<IdeaSingleEntryLibraryDependency>()
+                .filter { it.scope.scope != "RUNTIME" } // We don't need runtime deps for a LSP
+                .partition { it.scope.scope == "TEST" }
 
-                val sourceDeps: MutableList<Module> = sourceIdeaDeps
-                    .map {
-                        LibraryModule(
-                            id = it.file.name,
-                            appEnvironment = appEnvironment,
-                            project = project,
-                            javaVersion = jvmTarget,
-                            contentRoots = listOf(it.file.toPath()),
-                        )
-                    }
-                    .toMutableList()
+            // Register regular dependencies
+            (ideaTestDeps.asSequence() + ideaSourceDeps.asSequence()).forEach {
+                val id = it.gradleModuleVersion.formatted()
+                if (modules.containsKey(id)) return@forEach
 
-                sourceDeps.addAll(androidDeps.map {
-                    LibraryModule(
-                        id = it.absolutePathString(),
-                        appEnvironment = appEnvironment,
-                        project = project,
-                        javaVersion = jvmTarget,
-                        contentRoots = listOf(it),
-                    )
-                })
-
-                val testDeps: MutableList<Module> = testIdeaDeps
-                    .map {
-                        LibraryModule(
-                            id = it.file.name,
-                            appEnvironment = appEnvironment,
-                            project = project,
-                            javaVersion = jvmTarget,
-                            contentRoots = listOf(it.file.toPath()),
-                        )
-                    }
-                    .toMutableList()
-
-                // Android projects use embedded JDK in android.jar
-                if (jdkModule != null && androidDeps.isEmpty()) {
-                    sourceDeps.add(jdkModule)
-                }
-
-                val sourceModule = SourceModule(
-                    id = module.name,
-                    project = project,
-                    contentRoots = sourceDirs,
-                    dependencies = sourceDeps,
-                    javaVersion = jvmTarget,
-                    kotlinVersion = LanguageVersion.KOTLIN_2_1,
+                modules[id] = SerializedModule(
+                    id = id,
+                    isSource = false,
+                    dependencies = emptyList(),
+                    isJdk = false,
+                    javaVersion = ideaProject.jdkName,
+                    contentRoots = listOf(it.file.absolutePath)
                 )
-
-                if (testDirs.isEmpty()) return@mapNotNull listOf(sourceModule)
-
-                testDeps.add(sourceModule)
-                testDeps.addAll(sourceDeps)
-
-                val testModule = SourceModule(
-                    id = "${module.name}-test",
-                    project = project,
-                    contentRoots = testDirs,
-                    dependencies = testDeps,
-                    javaVersion = jvmTarget,
-                    kotlinVersion = LanguageVersion.KOTLIN_2_1,
-                )
-
-                return@mapNotNull listOf(sourceModule, testModule)
             }
-            .flatten()
-            .toList()
+
+            // Register extra dependencies
+            ideaExtraSourceDeps.forEach {
+                val path = it.directory.toString().removePrefix("jar:")
+                if (modules.containsKey(path)) return@forEach
+
+                modules[path] = SerializedModule(
+                    id = path,
+                    isSource = false,
+                    dependencies = emptyList(),
+                    isJdk = false,
+                    javaVersion = ideaProject.jdkName,
+                    contentRoots = listOf(path)
+                )
+            }
+
+            // Register source module
+            val isAndroidModule = ideaExtraSourceDeps.isNotEmpty()  // TODO Find a better way to know this
+            val sourceModuleId = module.name
+            val sourceDirs = ideaSourceDirs.map { it.directory.absolutePath }
+            val sourceDeps = ideaSourceDeps.map { it.gradleModuleVersion.formatted() } + ideaExtraSourceDeps.map {
+                it.directory.toString().removePrefix("jar:")
+            } + if(!isAndroidModule) { listOf("JDK") } else { emptyList() }
+            modules[sourceModuleId] = SerializedModule(
+                id = sourceModuleId,
+                isSource = true,
+                dependencies = sourceDeps,
+                contentRoots = sourceDirs,
+                kotlinVersion = LanguageVersion.KOTLIN_2_1.versionString,   // TODO Figure out this
+                javaVersion = ideaProject.jdkName
+            )
+
+            // Register test module
+            if(contentRoot.testDirectories.isNotEmpty()) {
+                val testModuleId = "${sourceModuleId}-test"
+                val testDirs = contentRoot.testDirectories.map { it.directory.absolutePath }
+                val testDeps = sourceDeps + ideaTestDeps.map { it.gradleModuleVersion.formatted() } + listOf(sourceModuleId)
+                modules[testModuleId] = SerializedModule(
+                    id = testModuleId,
+                    isSource = true,
+                    dependencies = testDeps,
+                    contentRoots = testDirs,
+                    kotlinVersion = LanguageVersion.KOTLIN_2_1.versionString,   // TODO Figure out this
+                    javaVersion = ideaProject.jdkName
+                )
+            }
+        }
 
         progressNotifier.onReportProgress(WorkDoneProgressKind.end, PROGRESS_TOKEN, "[GRADLE] Done")
 
         val metadata = Gson().toJson(computeGradleMetadata(ideaProject))
 
         connection.close()
-        androidInitScript.delete()
+        initScript.delete()
 
-        return BuildSystem.Result(modules, metadata)
+        val moduleList = modules.values.toList()
+        return BuildSystem.Result(buildModulesGraph(moduleList, modules, appEnvironment, project), metadata)
     }
 }
+
+private fun GradleModuleVersion.formatted(): String = "$group:$name:${version}"
 
 private fun computeGradleMetadata(project: IdeaProject): Map<String, Map<String, Long>> {
     val result = mutableMapOf<String, Map<String, Long>>()
@@ -235,7 +224,7 @@ private fun shouldReloadGradleProject(metadataString: String?): Boolean {
     return false
 }
 
-private fun getAndroidInitScriptFile(rootFolder: String): File {
+private fun getInitScriptFile(rootFolder: String): File {
     val inputStream = object {}.javaClass.getResourceAsStream("/android.init.gradle")
     val scriptFile = getCachePath(rootFolder).resolve(".android.init.gradle").toFile()
     scriptFile.delete()

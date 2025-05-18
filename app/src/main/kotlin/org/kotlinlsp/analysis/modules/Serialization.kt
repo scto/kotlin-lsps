@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import kotlin.io.path.Path
 import kotlin.io.path.absolutePathString
 
-private data class SerializedModule(
+data class SerializedModule(
     val id: String,
     val dependencies: List<String>,
     val contentRoots: List<String>,
@@ -64,6 +64,15 @@ fun deserializeModules(
     val gson = Gson()
     val modules: List<SerializedModule> = gson.fromJson(data, Array<SerializedModule>::class.java).toList()
     val moduleMap = modules.associateBy { it.id }
+    return buildModulesGraph(modules, moduleMap, appEnvironment, project)
+}
+
+fun buildModulesGraph(
+    modules: List<SerializedModule>,
+    moduleMap: Map<String, SerializedModule>,
+    appEnvironment: KotlinCoreApplicationEnvironment,
+    project: Project
+): List<Module> {
     val builtModules = mutableMapOf<String, Module>()
 
     fun build(id: String): Module {
