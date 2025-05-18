@@ -20,10 +20,10 @@ Right now, this language server is at its infancy and thus not ready to use for 
 - ✅ Hover: fully working
 - 🚧 Go to definition: working except for kotlin binary dependencies (considering using the background index for this if we cannot make it work), it would also be nice to use a decompiler to jump into .class files (the analysis api provides `KotlinClassFileDecompiler` for kotlin .class files, fernflower may be used for java .class files)
 - 🚧 Build system integration: there is support for
-    * Single module Gradle projects
+    * Gradle projects (single and multi module) 
     * Single module Android projects (uses debug variant and does not handle source set merging yet)
     * Needs work on:
-        * Multi module Gradle projects
+        * Multimodule Android projects
         * KMP projects (targeting JVM, native target needs investigation on how to do it)
 
 ## Installing

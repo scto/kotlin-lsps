@@ -7,10 +7,12 @@ import org.eclipse.lsp4j.WorkDoneProgressKind
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.events.OperationType
 import org.gradle.tooling.model.GradleModuleVersion
+import org.gradle.tooling.model.idea.IdeaModuleDependency
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.tooling.model.idea.IdeaSingleEntryLibraryDependency
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreApplicationEnvironment
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.util.collectionUtils.concat
 import org.kotlinlsp.analysis.ProgressNotifier
 import org.kotlinlsp.analysis.modules.*
 import org.kotlinlsp.common.getCachePath
@@ -97,6 +99,10 @@ class GradleBuildSystem(
                 .filter { it.scope.scope != "RUNTIME" } // We don't need runtime deps for a LSP
                 .partition { it.scope.scope == "TEST" }
 
+            val ideaSourceModuleDeps = module
+                .dependencies
+                .filterIsInstance<IdeaModuleDependency>()
+
             // Register regular dependencies
             (ideaTestDeps.asSequence() + ideaSourceDeps.asSequence()).forEach {
                 val id = it.gradleModuleVersion.formatted()
@@ -131,27 +137,42 @@ class GradleBuildSystem(
             val isAndroidModule = ideaExtraSourceDeps.isNotEmpty()  // TODO Find a better way to know this
             val sourceModuleId = module.name
             val sourceDirs = ideaSourceDirs.map { it.directory.absolutePath }
-            val sourceDeps = ideaSourceDeps.map { it.gradleModuleVersion.formatted() } + ideaExtraSourceDeps.map {
-                it.directory.toString().removePrefix("jar:")
-            } + if(!isAndroidModule) { listOf("JDK") } else { emptyList() }
+            val sourceDeps =
+                ideaSourceDeps.asSequence().map { it.gradleModuleVersion.formatted() }
+                    .plus(
+                        ideaExtraSourceDeps.map {
+                            it.directory.toString().removePrefix("jar:")
+                        }
+                    ).plus(
+                        if (!isAndroidModule) {
+                            sequenceOf("JDK")
+                        } else {
+                            emptySequence()
+                        }
+                    ).plus(
+                        ideaSourceModuleDeps.map { it.targetModuleName }
+                    )
             modules[sourceModuleId] = SerializedModule(
                 id = sourceModuleId,
                 isSource = true,
-                dependencies = sourceDeps,
+                dependencies = sourceDeps.toList(),
                 contentRoots = sourceDirs,
                 kotlinVersion = LanguageVersion.KOTLIN_2_1.versionString,   // TODO Figure out this
                 javaVersion = ideaProject.jdkName
             )
 
             // Register test module
-            if(contentRoot.testDirectories.isNotEmpty()) {
+            if (contentRoot.testDirectories.isNotEmpty()) {
                 val testModuleId = "${sourceModuleId}-test"
                 val testDirs = contentRoot.testDirectories.map { it.directory.absolutePath }
-                val testDeps = sourceDeps + ideaTestDeps.map { it.gradleModuleVersion.formatted() } + listOf(sourceModuleId)
+                val testDeps =
+                    sourceDeps
+                        .plus(ideaTestDeps.map { it.gradleModuleVersion.formatted() })
+                        .plus(sequenceOf(sourceModuleId))
                 modules[testModuleId] = SerializedModule(
                     id = testModuleId,
                     isSource = true,
-                    dependencies = testDeps,
+                    dependencies = testDeps.toList(),
                     contentRoots = testDirs,
                     kotlinVersion = LanguageVersion.KOTLIN_2_1.versionString,   // TODO Figure out this
                     javaVersion = ideaProject.jdkName

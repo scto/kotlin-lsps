@@ -79,6 +79,58 @@ class Gradle {
     }
 
     @Test
+    fun `loads multi module project successfully`() = scenario("multi-module") { buildSystem ->
+        // Act
+        val (modules, _) = buildSystem.resolveModulesIfNeeded(cachedMetadata = null)!!
+
+        // Assert
+        assertEquals(modules.size, 4)
+        assertEquals(modules[0].isSourceModule, true)
+        assertEquals(
+            modules[0].contentRoots,
+            listOf(
+                Path("$cwd/test-projects/multi-module/app/src/main/java"),
+                Path("$cwd/test-projects/multi-module/app/src/main/kotlin"),
+            )
+        )
+        assertEquals(modules[0].dependencies.size, 4)
+        val depNames = modules[0].dependencies.map { it.id }.toSet()
+        assertTrue("submodule" in depNames)
+
+        assertEquals(modules[1].isSourceModule, true)
+        assertEquals(
+            modules[1].contentRoots,
+            listOf(
+                Path("$cwd/test-projects/multi-module/app/src/test/java"),
+                Path("$cwd/test-projects/multi-module/app/src/test/kotlin"),
+            )
+        )
+        assertEquals(modules[1].dependencies.size, 5)
+        assertEquals(modules[1].dependencies.filter { it.isSourceModule }.size, 2)
+
+        assertEquals(modules[2].isSourceModule, true)
+        assertEquals(
+            modules[2].contentRoots,
+            listOf(
+                Path("$cwd/test-projects/multi-module/submodule/src/main/java"),
+                Path("$cwd/test-projects/multi-module/submodule/src/main/kotlin"),
+            )
+        )
+        assertEquals(modules[2].dependencies.size, 3)
+
+        assertEquals(modules[3].isSourceModule, true)
+        assertEquals(
+            modules[3].contentRoots,
+            listOf(
+                Path("$cwd/test-projects/multi-module/submodule/src/test/java"),
+                Path("$cwd/test-projects/multi-module/submodule/src/test/kotlin"),
+            )
+        )
+        assertEquals(modules[3].dependencies.size, 4)
+        assertEquals(modules[3].dependencies.filter { it.isSourceModule }.size, 1)
+    }
+
+    @Test
     fun `loads android project successfully`() = scenario("android") { buildSystem ->
         // Act
         val (modules, _) = buildSystem.resolveModulesIfNeeded(cachedMetadata = null)!!
