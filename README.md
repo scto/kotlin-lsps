@@ -18,7 +18,7 @@ Right now, this language server is at its infancy and thus not ready to use for 
 ### Implemented features
 - ✅ Real time diagnostics: working for this codebase
 - ✅ Hover: fully working
-- 🚧 Go to definition: working, needs research on how to decompile java .class files
+- 🚧 Go to definition: working (with decompilation support), needs polish when resolving to kotlin libraries and JDK classes
 - 🚧 Build system integration: there is support for
     * Gradle projects (single and multi module) 
     * Single module Android projects (uses debug variant and does not handle source set merging yet)
