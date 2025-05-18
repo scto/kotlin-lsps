@@ -16,6 +16,14 @@ https://www.jetbrains.com/idea/
 
 ---
 
+JetBrains Java Decompiler FernFlower v243.22562.218
+Licensed under the Apache License, Version 2.0
+
+Copyright © 2014–2025 JetBrains s.r.o.
+https://www.jetbrains.com/
+
+---
+
 Kotlin Compiler & Analysis API v2.2.20-dev-2432 
 Licensed under the Apache License, Version 2.0
 Modules used: kotlin-compiler, analysis-api-k2-for-ide, analysis-api-for-ide, low-level-api-fir-for-ide, analysis-api-platform-interface-for-ide, symbol-light-classes-for-ide, analysis-api-impl-base-for-ide, kotlin-compiler-common-for-ide, kotlin-compiler-fir-for-ide  

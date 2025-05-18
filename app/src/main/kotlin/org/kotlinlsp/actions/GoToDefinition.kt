@@ -1,27 +1,28 @@
 package org.kotlinlsp.actions
 
-import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.compiled.ClassFileDecompiler
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtReferenceExpression
-import org.kotlinlsp.common.info
 import org.kotlinlsp.common.toLspRange
 import org.kotlinlsp.common.toOffset
 import org.kotlinlsp.common.warn
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.jar.JarFile
+import kotlin.io.path.absolutePathString
 
 fun goToDefinitionAction(ktFile: KtFile, position: Position): Location? = analyze(ktFile) {
     val offset = position.toOffset(ktFile)
@@ -30,6 +31,7 @@ fun goToDefinitionAction(ktFile: KtFile, position: Position): Location? = analyz
     val file = element.containingFile ?: return null
     if(file.viewProvider.document == null) {
         // This comes from a java .class file
+        // TODO Handle the case of JDK .class files (jrt:// urls)
         return tryDecompileJavaClass(file)
     }
     val range = element.textRange.toLspRange(file)
@@ -42,6 +44,7 @@ fun goToDefinitionAction(ktFile: KtFile, position: Position): Location? = analyz
 }
 
 private fun KaSession.tryResolveFromKotlinLibrary(ktFile: KtFile, offset: Int): Location? {
+    // TODO Test class methods, properties and types to see if they work, just tested with top level functions
     val element = ktFile.findElementAt(offset) ?: return null
     val ref = element.parent as? KtReferenceExpression ?: return null
     val symbol = ref.mainReference.resolveToSymbol() as? KaCallableSymbol ?: return null
@@ -69,6 +72,7 @@ private fun KaSession.tryResolveFromKotlinLibrary(ktFile: KtFile, offset: Int): 
     val decompiledContent = decompiledView.content.get()
     val tmpFile = File.createTempFile("KtDecompiledFile", ".kt")
     tmpFile.writeText(decompiledContent)
+    tmpFile.setWritable(false)
 
     return Location().apply {
         uri = "file://${tmpFile.absolutePath}"
@@ -80,17 +84,55 @@ private fun KaSession.tryResolveFromKotlinLibrary(ktFile: KtFile, offset: Int): 
 }
 
 private fun tryDecompileJavaClass(file: PsiFile): Location? {
-    // Just testing, does not work right now
-    /*val decompiledContent = ClassFileDecompiler().decompile(file.virtualFile).toString()
-    val tmpFile = File.createTempFile("JavaDecompiledFile", ".java")
-    tmpFile.writeText(decompiledContent)
+    val classFile = extractClassFromJar("${file.containingDirectory}/${file.containingFile.name}") ?: return null
+    val outputDir = Files.createTempDirectory("fernflower_output").toFile()
+    try {
+        val args = arrayOf(
+            "-jpr=1",
+            classFile.absolutePath,
+            outputDir.absolutePath
+        )
+        ConsoleDecompiler.main(args)
 
-    return Location().apply {
-        uri = "file://${tmpFile.absolutePath}"
-        range = Range().apply {
-            start = Position(0, 0)  // TODO Set correct position
-            end = Position(0, 1)
+        val outName = classFile.toPath().fileName.replaceExtensionWith(".java")
+        val outPath = outputDir.toPath().resolve(outName)
+        if (!Files.exists(outPath)) return null
+        outPath.toFile().setWritable(false)
+
+        return Location().apply {
+            uri = "file://${outPath.absolutePathString()}"
+            range = Range().apply {
+                start = Position(0, 0)  // TODO Set correct position
+                end = Position(0, 1)
+            }
         }
-    }*/
-    return null
+    } catch (e: Exception) {
+        warn(e.message ?: "Unknown fernflower error")
+        return null
+    } finally {
+        classFile.delete()
+    }
+}
+
+private fun extractClassFromJar(jarPathWithEntry: String): File? {
+    try {
+        val path = jarPathWithEntry.removePrefix("PsiDirectory:")
+        val (jarPath, entryPath) = path.split("!/")
+        val jarFile = JarFile(jarPath)
+        val entry = jarFile.getEntry(entryPath)
+        val inputStream = jarFile.getInputStream(entry)
+        val tempFile = File.createTempFile("JavaClass", ".class")
+        tempFile.outputStream().use { output -> inputStream.copyTo(output) }
+        jarFile.close()
+        return tempFile
+    } catch (e: Exception) {
+        warn("Error extracting class from jar: $jarPathWithEntry")
+        return null
+    }
+}
+
+private fun Path.replaceExtensionWith(newExtension: String): Path {
+    val oldName = fileName.toString()
+    val newName = oldName.substring(0, oldName.lastIndexOf(".")) + newExtension
+    return resolveSibling(newName)
 }
