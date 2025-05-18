@@ -22,9 +22,9 @@ Right now, this language server is at its infancy and thus not ready to use for 
 - 🚧 Build system integration: there is support for
     * Single module Gradle projects
     * Single module Android projects (uses debug variant and does not handle source set merging yet)
-    and needs work on:
-    * Multi module Gradle projects
-    * KMP projects (targeting JVM, native target needs investigation on how to do it)
+    * Needs work on:
+        * Multi module Gradle projects
+        * KMP projects (targeting JVM, native target needs investigation on how to do it)
 
 ## Installing
 We provide a distribution zip file, which you can download from [GitHub Releases](https://github.com/amgdev9/kotlin-lsp/releases/latest). Alternatively, there are unofficial methods to install it, provided by the community:
