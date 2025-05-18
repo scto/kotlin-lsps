@@ -10,7 +10,7 @@ This is an implementation of the [Language Server Protocol](https://microsoft.gi
 Right now, this language server is at its infancy and thus not ready to use for production environments (yet). As of now, this language server is being prepared to analyse its own codebase, with upcoming support for other projects. Here are the most important steps to make in order to improve its usability:
 
 - Integration with build systems: right now we have 2 integrations available:
-    - Gradle: basic support for single module projects is supported
+    - Gradle
     - File-based: for other build systems, you can write a `.kotlinlsp-modules.json` file at the root of your project with the modules and dependencies it contains. You have an example at `org.kotlinlsp.setup.Scenario.Kt`
 
 - Indexing solution: to provide features like autocomplete and search references, as well as caching to improve analysis performance, we need to create an index where we store all the references used in the project. For this we are using multiple key value stores using [RocksDB](https://rocksdb.org) on disk and perform a background indexing of the whole project, and incrementally update it as the user modifies the source files. One of the goals of this LS is to provide a fast startup time, so diagnostics are reported as quick as possible.
@@ -18,7 +18,7 @@ Right now, this language server is at its infancy and thus not ready to use for 
 ### Implemented features
 - ✅ Real time diagnostics: working for this codebase
 - ✅ Hover: fully working
-- 🚧 Go to definition: working except for kotlin binary dependencies (considering using the background index for this if we cannot make it work), it would also be nice to use a decompiler to jump into .class files (the analysis api provides `KotlinClassFileDecompiler` for kotlin .class files, fernflower may be used for java .class files)
+- 🚧 Go to definition: working, needs research on how to decompile java .class files
 - 🚧 Build system integration: there is support for
     * Gradle projects (single and multi module) 
     * Single module Android projects (uses debug variant and does not handle source set merging yet)

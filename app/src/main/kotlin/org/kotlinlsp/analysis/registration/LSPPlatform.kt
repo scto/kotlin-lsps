@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionPr
 import org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderCliImpl
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.DummyFileAttributeService
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
@@ -111,6 +112,7 @@ fun Registrar.lspPlatform() {
     with(app) {
         registerService(FileAttributeService::class.java, DummyFileAttributeService::class.java)
         registerService(KotlinAnalysisPermissionOptions::class.java, AnalysisPermissionOptions::class.java)
+        registerService(ClsKotlinBinaryClassCache::class.java)
     }
 }
 
