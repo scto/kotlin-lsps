@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackagePartProviderFactory
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler
+import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -29,10 +30,23 @@ fun goToDefinitionAction(ktFile: KtFile, position: Position): Location? = analyz
     val ref = ktFile.findReferenceAt(offset) ?: return null
     val element = ref.resolve() ?: return tryResolveFromKotlinLibrary(ktFile, offset)
     val file = element.containingFile ?: return null
+
+    // It comes from a java .class file
     if(file.viewProvider.document == null) {
-        // This comes from a java .class file
-        // TODO Handle the case of JDK .class files (jrt:// urls)
-        return tryDecompileJavaClass(file)
+        if(file.virtualFile.url.startsWith("jrt:/")) {
+            // Comes from JDK
+            val classFile = File.createTempFile("jrtClass", ".class")
+            classFile.writeBytes(file.virtualFile.contentsToByteArray())
+            val result = tryDecompileJavaClass(classFile.toPath())
+            classFile.delete()
+            return result
+        } else {
+            // Comes from JAR
+            val classFile = extractClassFromJar("${file.containingDirectory}/${file.containingFile.name}") ?: return null
+            val result = tryDecompileJavaClass(classFile.toPath())
+            classFile.delete()
+            return result
+        }
     }
     val range = element.textRange.toLspRange(file)
     val folder = file.containingDirectory.toString().removePrefix("PsiDirectory:")
@@ -83,18 +97,17 @@ private fun KaSession.tryResolveFromKotlinLibrary(ktFile: KtFile, offset: Int): 
     }
 }
 
-private fun tryDecompileJavaClass(file: PsiFile): Location? {
-    val classFile = extractClassFromJar("${file.containingDirectory}/${file.containingFile.name}") ?: return null
+private fun tryDecompileJavaClass(path: Path): Location? {
     val outputDir = Files.createTempDirectory("fernflower_output").toFile()
     try {
         val args = arrayOf(
             "-jpr=1",
-            classFile.absolutePath,
+            path.absolutePathString(),
             outputDir.absolutePath
         )
         ConsoleDecompiler.main(args)
 
-        val outName = classFile.toPath().fileName.replaceExtensionWith(".java")
+        val outName = path.fileName.replaceExtensionWith(".java")
         val outPath = outputDir.toPath().resolve(outName)
         if (!Files.exists(outPath)) return null
         outPath.toFile().setWritable(false)
@@ -109,8 +122,6 @@ private fun tryDecompileJavaClass(file: PsiFile): Location? {
     } catch (e: Exception) {
         warn(e.message ?: "Unknown fernflower error")
         return null
-    } finally {
-        classFile.delete()
     }
 }
 
