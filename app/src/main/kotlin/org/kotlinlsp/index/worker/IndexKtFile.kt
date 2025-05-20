@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.psi.psiUtil.isAbstract
 import org.kotlinlsp.common.read
 import org.kotlinlsp.common.warn
 import org.kotlinlsp.index.db.*
-import java.time.Instant
 
 fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
     val newFile = File.fromKtFile(ktFile, project, indexed = true)
@@ -20,51 +19,29 @@ fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
         existingFile?.indexed == true  // Already indexed
     ) return
 
-    // Update the file timestamp and package
-    db.setFile(newFile)
-
     // TODO Remove declarations for this file first
-    project.read {
+    val declarations = project.read {
+        val list = mutableListOf<KtDeclaration>()
         ktFile.accept(object : KtTreeVisitorVoid() {
             override fun visitDeclaration(dcl: KtDeclaration) {
-                val decl = analyze(dcl) {
-                    analyzeDeclaration(newFile.path, dcl)
-                } ?: return
-
-                db.putDeclaration(decl) // TODO Put all declarations in bulk to improve performance
-
+                list.add(dcl)
                 super.visitDeclaration(dcl)
             }
-
-            // TODO Store references
-            /*override fun visitReferenceExpression(e: KtReferenceExpression) {
-                super.visitReferenceExpression(e)
-                if (e !is KtNameReferenceExpression) return
-
-                val target = try {
-                    e.mainReference.resolve()
-                } catch (_: Exception) {
-                    null
-                }
-
-                if (target == null) {
-                    warn("Unresolved reference: ${e.text}")
-                    return
-                }
-
-                val referenceRecord = ReferenceRecord(
-                    id = -1,
-                    symbolId = 1,
-                    startOffset = e.textOffset,
-                    endOffset = e.endOffset
-                )
-
-                debug("REFERENCE: $referenceRecord")
-                debug("-> Name: ${e.text}")
-                debug("-> Target: ${target?.containingFile?.virtualFile?.url}")
-            }*/
         })
+        return@read list
     }
+
+    declarations.forEach {
+        val record = analyze(it) {
+            analyzeDeclaration(newFile.path, it)
+        } ?: return@forEach
+
+        // TODO Put all declarations in bulk to improve performance
+        db.putDeclaration(record)
+    }
+
+    // Update the file timestamp and package
+    db.setFile(newFile)
 }
 
 private fun KaSession.analyzeDeclaration(path: String, dcl: KtDeclaration): Declaration? {

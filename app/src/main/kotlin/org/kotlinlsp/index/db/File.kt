@@ -2,7 +2,6 @@ package org.kotlinlsp.index.db
 
 import com.intellij.openapi.project.Project
 import kotlinx.serialization.Serializable
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.common.read
 import org.kotlinlsp.index.db.adapters.get
