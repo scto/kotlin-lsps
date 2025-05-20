@@ -1,17 +1,10 @@
 package org.kotlinlsp.index.db.adapters
 
-import kotlinx.serialization.*
-import kotlinx.serialization.protobuf.ProtoBuf
-import org.rocksdb.InfoLogLevel
-import org.rocksdb.Options
-import org.rocksdb.ReadOptions
-import org.rocksdb.RocksDB
+import org.rocksdb.*
 import java.io.File
-import java.io.Serial
 import java.nio.charset.Charset
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
-import kotlin.reflect.KClass
 
 class RocksDBAdapter(private val path: Path): DatabaseAdapter {
     companion object {
@@ -30,6 +23,15 @@ class RocksDBAdapter(private val path: Path): DatabaseAdapter {
 
     override fun putByteArray(key: String, value: ByteArray) {
         db.put(key.toByteArray(), value)
+    }
+
+    override fun putByteArrayBulk(values: Iterable<Pair<String, ByteArray>>) {
+        val batch = WriteBatch()
+        values.forEach { (key, value) ->
+            batch.put(key.toByteArray(), value)
+        }
+        db.write(WriteOptions(), batch)
+        batch.close()
     }
 
     override fun getByteArray(key: String): ByteArray? {

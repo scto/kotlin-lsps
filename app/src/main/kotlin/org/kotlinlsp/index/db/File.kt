@@ -14,6 +14,7 @@ data class File(
     val lastModified: Instant,
     val modificationStamp: Long,
     val indexed: Boolean,
+    val declarationKeys: MutableList<String> = mutableListOf()
 ) {
     companion object {
         fun fromKtFile(ktFile: KtFile, project: Project, indexed: Boolean): File = project.read {
@@ -43,6 +44,7 @@ fun File.toDto(): FileDto = FileDto(
     lastModified = lastModified.toEpochMilli(),
     modificationStamp = modificationStamp,
     indexed = indexed,
+    declarationKeys = declarationKeys
 )
 
 @Serializable
@@ -51,6 +53,7 @@ data class FileDto(
     val lastModified: Long,
     val modificationStamp: Long,
     val indexed: Boolean,
+    val declarationKeys: List<String>
 )
 
 fun Database.file(path: String): File? {

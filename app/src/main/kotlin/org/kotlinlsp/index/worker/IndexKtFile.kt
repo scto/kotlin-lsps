@@ -13,34 +13,38 @@ import org.kotlinlsp.index.db.*
 fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
     val newFile = File.fromKtFile(ktFile, project, indexed = true)
 
+    // Check if skipping the indexing of that file
     val existingFile = db.file(newFile.path)
     if (
         File.shouldBeSkipped(existingFile = existingFile, newFile = newFile) &&
         existingFile?.indexed == true  // Already indexed
     ) return
 
-    // TODO Remove declarations for this file first
+    // Remove declarations for this file first
+    existingFile?.declarationKeys?.forEach {
+        db.declarationsDb.remove(it)
+    }
+
+    // Get declarations metadata
     val declarations = project.read {
-        val list = mutableListOf<KtDeclaration>()
+        val list = mutableListOf<Declaration>()
         ktFile.accept(object : KtTreeVisitorVoid() {
             override fun visitDeclaration(dcl: KtDeclaration) {
-                list.add(dcl)
+                val record = analyze(dcl) {
+                    analyzeDeclaration(newFile.path, dcl)
+                } ?: return
+                list.add(record)
                 super.visitDeclaration(dcl)
             }
         })
         return@read list
     }
 
-    declarations.forEach {
-        val record = analyze(it) {
-            analyzeDeclaration(newFile.path, it)
-        } ?: return@forEach
+    // Save declarations
+    db.putDeclarations(declarations)
 
-        // TODO Put all declarations in bulk to improve performance
-        db.putDeclaration(record)
-    }
-
-    // Update the file timestamp and package
+    // Update the file timestamp, package and declaration names
+    newFile.declarationKeys.addAll(declarations.map { it.id() })
     db.setFile(newFile)
 }
 
