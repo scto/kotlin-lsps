@@ -282,6 +282,6 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         val ktFile = index.getOpenedKtFile(path) ?: return emptyList()
         val offset = position.toOffset(ktFile)
 
-        return autocompleteAction(ktFile, offset, index)
+        return project.read { autocompleteAction(ktFile, offset, index) }.toList()
     }
 }

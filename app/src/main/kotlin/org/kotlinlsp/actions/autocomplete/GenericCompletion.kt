@@ -31,9 +31,8 @@ import org.kotlinlsp.index.queries.getCompletions
 
 private val newlines = arrayOf("", "\n", "\n\n")
 
-fun autoCompletionGeneric(ktFile: KtFile, offset: Int, index: Index, completingElement: KtElement, prefix: String): List<CompletionItem> {
-    val localVariableCompletions = fetchLocalCompletions(ktFile, offset, completingElement, prefix)
-
+fun autoCompletionGeneric(ktFile: KtFile, offset: Int, index: Index, completingElement: KtElement, prefix: String): Sequence<CompletionItem> {
+    // Get import list and where to add new imports
     val existingImports = ktFile.importList?.children?.filterIsInstance<KtImportDirective>() ?: emptyList()
     val (importInsertionOffset, newlineCount) = if (existingImports.isEmpty()) {
         ktFile.packageDirective?.textRange?.let { it.endOffset to 2 } ?: (ktFile.textRange.startOffset to 0)
@@ -43,11 +42,12 @@ fun autoCompletionGeneric(ktFile: KtFile, offset: Int, index: Index, completingE
     val importInsertionPosition =
         StringUtil.offsetToLineColumn(ktFile.text, importInsertionOffset).let { Position(it.line, it.column) }
 
-    val completions = index
-        .getCompletions(prefix, "", "") // TODO: ThisRef
+    val externalCompletions = index
+        .getCompletions(prefix) // TODO: ThisRef
         .map { decl ->
             val additionalEdits = mutableListOf<TextEdit>()
 
+            // Add the import if not there yet
             if (decl is Declaration.Class) {
                 val exists = existingImports.any {
                     it.importedFqName?.asString() == decl.fqName
@@ -74,7 +74,9 @@ fun autoCompletionGeneric(ktFile: KtFile, offset: Int, index: Index, completingE
             }
         }
 
-    return localVariableCompletions + completions
+    val localCompletions = fetchLocalCompletions(ktFile, offset, completingElement, prefix)
+
+    return localCompletions.plus(externalCompletions).asSequence()
 }
 
 @OptIn(KaExperimentalApi::class)
@@ -83,55 +85,57 @@ private fun fetchLocalCompletions(
     offset: Int,
     completingElement: KtElement,
     prefix: String
-): List<CompletionItem> = analyze(completingElement) {
+): List<CompletionItem> = analyze(ktFile) {
     ktFile
         .scopeContext(completingElement)
         .scopes
+        .asSequence()
         .filter { it.kind is KaScopeKind.LocalScope }
-        .flatMap {
-            it.scope.declarations.mapNotNull { decl ->
-                if (!decl.name.toString().startsWith(prefix)) return@mapNotNull null
-                val psi = decl.psi ?: return@mapNotNull null
-
-                // TODO: This is a hack to get the correct offset for function literals, can analysis tell us if a declaration is accessible?
-                val declOffset = if (psi is KtFunctionLiteral) psi.textRange.startOffset else psi.textRange.endOffset
-                if (declOffset >= offset) return@mapNotNull null
-
-                val detail = when (decl) {
-                    is KaVariableSymbol -> decl.returnType.render(
-                        KaTypeRendererForSource.WITH_SHORT_NAMES,
-                        Variance.INVARIANT
-                    )
-
-                    else -> "Missing ${decl.javaClass.simpleName}"
-                }
-
-                val preview = when (psi) {
-                    is KtProperty -> psi.text
-                    is KtParameter -> {
-                        if (psi.isLoopParameter) {
-                            val loop = psi.parentOfType<KtLoopExpression>()!!
-                            loop.text.replace(loop.body!!.text, "")
-                        } else psi.text
-                    }
-
-                    is KtFunctionLiteral -> decl.name // TODO: Show the function call containing the lambda?
-                    else -> "TODO: Preview for ${psi.javaClass.simpleName}"
-                }
-
-                CompletionItem().apply {
-                    label = decl.name.toString()
-                    labelDetails = CompletionItemLabelDetails().apply {
-                        this.detail = "  $detail"
-                        description = ""
-                    }
-                    documentation = Either.forRight(
-                        MarkupContent("markdown", "```kotlin\n${preview}\n```")
-                    )
-                    kind = CompletionItemKind.Variable
-                    insertText = decl.name.toString()
-                    insertTextFormat = InsertTextFormat.PlainText
-                }
-            }.toList()
+        .flatMap { it.scope.declarations }
+        .filter { it.name.toString().startsWith(prefix) }
+        .mapNotNull { if (it.psi != null) Pair(it, it.psi!!) else null }
+        .filter { (_, psi) ->
+            // TODO: This is a hack to get the correct offset for function literals, can analysis tell us if a declaration is accessible?
+            val declOffset =
+                if (psi is KtFunctionLiteral) psi.textRange.startOffset else psi.textRange.endOffset
+            declOffset < offset
         }
+        .map { (decl, psi) ->
+            val detail = when (decl) {
+                is KaVariableSymbol -> decl.returnType.render(
+                    KaTypeRendererForSource.WITH_SHORT_NAMES,
+                    Variance.INVARIANT
+                )
+
+                else -> "Missing ${decl.javaClass.simpleName}"
+            }
+
+            val preview = when (psi) {
+                is KtProperty -> psi.text
+                is KtParameter -> {
+                    if (psi.isLoopParameter) {
+                        val loop = psi.parentOfType<KtLoopExpression>()!!
+                        loop.text.replace(loop.body!!.text, "")
+                    } else psi.text
+                }
+
+                is KtFunctionLiteral -> decl.name // TODO: Show the function call containing the lambda?
+                else -> "TODO: Preview for ${psi.javaClass.simpleName}"
+            }
+
+            CompletionItem().apply {
+                label = decl.name.toString()
+                labelDetails = CompletionItemLabelDetails().apply {
+                    this.detail = "  $detail"
+                    description = ""
+                }
+                documentation = Either.forRight(
+                    MarkupContent("markdown", "```kotlin\n${preview}\n```")
+                )
+                kind = CompletionItemKind.Variable
+                insertText = decl.name.toString()
+                insertTextFormat = InsertTextFormat.PlainText
+            }
+        }
+        .toList()
 }

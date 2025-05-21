@@ -44,3 +44,13 @@ fun Declaration.insertInfo(): Pair<String, InsertTextFormat> = when (this) {
 
     is Declaration.Field -> name to InsertTextFormat.PlainText
 }
+
+fun Sequence<Declaration>.filterMatchesReceiver(receiver: String): Sequence<Declaration> =
+    filter {
+        when (it) {
+            is Declaration.Function -> it.receiverFqName == receiver || it.receiverFqName.isEmpty()
+            is Declaration.Class -> true
+            is Declaration.EnumEntry -> true
+            is Declaration.Field -> it.parentFqName == receiver || it.parentFqName.isEmpty()
+        }
+    }

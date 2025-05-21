@@ -9,11 +9,17 @@ interface DatabaseAdapter {
     fun putRawData(key: String, value: ByteArray)
     fun putRawData(values: Iterable<Pair<String, ByteArray>>)
     fun getRawData(key: String): ByteArray?
-    fun prefixSearch(prefix: String): Sequence<Pair<String, ByteArray>>
+    fun prefixSearchRaw(prefix: String): Sequence<Pair<String, ByteArray>>
     fun remove(key: String)
     fun remove(keys: Iterable<String>)
     fun close()
     fun deleteDb()
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+inline fun <reified T: Any> DatabaseAdapter.prefixSearch(key: String): Sequence<Pair<String, T>> {
+    return prefixSearchRaw(key)
+        .map { (key, value) -> Pair(key, ProtoBuf.decodeFromByteArray(value)) }
 }
 
 @OptIn(ExperimentalSerializationApi::class)

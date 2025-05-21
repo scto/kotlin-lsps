@@ -39,7 +39,7 @@ class RocksDBAdapter(private val path: Path): DatabaseAdapter {
         return data
     }
 
-    override fun prefixSearch(prefix: String): Sequence<Pair<String, ByteArray>> = sequence {
+    override fun prefixSearchRaw(prefix: String): Sequence<Pair<String, ByteArray>> = sequence {
         val readOptions = ReadOptions().setPrefixSameAsStart(true)
 
         readOptions.use {
