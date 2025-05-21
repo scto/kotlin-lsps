@@ -65,7 +65,14 @@ java {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    val isCI: String? by project
+    if (!isCI.isNullOrBlank()) {
+        useJUnitPlatform {
+            includeTags("CI")
+        }
+    } else {
+        useJUnitPlatform()
+    }
 
     forkEvery = 1
     maxParallelForks = 1

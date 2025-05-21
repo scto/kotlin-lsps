@@ -3,11 +3,13 @@ package org.kotlinlsp
 import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.DidOpenTextDocumentParams
 import org.eclipse.lsp4j.TextDocumentItem
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.kotlinlsp.setup.scenario
 import org.mockito.ArgumentMatchers.argThat
 import org.mockito.Mockito.verify
 
+@Tag("CI")
 class RealTimeDiagnostics {
     @Test
     fun `analyzes basic codebase with no error diagnostics`() = scenario("playground") { server, client, projectUrl, _ ->
