@@ -28,7 +28,7 @@ class SourceModule(
     override val isSourceModule: Boolean
         get() = true
 
-    override fun computeFiles(): Sequence<VirtualFile> =
+    override fun computeFiles(extended: Boolean): Sequence<VirtualFile> =
         contentRoots
             .asSequence()
             .map { File(it.absolutePathString()).walk() }
@@ -40,8 +40,7 @@ class SourceModule(
     override val kaModule: KaModule by lazy {
         object : KaSourceModule, KaModuleBase() {
             private val scope: GlobalSearchScope by lazy {
-                val files = computeFiles()
-                    .toList()
+                val files = computeFiles(extended = true).toList()
 
                 GlobalSearchScope.filesScope(this@SourceModule.project, files)
             }

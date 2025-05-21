@@ -16,7 +16,7 @@ class ScanFilesThread(
         // Scan phase
         modules.asFlatSequence()
             .filter { it.isSourceModule }
-            .map { it.computeFiles() }
+            .map { it.computeFiles(extended = true) }
             .flatten()
             .takeWhile { !shouldStop.get() }
             .forEach {
@@ -30,7 +30,7 @@ class ScanFilesThread(
         modules.asFlatSequence()
             // Scan source files first as they will be more frequently accessed by the user
             .sortedByDescending { it.isSourceModule }
-            .map { it.computeFiles() }
+            .map { it.computeFiles(extended = true) }
             .flatten()
             .takeWhile { !shouldStop.get() }
             .forEach {

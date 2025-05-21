@@ -66,9 +66,10 @@ class DirectInheritorsProvider: KotlinDirectInheritorsProvider {
         classesBySupertypeName.clear()
         inheritableTypeAliasesByAliasedName.clear()
 
-        modules.asFlatSequence()
+        modules
+            .asFlatSequence()
             .filter { it.isSourceModule }
-            .map { it.computeFiles() }
+            .map { it.computeFiles(extended = true) }
             .flatten()
             .mapNotNull { index.getKtFile(it) }
             .forEach {

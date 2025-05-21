@@ -11,7 +11,8 @@ interface Module {
     val contentRoots: List<Path>
     val kaModule: KaModule
 
-    fun computeFiles(): Sequence<VirtualFile>
+    // Extended = true includes each file from .jar file
+    fun computeFiles(extended: Boolean): Sequence<VirtualFile>
 }
 
 fun List<Module>.asFlatSequence(): Sequence<Module> {

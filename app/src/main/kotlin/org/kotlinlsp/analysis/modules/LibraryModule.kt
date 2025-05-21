@@ -1,9 +1,7 @@
 package org.kotlinlsp.analysis.modules
 
 import com.intellij.core.CoreApplicationEnvironment
-import com.intellij.mock.MockProject
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems.JAR_PROTOCOL
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -40,7 +38,7 @@ class LibraryModule(
         get() = false
 
     @OptIn(KaImplementationDetail::class)
-    override fun computeFiles(): Sequence<VirtualFile> {
+    override fun computeFiles(extended: Boolean): Sequence<VirtualFile> {
         val roots = if (isJdk) {
             // This returns urls to the JMOD files in the jdk
             project.read { LibraryUtils.findClassesFromJdkHome(contentRoots.first(), isJre = false) }
@@ -49,10 +47,15 @@ class LibraryModule(
             contentRoots
         }
 
-        return roots.asSequence()
+        val notExtendedFiles = roots
+            .asSequence()
             .mapNotNull {
                 getVirtualFileForLibraryRoot(it, appEnvironment, project)
             }
+
+        if (!extended) return notExtendedFiles
+
+        return notExtendedFiles
             .map {
                 project.read { LibraryUtils.getAllVirtualFilesFromRoot(it, includeRoot = true) }
             }
@@ -63,9 +66,7 @@ class LibraryModule(
         object : KaLibraryModule, KaModuleBase() {
             @KaPlatformInterface
             override val baseContentScope: GlobalSearchScope by lazy {
-                val virtualFileUrls = mutableSetOf<String>()
-                computeFiles()
-                    .forEach { virtualFileUrls.add(it.url) }
+                val virtualFileUrls = computeFiles(extended = true).map { it.url }.toSet()
 
                 object : GlobalSearchScope(project) {
                     override fun contains(file: VirtualFile): Boolean = file.url in virtualFileUrls
@@ -115,17 +116,20 @@ private fun getVirtualFileForLibraryRoot(
     environment: CoreApplicationEnvironment,
     project: Project
 ): VirtualFile? {
-    val pathString = FileUtil.toSystemIndependentName(root.toAbsolutePath().toString())
+    val pathString = root.absolutePathString()
 
+    // .jar or .klib files
     if (pathString.endsWith(JAR_PROTOCOL) || pathString.endsWith(KLIB_FILE_EXTENSION)) {
         return project.read { environment.jarFileSystem.findFileByPath(pathString + JAR_SEPARATOR) }
     }
 
+    // JDK classes
     if (pathString.contains(JAR_SEPARATOR)) {
         val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
         val adjustedPath = libHomePath + JAR_SEPARATOR + "modules/$pathInImage"
         return project.read { environment.jrtFileSystem?.findFileByPath(adjustedPath) }
     }
 
+    // Regular .class file
     return project.read { VirtualFileManager.getInstance().findFileByNioPath(root) }
 }

@@ -12,6 +12,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.file.impl.JavaFileManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.eclipse.lsp4j.*
@@ -111,23 +112,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         val libraryRoots = modules
             .asFlatSequence()
             .filter { !it.isSourceModule }
-            .map { module ->
-                val isJdk = (module as LibraryModule).isJdk
-
-                if (isJdk) {
-                    return@map LibraryUtils.findClassesFromJdkHome(module.contentRoots.first(), isJre = false).mapNotNull {
-                        val adjustedPath = adjustModulePath(it.absolutePathString())
-                        val virtualFile = CoreJrtFileSystem().findFileByPath(adjustedPath) ?: return@mapNotNull null
-                        JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
-                    }
-                } else {
-                    return@map module.contentRoots.mapNotNull {
-                        if(!File(it.absolutePathString()).exists()) return@mapNotNull null
-                        val virtualFile = CoreJarFileSystem().findFileByPath("${it.absolutePathString()}!/") ?: return@mapNotNull null
-                        JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
-                    }
-                }
-            }
+            .map { it.computeFiles(extended = false).map { JavaRoot(it, JavaRoot.RootType.BINARY) } }
             .flatten()
             .toList()
 
@@ -204,14 +189,6 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
 
         // Sync the index in the background
         index.syncIndexInBackground()
-    }
-
-    private fun adjustModulePath(pathString: String): String {
-        return if (pathString.contains("!/")) {
-            val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
-            "$libHomePath!/modules/$pathInImage"
-        } else
-            pathString
     }
 
     fun onOpenFile(path: String) {
