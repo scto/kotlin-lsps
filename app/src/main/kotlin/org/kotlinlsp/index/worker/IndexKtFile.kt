@@ -21,7 +21,7 @@ fun indexKtFile(project: Project, ktFile: KtFile, db: Database) {
     ) return
 
     // Remove declarations for this file first
-    existingFile?.declarationKeys?.forEach {
+    existingFile?.declarationKeys?.let {
         db.declarationsDb.remove(it)
     }
 

@@ -108,25 +108,11 @@ private fun formatDuration(duration: Duration): String {
     return "%.3f ms".format(duration.inWholeMicroseconds.toDouble() / 1000)
 }
 
-fun debug(message: String) {
-    logger.log(LogLevel.Debug, message)
-}
-
-fun info(message: String) {
-    logger.log(LogLevel.Info, message)
-}
-
-fun error(message: String) {
-    logger.log(LogLevel.Error, message)
-}
-
-fun trace(message: String) {
-    logger.log(LogLevel.Trace, message)
-}
-
-fun warn(message: String) {
-    logger.log(LogLevel.Warning, message)
-}
+fun debug(message: String) = logger.log(LogLevel.Debug, message)
+fun info(message: String) = logger.log(LogLevel.Info, message)
+fun error(message: String) = logger.log(LogLevel.Error, message)
+fun trace(message: String) = logger.log(LogLevel.Trace, message)
+fun warn(message: String) = logger.log(LogLevel.Warning, message)
 
 private class JULRedirector: Handler() {
     override fun publish(record: LogRecord) {

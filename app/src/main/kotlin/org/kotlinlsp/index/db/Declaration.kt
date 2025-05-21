@@ -2,9 +2,7 @@ package org.kotlinlsp.index.db
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.kotlinlsp.common.info
 import org.kotlinlsp.index.db.adapters.put
-import org.kotlinlsp.index.db.adapters.putBulk
 
 @Serializable
 sealed class Declaration() {
@@ -80,5 +78,5 @@ sealed class Declaration() {
 fun Declaration.id() = "${name}:${file}:${startOffset}:${endOffset}"
 
 fun Database.putDeclarations(declarations: Iterable<Declaration>) {
-    declarationsDb.putBulk(declarations.map { Pair(it.id(), it) })
+    declarationsDb.put(declarations.map { Pair(it.id(), it) })
 }

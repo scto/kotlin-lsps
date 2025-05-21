@@ -21,11 +21,11 @@ class RocksDBAdapter(private val path: Path): DatabaseAdapter {
 
     private val db = RocksDB.open(options, path.absolutePathString())
 
-    override fun putByteArray(key: String, value: ByteArray) {
+    override fun putRawData(key: String, value: ByteArray) {
         db.put(key.toByteArray(), value)
     }
 
-    override fun putByteArrayBulk(values: Iterable<Pair<String, ByteArray>>) {
+    override fun putRawData(values: Iterable<Pair<String, ByteArray>>) {
         val batch = WriteBatch()
         values.forEach { (key, value) ->
             batch.put(key.toByteArray(), value)
@@ -34,7 +34,7 @@ class RocksDBAdapter(private val path: Path): DatabaseAdapter {
         batch.close()
     }
 
-    override fun getByteArray(key: String): ByteArray? {
+    override fun getRawData(key: String): ByteArray? {
         val data = db.get(key.toByteArray()) ?: return null
         return data
     }
@@ -59,6 +59,15 @@ class RocksDBAdapter(private val path: Path): DatabaseAdapter {
 
     override fun remove(key: String) {
         db.delete(key.toByteArray())
+    }
+
+    override fun remove(keys: Iterable<String>) {
+        val batch = WriteBatch()
+        keys.forEach {
+            batch.delete(it.toByteArray())
+        }
+        db.write(WriteOptions(), batch)
+        batch.close()
     }
 
     override fun close() {

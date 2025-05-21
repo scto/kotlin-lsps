@@ -18,7 +18,6 @@ import org.eclipse.lsp4j.*
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinAnnotationsResolverFactory
 import org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory
@@ -44,13 +43,14 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.kotlinlsp.actions.autocompleteAction
 import org.kotlinlsp.actions.goToDefinitionAction
 import org.kotlinlsp.actions.hoverAction
+import org.kotlinlsp.analysis.modules.LibraryModule
+import org.kotlinlsp.analysis.modules.Module
+import org.kotlinlsp.analysis.modules.SourceModule
+import org.kotlinlsp.analysis.modules.asFlatSequence
 import org.kotlinlsp.analysis.registration.Registrar
 import org.kotlinlsp.analysis.registration.lspPlatform
 import org.kotlinlsp.analysis.registration.lspPlatformPostInit
 import org.kotlinlsp.analysis.services.*
-import org.kotlinlsp.analysis.modules.LibraryModule
-import org.kotlinlsp.analysis.modules.Module
-import org.kotlinlsp.analysis.modules.SourceModule
 import org.kotlinlsp.buildsystem.BuildSystemResolver
 import org.kotlinlsp.common.*
 import org.kotlinlsp.index.Index
@@ -68,6 +68,7 @@ interface ProgressNotifier {
 
 interface AnalysisSessionNotifier: IndexNotifier, DiagnosticsNotifier, ProgressNotifier
 
+@OptIn(KaImplementationDetail::class)
 class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: String) {
     private val app: MockApplication
     private val project: MockProject
@@ -107,10 +108,28 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         // Prepare the dependencies index for the Analysis API
         project.setupHighestLanguageLevel()
         val librariesScope = ProjectScope.getLibrariesScope(project)
-        val libraryRoots = mutableListOf<JavaRoot>()
-        modules.forEach {
-            fetchLibraryRoots(it, libraryRoots)
-        }
+        val libraryRoots = modules
+            .asFlatSequence()
+            .filter { !it.isSourceModule }
+            .map { module ->
+                val isJdk = (module as LibraryModule).isJdk
+
+                if (isJdk) {
+                    return@map LibraryUtils.findClassesFromJdkHome(module.contentRoots.first(), isJre = false).mapNotNull {
+                        val adjustedPath = adjustModulePath(it.absolutePathString())
+                        val virtualFile = CoreJrtFileSystem().findFileByPath(adjustedPath) ?: return@mapNotNull null
+                        JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
+                    }
+                } else {
+                    return@map module.contentRoots.mapNotNull {
+                        if(!File(it.absolutePathString()).exists()) return@mapNotNull null
+                        val virtualFile = CoreJarFileSystem().findFileByPath("${it.absolutePathString()}!/") ?: return@mapNotNull null
+                        JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
+                    }
+                }
+            }
+            .flatten()
+            .toList()
 
         val javaFileManager = project.getService(JavaFileManager::class.java) as KotlinCliJavaFileManagerImpl
         val javaModuleFinder = CliJavaModuleFinder(null, null, javaFileManager, project, null)
@@ -187,52 +206,8 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         index.syncIndexInBackground()
     }
 
-    @OptIn(KaImplementationDetail::class)
-    private fun fetchLibraryRoots(module: Module, roots: MutableList<JavaRoot>, cache: MutableSet<String> = mutableSetOf()) {
-        when(module) {
-            is SourceModule -> {
-                module.dependencies.forEach {
-                    fetchLibraryRoots(it, roots, cache)
-                }
-            }
-            is LibraryModule -> {
-                if (cache.contains(module.id)) return
-
-                if (module.isJdk) {
-                    val jdkRoots = LibraryUtils.findClassesFromJdkHome(module.contentRoots.first(), isJre = false).map {
-                        val adjustedPath = adjustModulePath(it.absolutePathString())
-                        val virtualFile = CoreJrtFileSystem().findFileByPath(adjustedPath)!!
-                        return@map JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
-                    }
-                    roots.addAll(jdkRoots)
-                } else {
-                    module.contentRoots.forEach {
-                        if(!File(it.absolutePathString()).exists()) return@forEach
-
-                        val virtualFile = CoreJarFileSystem().findFileByPath("${it.absolutePathString()}!/")!!
-                        val root = JavaRoot(virtualFile, JavaRoot.RootType.BINARY)
-                        roots.add(root)
-                    }
-                    module.dependencies.forEach {
-                        fetchLibraryRoots(it, roots, cache)
-                    }
-                }
-                cache.add(module.id)
-            }
-            else -> throw Exception("Unsupported KaModule! $module")
-        }
-    }
-
     private fun adjustModulePath(pathString: String): String {
         return if (pathString.contains("!/")) {
-            // URLs loaded from JDK point to module names in a JRT protocol format,
-            // e.g., "jrt:///path/to/jdk/home!/java.base" (JRT protocol prefix + JDK home path + JAR separator + module name)
-            // After protocol erasure, we will see "/path/to/jdk/home!/java.base" as a binary root.
-            // CoreJrtFileSystem.CoreJrtHandler#findFile, which uses Path#resolve, finds a virtual file path to the file itself,
-            // e.g., "/path/to/jdk/home!/modules/java.base". (JDK home path + JAR separator + actual file path)
-            // To work with that JRT handler, a hacky workaround here is to add "modules" before the module name so that it can
-            // find the actual file path.
-            // See [LLFirJavaFacadeForBinaries#getBinaryPath] and [StandaloneProjectFactory#getBinaryPath] for a similar hack.
             val (libHomePath, pathInImage) = CoreJrtFileSystem.splitPath(pathString)
             "$libHomePath!/modules/$pathInImage"
         } else
@@ -240,7 +215,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     }
 
     fun onOpenFile(path: String) {
-        val ktFile = loadKtFile(path)
+        val ktFile = loadKtFile(path) ?: return
         index.openKtFile(path, ktFile)
 
         updateDiagnostics(ktFile)
@@ -250,10 +225,10 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
         index.closeKtFile(path)
     }
 
-    private fun loadKtFile(path: String): KtFile {
+    private fun loadKtFile(path: String): KtFile? {
         val virtualFile = project.read { VirtualFileManager.getInstance()
-            .findFileByUrl(path)!! }
-        return project.read { PsiManager.getInstance(project).findFile(virtualFile)!! as KtFile }
+            .findFileByUrl(path) } ?: return null
+        return project.read { PsiManager.getInstance(project).findFile(virtualFile) as? KtFile }
     }
 
     private fun updateDiagnostics(ktFile: KtFile) {
@@ -289,8 +264,8 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
 
     // TODO Use version to avoid conflicts
     fun editFile(path: String, version: Int, changes: List<TextDocumentContentChangeEvent>) {
-        val ktFile = index.getOpenedKtFile(path)!!
-        val doc = project.read { psiDocumentManager.getDocument(ktFile)!! }
+        val ktFile = index.getOpenedKtFile(path) ?: return
+        val doc = project.read { psiDocumentManager.getDocument(ktFile) } ?: return
 
         project.write {
             changes.forEach {
@@ -311,7 +286,7 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     }
 
     fun lintFile(path: String) {
-        val ktFile = index.getOpenedKtFile(path)!!
+        val ktFile = index.getOpenedKtFile(path) ?: return
         index.queueOnFileChanged(ktFile)
 
         // Update diagnostics on the edited file first so feedback is faster
@@ -326,26 +301,19 @@ class AnalysisSession(private val notifier: AnalysisSessionNotifier, rootPath: S
     }
 
     fun hover(path: String, position: Position): Pair<String, Range>? {
-        val ktFile = index.getOpenedKtFile(path)!!
+        val ktFile = index.getOpenedKtFile(path) ?: return null
         return project.read { hoverAction(ktFile, position) }
     }
 
     fun goToDefinition(path: String, position: Position): Location? {
-        val ktFile = index.getOpenedKtFile(path)!!
+        val ktFile = index.getOpenedKtFile(path) ?: return null
         return project.read { goToDefinitionAction(ktFile, position) }
     }
 
     fun autocomplete(path: String, position: Position): List<CompletionItem> {
-        val ktFile = index.getOpenedKtFile(path)!!
+        val ktFile = index.getOpenedKtFile(path) ?: return emptyList()
         val offset = position.toOffset(ktFile)
 
         return autocompleteAction(ktFile, offset, index)
     }
 }
-
-private fun KaSeverity.toLspSeverity(): DiagnosticSeverity =
-    when(this) {
-        KaSeverity.ERROR -> DiagnosticSeverity.Error
-        KaSeverity.WARNING -> DiagnosticSeverity.Warning
-        KaSeverity.INFO -> DiagnosticSeverity.Information
-    }
